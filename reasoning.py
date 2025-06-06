@@ -119,56 +119,30 @@ class EnhancedReasoningTools(Toolkit):
                 """\
                 ## Enhanced Universal Reasoning Tools
 
-                Welcome to the Enhanced Universal Reasoning Toolkit! This suite empowers you to perform advanced, multi-modal reasoning, detect cognitive biases, and manage reasoning sessions for complex problem solving.
+                The Enhanced Universal Reasoning Toolkit empowers you to perform advanced, multi-modal reasoning, detect cognitive biases, and manage reasoning sessions for complex problem solving. All outputs are designed to be human-like, conversational, and provide natural language explanations and bias alerts.
 
-                ### Available Tools
+                ### Features
 
-                1. **reason(agent_or_team, problem, reasoning_type="deductive", evidence=None, context=None)**
-                   - Apply structured reasoning to a problem using a specified reasoning type.
-                   - Parameters:
-                     - `agent_or_team`: The agent or team requesting reasoning (object or identifier).
-                     - `problem` (str): The problem or question to analyze.
-                     - `reasoning_type` (str, optional): One of "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical". Default: "deductive".
-                     - `evidence` (list of str, optional): Supporting evidence or data points.
-                     - `context` (str, optional): Additional context for the problem.
-
-                2. **multi_modal_reason(agent_or_team, problem, reasoning_types, evidence=None)**
-                   - Combine multiple reasoning approaches for comprehensive analysis.
-                   - Parameters:
-                     - `reasoning_types` (list of str): E.g., ["deductive", "abductive"].
-
-                3. **analyze_reasoning(agent_or_team, result, analysis, next_action="continue", confidence="moderately confident")**
-                   - Evaluate reasoning results and determine next actions.
-                   - Parameters:
-                     - `next_action` (str, optional): "continue", "validate", or "final_answer".
-
-                4. **detect_biases(agent_or_team, reasoning_content)**
-                   - Identify cognitive biases in reasoning content (if bias detection is enabled).
-
-                5. **get_reasoning_history(agent_or_team)**
-                   - Retrieve the reasoning history for the current session.
-
-                6. **clear_reasoning_session(agent_or_team)**
-                   - Clear the reasoning session state.
-
-                ### Reasoning Workflow
-
-                - Use **reason()** for single-shot analysis with a specific reasoning type.
-                - Use **multi_modal_reason()** for comprehensive analysis using multiple approaches.
-                - Use **analyze_reasoning()** to evaluate results and decide on next steps.
-                - Use **detect_biases()** to check for cognitive biases in your reasoning.
-                - Use **get_reasoning_history()** to review your reasoning steps and progress.
-                - Use **clear_reasoning_session()** to reset the session for a new problem.
+                - Multi-modal reasoning: Deductive, inductive, abductive, causal, probabilistic, and analogical approaches.
+                - Cognitive bias detection with natural language feedback.
+                - Iterative, bias-aware reasoning: After each reasoning step, bias detection is run. If a major bias is found, the reasoning is automatically refined and repeated until no major bias is detected or a maximum iteration count is reached. The process and answer evolution are narrated in natural language.
+                - Session management and stepwise reasoning history.
+                - Human-like, conversational output—never expose tool calls or code in user-facing responses.
 
                 ### Best Practices
 
-                - Select reasoning types that best fit the problem's nature (e.g., use "deductive" for logic, "abductive" for best explanations).
+                - Choose reasoning approaches that best fit the problem's nature.
                 - Provide high-quality, relevant evidence to strengthen your analysis.
                 - Be explicit about uncertainties and consider alternative explanations.
-                - Actively look for and address cognitive biases.
+                - Remain vigilant for cognitive biases; the toolkit will alert you to detected biases if enabled.
                 - Use iterative and multi-step reasoning for complex or ambiguous problems.
                 - Document your reasoning steps for transparency and review.
-                - **If you use another tool (such as a search, data, or external API tool, etc.), incorporate the results into your reasoning and final answer if they add value or relevant context.**
+                - If you use another tool (such as a search, data, or external API tool), incorporate the results into your reasoning and final answer if they add value or relevant context.
+
+                ### Notes
+
+                - Reasoning sessions track your steps and progress. Use session management features to review or reset your reasoning process as needed.
+                - All outputs should be natural, conversational, and free of explicit tool call references, code, or numeric confidence scores.
                 """
             )
         else:
@@ -224,11 +198,127 @@ class EnhancedReasoningTools(Toolkit):
         }
 
         # Register tools
+        # Register iterative_reason as the default reasoning tool
+        self.register(self.iterative_reason)
         self.register(self.reason)
         self.register(self.multi_modal_reason)
         self.register(self.analyze_reasoning)
         if enable_bias_detection:
             self.register(self.detect_biases)
+
+    def iterative_reason(
+        self,
+        agent_or_team: Any,
+        problem: str,
+        reasoning_type: Union[ReasoningType, str] = ReasoningType.DEDUCTIVE,
+        evidence: Optional[List[str]] = None,
+        context: Optional[str] = None,
+        max_iterations: int = 3,
+    ) -> str:
+        """
+        Improved iterative reasoning with explicit bias feedback integration and stepwise narration.
+        """
+        major_biases = {
+            "confirmation_bias",
+            "anchoring_bias",
+            "overconfidence_bias",
+            "availability_heuristic",
+        }
+        history = []
+        current_answer = None
+        current_problem = problem
+        current_reasoning_type = reasoning_type
+        current_evidence = evidence
+        current_context = context
+        iteration = 0
+        last_biases = []
+
+        while iteration < max_iterations:
+            # Step 1: Generate answer (pass previous answer and bias feedback if not first iteration)
+            if iteration == 0:
+                prompt = current_problem
+            else:
+                bias_names = [b.replace("_", " ").title() for b in last_biases]
+                bias_text = ", ".join(bias_names)
+                prompt = (
+                    f"Previous answer:\n{current_answer}\n\n"
+                    f"Bias detected: {bias_text}.\n"
+                    f"Revise your answer by explicitly addressing this bias. "
+                    f"Add counterarguments, alternative perspectives, or express more uncertainty as needed. "
+                    f"Narrate what you changed and why."
+                )
+            # Use a dedicated method to generate the answer from the prompt
+            answer = self._generate_reasoning_step(
+                agent_or_team,
+                prompt,
+                current_reasoning_type,
+                current_evidence,
+                current_context,
+            )
+            # Step 2: Detect biases
+            detected_biases = []
+            if self.enable_bias_detection:
+                detected_biases = self._detect_biases_in_content(
+                    answer, current_evidence or [], current_context
+                )
+            history.append(
+                {
+                    "iteration": iteration + 1,
+                    "answer": answer,
+                    "biases": detected_biases,
+                }
+            )
+            # Step 3: Check for major bias
+            major_found = [b for b in detected_biases if b in major_biases]
+            if not major_found:
+                break
+            last_biases = major_found
+            current_answer = answer
+            iteration += 1
+
+        # Compose output
+        output_parts = []
+        for step in history:
+            output_parts.append(
+                f"**Iteration {step['iteration']} Reasoning:**\n{step['answer']}"
+            )
+            if step["biases"]:
+                bias_names = [b.replace("_", " ").title() for b in step["biases"]]
+                output_parts.append(f"\nBiases detected: {', '.join(bias_names)}")
+            else:
+                output_parts.append("\nNo major bias detected.")
+
+        if last_biases and iteration == max_iterations:
+            output_parts.append(
+                "\nMaximum iterations reached. Some bias may remain, and further review is recommended."
+            )
+        else:
+            output_parts.append(
+                "\nFinal answer is considered balanced and bias-mitigated."
+            )
+
+        return "\n\n".join(output_parts)
+
+    def _generate_reasoning_step(
+        self,
+        agent_or_team: Any,
+        prompt: str,
+        reasoning_type: Union[ReasoningType, str],
+        evidence: Optional[List[str]],
+        context: Optional[str],
+    ) -> str:
+        """
+        Generate a reasoning step from a prompt, using the LLM or self.reason as appropriate.
+        """
+        # If using an LLM, pass the prompt directly.
+        # If using self.reason, you may need to adapt the method to accept a custom prompt.
+        return self.reason(
+            agent_or_team,
+            prompt,
+            reasoning_type,
+            evidence,
+            context,
+        )
 
     def reason(
         self,
@@ -458,6 +548,13 @@ class EnhancedReasoningTools(Toolkit):
             )
 
             detected_biases = self._identify_biases(reasoning_content)
+
+            # Store detected biases in agent_or_team.session_state for context-awareness
+            if (
+                hasattr(agent_or_team, "session_state")
+                and agent_or_team.session_state is not None
+            ):
+                agent_or_team.session_state["last_detected_biases"] = detected_biases
 
             if not detected_biases:
                 return "Looking at this reasoning, I don't notice any obvious cognitive biases. The thinking appears balanced and well-considered."
