@@ -9,7 +9,7 @@ A production-ready financial data toolkit that provides:
 - Consistent data formatting
 - Performance optimizations
 
-Author: malvavisc0
+Author: me
 License: MIT
 Version: 2.0.0
 """
@@ -1040,3 +1040,82 @@ class EnhancedYFinanceTools(Toolkit):
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+
+    @staticmethod
+    def get_llm_usage_instructions() -> str:
+        """
+        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedYFinanceTools.
+        Each instruction includes the method name, description, parameters, types, and example values.
+        """
+        instructions = """
+*** Yahoo Finance Data Tools Instructions ***
+
+By leveraging the following set of tools, you can instantly access up-to-date stock prices, company fundamentals, financial statements, news, analyst insights, and historical market data for any publicly traded company. These tools empower you to deliver accurate, real-time financial intelligence and comprehensive market analysis with ease. Here are the detailed instructions for using the set of tools:
+
+- Use get_current_price to retrieve the current price of a stock.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "AAPL".
+
+- Use get_company_information to retrieve comprehensive company information.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "GOOGL".
+
+- Use get_news_for_ticker to retrieve the latest news articles for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "MSFT".
+      - max_articles (int, optional): Maximum number of articles to return (default: 10, range: 1-50).
+
+- Use get_earnings_history to retrieve the earnings history for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "TSLA".
+
+- Use get_income_statement to retrieve the income statement for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "AMZN".
+
+- Use get_quarterly_financials to retrieve quarterly financials for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "NFLX".
+
+- Use get_balance_sheet to retrieve the balance sheet for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "META".
+
+- Use get_quarterly_balance_sheet to retrieve the quarterly balance sheet for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "NVDA".
+
+- Use get_cashflow to retrieve the annual cash flow statement for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "BABA".
+
+- Use get_quarterly_cashflow to retrieve the quarterly cash flow statement for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "ORCL".
+
+- Use get_major_holders to retrieve the list of major shareholders for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "INTC".
+
+- Use get_institutional_holders to retrieve the list of institutional shareholders for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "CSCO".
+
+- Use get_recommendations to retrieve stock recommendations for a ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "ADBE".
+
+- Use get_sustainability_scores to retrieve sustainability (ESG) scores for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "CRM".
+
+- Use get_price_history to retrieve historical price data for a stock ticker.
+   Parameters:
+      - ticker (str): The stock ticker symbol, e.g., "AAPL".
+      - period (str): The time period, e.g., "1y", "2y", "1mo", "max".
+      - interval (str): The data interval, e.g., "1d", "1wk", "1mo".
+   Notes:
+      - Valid periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max.
+      - Valid intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo.
+"""
+        return instructions
