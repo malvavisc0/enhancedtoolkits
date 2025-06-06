@@ -559,6 +559,54 @@ class EnhancedSearxngTools(Toolkit):
 
         return text
 
+    @staticmethod
+    def get_llm_usage_instructions() -> str:
+        """
+        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedSearxngTools.
+        Each instruction includes the method name, description, parameters, types, and example values.
+        """
+        instructions = """
+*** SearxNG Search Tools Instructions ***
+
+By leveraging the following set of tools, you can perform web, news, image, and video searches, as well as fetch content from URLs (if enabled). These tools empower you to deliver accurate, real-time search results and content extraction with ease. Here are the detailed instructions for using the set of tools:
+
+- Use search_web to perform a general web search.
+   Parameters:
+      - query (str): The search query, e.g., "climate change".
+      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+
+- Use search_news to search for news articles.
+   Parameters:
+      - query (str): The search query, e.g., "AI regulation".
+      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+
+- Use search_images to search for images.
+   Parameters:
+      - query (str): The search query, e.g., "Eiffel Tower".
+      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+
+- Use search_videos to search for videos.
+   Parameters:
+      - query (str): The search query, e.g., "machine learning tutorial".
+      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+
+- Use search_category to search in a specific category.
+   Parameters:
+      - query (str): The search query, e.g., "quantum computing".
+      - category (str): One of: general, news, images, videos, music, files, science, social.
+      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+
+- Use get_page_content to fetch and parse content from a webpage (only if content fetching is enabled).
+   Parameters:
+      - url (str): The URL to fetch, e.g., "https://example.com/article".
+
+Notes:
+- The get_page_content tool is only available if content fetching is enabled during initialization.
+- The max_results parameter is always optional and defaults to the toolkit's configuration.
+- The category parameter for search_category must be one of: general, news, images, videos, music, files, science, social.
+"""
+        return instructions
+
     def __del__(self):
         """
         Cleanup HTTP client on destruction.
