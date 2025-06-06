@@ -74,21 +74,37 @@ class EnhancedThinkingTools(Toolkit):
         if instructions is None:
             self.instructions = dedent(
                 """\
-            ## Using the Enhanced Think Tool
-            Before taking any action or responding to the user after receiving tool results, use the think tool as an advanced cognitive scratchpad to:
-            - Apply structured thinking approaches (analysis, synthesis, evaluation, etc.)
-            - Consider the specific context and available evidence
-            - Be aware of potential cognitive biases in your thinking
-            - Build logical chains of reasoning toward problem resolution
-            - Reflect on the quality and depth of your thinking process
+                ## Using the Enhanced Thinking Tool
 
-            ## Enhanced Thinking Guidelines
-            - Choose appropriate thinking types for different cognitive tasks
-            - Connect thoughts to specific problems, context, and evidence
-            - Express confidence levels naturally (not as numbers)
-            - Be aware of cognitive biases and think around them
-            - Use the think tool generously to develop deep, structured reasoning
-            """
+                The Enhanced Thinking Tool is your advanced cognitive scratchpad for developing, organizing, and improving your thought process before taking action or responding to the user. It produces natural language output with reasoning depth, cognitive insights, and actionable suggestions.
+
+                ### What this tool enables you to do
+
+                - Apply structured thinking approaches: analysis, synthesis, evaluation, reflection, planning, problem solving, creative, and critical thinking
+                - Integrate specific context and available evidence into your thoughts
+                - Detect and report potential cognitive biases, helping you actively mitigate them
+                - Build logical chains of reasoning toward problem resolution
+                - Reflect on the quality, clarity, and depth of your thinking process
+                - Receive feedback and suggestions to improve your thought quality with each step
+
+                ### Best Practices
+
+                - Select the most appropriate thinking type for your current cognitive task
+                - Explicitly connect your thoughts to the specific problem, context, and supporting evidence
+                - Express your confidence level in natural language (e.g., "quite confident", "uncertain")—avoid numeric confidence scores
+                - Remain vigilant for cognitive biases; the tool will also highlight any it detects in your reasoning
+                - Use the tool iteratively to develop, refine, and deepen your insights
+                - When using another tool (such as a search, data, or external API tool), incorporate its results into your thinking and final answer if they add value or relevant context
+                - Reflect on your thinking process and seek opportunities for improvement
+
+                ### Example Usage
+
+                - Break down a complex problem before proposing a solution
+                - Synthesize information from multiple sources and evidence
+                - Evaluate the strengths and weaknesses of different approaches
+                - Plan next steps or strategies based on your analysis
+                - Reflect on your reasoning to identify gaps or biases
+                """
             )
         else:
             self.instructions = instructions
@@ -104,6 +120,7 @@ class EnhancedThinkingTools(Toolkit):
         # Register tools
         tools = []
         if think:
+            tools.append(self.iterative_think)
             tools.append(self.think)
 
         super().__init__(
@@ -113,6 +130,125 @@ class EnhancedThinkingTools(Toolkit):
             tools=tools,
             **kwargs,
         )
+
+    def iterative_think(
+        self,
+        agent: Any,
+        thought: str,
+        thinking_type: ThinkingType = ThinkingType.ANALYSIS,
+        context: Optional[str] = None,
+        evidence: Optional[List[str]] = None,
+        confidence: Optional[str] = None,
+        max_iterations: int = 3,
+    ) -> str:
+        """
+        Iteratively applies thinking, bias detection, and quality assessment, refining the thought until no major bias or low quality is detected or the iteration limit is reached.
+
+        Args:
+            agent: The agent or team doing the thinking
+            thought: The initial thought content to process
+            thinking_type: Type of thinking approach being used
+            context: Additional context for the thought
+            evidence: Supporting evidence or data points
+            confidence: Natural language confidence expression
+            max_iterations: Maximum number of iterations
+
+        Returns:
+            Natural language summary of the iterative thinking process and final thought
+        """
+        major_biases = {
+            "confirmation_bias",
+            "anchoring_bias",
+            "overconfidence_bias",
+            "availability_heuristic",
+            "hindsight_bias",
+            "framing_effect",
+        }
+        min_quality = 0.6  # Minimum acceptable overall quality score
+        history = []
+        current_thought = thought
+        current_thinking_type = thinking_type
+        current_context = context
+        current_evidence = evidence
+        current_confidence = confidence
+        iteration = 0
+        last_biases = []
+        last_quality = 1.0
+
+        while iteration < max_iterations:
+            # Step 1: Generate enhanced thought
+            output = self.think(
+                agent,
+                current_thought,
+                current_thinking_type,
+                current_context,
+                current_evidence,
+                current_confidence,
+            )
+            # Retrieve last enhanced thought from session state
+            enhanced_thought = agent.session_state["enhanced_thoughts"][-1]
+            detected_biases = enhanced_thought.get("detected_biases", [])
+            quality_assessment = enhanced_thought.get("quality_assessment", {})
+            overall_quality = quality_assessment.get("overall_score", 1.0)
+            history.append(
+                {
+                    "iteration": iteration + 1,
+                    "output": output,
+                    "biases": detected_biases,
+                    "quality": overall_quality,
+                }
+            )
+            # Step 2: Check for major bias or low quality
+            major_found = [b for b in detected_biases if b in major_biases]
+            if not major_found and overall_quality >= min_quality:
+                break
+            # Step 3: Reframe thought to address bias/quality
+            bias_names = [b.replace("_", " ").title() for b in major_found]
+            bias_text = ", ".join(bias_names) if bias_names else ""
+            quality_text = ""
+            if overall_quality < min_quality:
+                quality_text = (
+                    f"Previous thought had low quality score ({overall_quality:.2f})."
+                )
+            prompt = (
+                f"Previous thought:\n{current_thought}\n\n"
+                f"{'Bias detected: ' + bias_text + '.' if bias_text else ''} "
+                f"{quality_text} "
+                f"Revise your thought by explicitly addressing these issues. "
+                f"Add counterarguments, alternative perspectives, clarify reasoning, or express more uncertainty as needed. "
+                f"Narrate what you changed and why."
+            )
+            current_thought = prompt
+            last_biases = major_found
+            last_quality = overall_quality
+            iteration += 1
+
+        # Compose output
+        output_parts = []
+        for step in history:
+            output_parts.append(
+                f"**Iteration {step['iteration']} Thinking:**\n{step['output']}"
+            )
+            if step["biases"]:
+                bias_names = [b.replace("_", " ").title() for b in step["biases"]]
+                output_parts.append(f"\nBiases detected: {', '.join(bias_names)}")
+            else:
+                output_parts.append("\nNo major bias detected.")
+            if step["quality"] < min_quality:
+                output_parts.append(f"\nQuality below threshold: {step['quality']:.2f}")
+            else:
+                output_parts.append(f"\nQuality: {step['quality']:.2f}")
+
+        if (last_biases or last_quality < min_quality) and iteration == max_iterations:
+            output_parts.append(
+                "\nMaximum iterations reached. Some bias or quality issues may remain, and further review is recommended."
+            )
+        else:
+            output_parts.append(
+                "\nFinal thought is considered balanced and high-quality."
+            )
+
+        return "\n\n".join(output_parts)
 
     def _initialize_bias_patterns(self) -> Dict[str, Dict[str, List[str]]]:
         """Initialize cognitive bias detection patterns."""
