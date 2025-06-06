@@ -117,26 +117,58 @@ class EnhancedReasoningTools(Toolkit):
         if instructions is None:
             self.instructions = dedent(
                 """\
-                ## Enhanced Reasoning Tools
-                
-                Use these tools for sophisticated problem analysis and decision-making:
-                
-                1. **reason()** - Apply structured reasoning to problems with multi-modal analysis
-                2. **multi_modal_reason()** - Combine multiple reasoning approaches for complex problems  
-                3. **analyze_reasoning()** - Evaluate reasoning results and determine next actions
-                4. **detect_biases()** - Identify cognitive biases in reasoning content
-                
-                ## Reasoning Workflow
-                - Use reason() for single-shot analysis with specific reasoning types
-                - Use multi_modal_reason() for comprehensive analysis with multiple approaches
-                - Use analyze_reasoning() to evaluate results and decide on next steps
-                - Chain reasoning calls for complex, multi-step problem solving
-                
-                ## Best Practices
-                - Choose appropriate reasoning types for different problem characteristics
-                - Consider evidence quality and context in your analysis
-                - Be aware of cognitive biases and address them explicitly
-                - Use iterative reasoning for complex problems requiring multiple steps
+                ## Enhanced Universal Reasoning Tools
+
+                Welcome to the Enhanced Universal Reasoning Toolkit! This suite empowers you to perform advanced, multi-modal reasoning, detect cognitive biases, and manage reasoning sessions for complex problem solving.
+
+                ### Available Tools
+
+                1. **reason(agent_or_team, problem, reasoning_type="deductive", evidence=None, context=None)**
+                   - Apply structured reasoning to a problem using a specified reasoning type.
+                   - Parameters:
+                     - `agent_or_team`: The agent or team requesting reasoning (object or identifier).
+                     - `problem` (str): The problem or question to analyze.
+                     - `reasoning_type` (str, optional): One of "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical". Default: "deductive".
+                     - `evidence` (list of str, optional): Supporting evidence or data points.
+                     - `context` (str, optional): Additional context for the problem.
+
+                2. **multi_modal_reason(agent_or_team, problem, reasoning_types, evidence=None)**
+                   - Combine multiple reasoning approaches for comprehensive analysis.
+                   - Parameters:
+                     - `reasoning_types` (list of str): E.g., ["deductive", "abductive"].
+
+                3. **analyze_reasoning(agent_or_team, result, analysis, next_action="continue", confidence="moderately confident")**
+                   - Evaluate reasoning results and determine next actions.
+                   - Parameters:
+                     - `next_action` (str, optional): "continue", "validate", or "final_answer".
+
+                4. **detect_biases(agent_or_team, reasoning_content)**
+                   - Identify cognitive biases in reasoning content (if bias detection is enabled).
+
+                5. **get_reasoning_history(agent_or_team)**
+                   - Retrieve the reasoning history for the current session.
+
+                6. **clear_reasoning_session(agent_or_team)**
+                   - Clear the reasoning session state.
+
+                ### Reasoning Workflow
+
+                - Use **reason()** for single-shot analysis with a specific reasoning type.
+                - Use **multi_modal_reason()** for comprehensive analysis using multiple approaches.
+                - Use **analyze_reasoning()** to evaluate results and decide on next steps.
+                - Use **detect_biases()** to check for cognitive biases in your reasoning.
+                - Use **get_reasoning_history()** to review your reasoning steps and progress.
+                - Use **clear_reasoning_session()** to reset the session for a new problem.
+
+                ### Best Practices
+
+                - Select reasoning types that best fit the problem's nature (e.g., use "deductive" for logic, "abductive" for best explanations).
+                - Provide high-quality, relevant evidence to strengthen your analysis.
+                - Be explicit about uncertainties and consider alternative explanations.
+                - Actively look for and address cognitive biases.
+                - Use iterative and multi-step reasoning for complex or ambiguous problems.
+                - Document your reasoning steps for transparency and review.
+                - **If you use another tool (such as a search, data, or external API tool, etc.), incorporate the results into your reasoning and final answer if they add value or relevant context.**
                 """
             )
         else:
@@ -874,3 +906,57 @@ class EnhancedReasoningTools(Toolkit):
         result += "\n\nTo improve reasoning quality, consider actively seeking contradictory evidence, questioning initial assumptions, and being more explicit about uncertainties."
 
         return result
+
+    @staticmethod
+    def get_llm_usage_instructions() -> str:
+        """
+        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedReasoningTools.
+        Each instruction includes the method name, description, parameters, types, and example values.
+        """
+        instructions = """
+*** Universal Reasoning Tools Instructions ***
+
+By leveraging the following set of tools, you can perform advanced reasoning, bias detection, and session management for complex problem solving. These tools empower you to deliver structured, multi-modal, and human-like reasoning with step tracking and bias awareness. Here are the detailed instructions for using the set of tools:
+
+- Use reason to apply structured reasoning to a problem.
+   Parameters:
+      - agent_or_team: The agent or team requesting reasoning (object or identifier).
+      - problem (str): The problem or question to analyze, e.g., "What are the causes of climate change?".
+      - reasoning_type (str, optional): Type of reasoning to apply, one of: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical" (default: "deductive").
+      - evidence (list of str, optional): Supporting evidence or data points.
+      - context (str, optional): Additional context for the problem.
+
+- Use multi_modal_reason to apply multiple reasoning approaches and integrate insights.
+   Parameters:
+      - agent_or_team: The agent or team requesting reasoning.
+      - problem (str): The problem to analyze.
+      - reasoning_types (list of str): List of reasoning types to apply, e.g., ["deductive", "abductive"].
+      - evidence (list of str, optional): Supporting evidence or data points.
+
+- Use analyze_reasoning to analyze reasoning results and determine next actions.
+   Parameters:
+      - agent_or_team: The agent or team requesting analysis.
+      - result (str): The outcome of the previous reasoning step.
+      - analysis (str): Your analysis of the results.
+      - next_action (str, optional): What to do next ("continue", "validate", or "final_answer") (default: "continue").
+      - confidence (str, optional): Confidence level in this analysis (default: "moderately confident").
+
+- Use detect_biases to detect cognitive biases in reasoning content (only if bias detection is enabled).
+   Parameters:
+      - agent_or_team: The agent or team requesting bias detection.
+      - reasoning_content (str): The reasoning text to analyze for biases.
+
+- Use get_reasoning_history to get the reasoning history for the current session.
+   Parameters:
+      - agent_or_team: The agent or team to get history for.
+
+- Use clear_reasoning_session to clear the reasoning session state.
+   Parameters:
+      - agent_or_team: The agent or team to clear session for.
+
+Notes:
+- The reasoning_type parameter for reason and multi_modal_reason must be one of: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical".
+- The detect_biases tool is only available if bias detection is enabled during initialization.
+- All tools expect agent_or_team to be an object or identifier representing the current agent or team context.
+"""
+        return instructions
