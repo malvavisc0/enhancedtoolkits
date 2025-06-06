@@ -695,3 +695,56 @@ class EnhancedYouTubeTools(Toolkit):
         except Exception as e:
             log_error(f"Error formatting JSON response: {e}")
             return json.dumps({"error": f"Failed to format response: {e}"})
+
+    @staticmethod
+    def get_llm_usage_instructions() -> str:
+        """
+        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedYouTubeTools.
+        Each instruction includes the method name, description, parameters, types, and example values.
+        """
+        instructions = """
+*** YouTube Tools Instructions ***
+
+By leveraging the following set of tools, you can retrieve comprehensive metadata, transcripts, and video information from YouTube. These tools empower you to deliver accurate, real-time video intelligence and content extraction with ease. Here are the detailed instructions for using the set of tools:
+
+- Use get_video_metadata to retrieve metadata for a YouTube video.
+   Parameters:
+      - video_url (str): The URL of the YouTube video, e.g., "https://www.youtube.com/watch?v=dQw4w9WgXcQ".
+
+- Use get_video_transcript to retrieve the transcript for a YouTube video (requires youtube-transcript-api).
+   Parameters:
+      - video_url (str): The URL of the YouTube video, e.g., "https://youtu.be/dQw4w9WgXcQ".
+      - language (str, optional): Preferred language code, e.g., "en", "es", "fr" (default: "en").
+      - auto_generated (bool, optional): Whether to include auto-generated transcripts (default: True).
+
+- Use get_available_transcripts to list available transcript languages for a video (requires youtube-transcript-api).
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+
+- Use get_transcript_languages to get a simplified list of available transcript language codes (requires youtube-transcript-api).
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+
+- Use extract_video_id to extract the video ID from a YouTube URL.
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+
+- Use get_video_info to get comprehensive video information, including metadata and optionally transcript.
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+      - include_transcript (bool, optional): Whether to include transcript data (default: False).
+
+- Use retrieve_youtube_video_metadata for backward compatibility (same as get_video_metadata).
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+
+- Use retrieve_youtube_video_transcript for backward compatibility (same as get_video_transcript).
+   Parameters:
+      - video_url (str): The URL of the YouTube video.
+
+Notes:
+- Transcript-related tools (get_video_transcript, get_available_transcripts, get_transcript_languages) require the youtube-transcript-api package to be installed.
+- The language parameter for transcripts should be a valid language code, e.g., "en" for English, "es" for Spanish.
+- The auto_generated parameter controls whether to include auto-generated transcripts.
+"""
+        return instructions
