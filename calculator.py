@@ -1,11 +1,11 @@
 """
-Financial Calculator Tools v1.0
+Enhanced Calculator Tools v1.0
 
 A comprehensive financial calculator toolkit providing essential financial calculations
 including time value of money, investment analysis, loan calculations, bond pricing,
 risk metrics, depreciation, and utility functions.
 
-Author: Financial Calculator Tool
+Author: malvavisc0
 License: MIT
 Version: 1.0.0
 """
@@ -38,9 +38,9 @@ class FinancialComputationError(FinancialCalculationError):
     pass
 
 
-class FinancialCalculatorTools(Toolkit):
+class EnhancedCalculatorTools(Toolkit):
     """
-    Financial Calculator Tools v1.0
+    Enhanced Calculator Tools v1.0
 
     A comprehensive toolkit for financial calculations including:
     - Time value of money calculations
@@ -53,7 +53,7 @@ class FinancialCalculatorTools(Toolkit):
     """
 
     def __init__(self, **kwargs):
-        """Initialize Financial Calculator Tools."""
+        """Initialize Enhanced Calculator Tools."""
         super().__init__(name="financial_calculator_tools", **kwargs)
 
         # Register basic arithmetic operations
@@ -89,7 +89,7 @@ class FinancialCalculatorTools(Toolkit):
         self.register(self.calculate_break_even_point)
 
         log_info(
-            "Financial Calculator Tools initialized with basic arithmetic and 20 financial methods"
+            "Enhanced Calculator Tools initialized with basic arithmetic and 20 financial methods"
         )
 
     # Basic Arithmetic Operations
