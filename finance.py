@@ -9,7 +9,7 @@ A production-ready financial data toolkit that provides:
 - Consistent data formatting
 - Performance optimizations
 
-Author: me
+Author: malvavisc0
 License: MIT
 Version: 2.0.0
 """
