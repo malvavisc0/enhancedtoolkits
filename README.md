@@ -6,7 +6,7 @@
 
 **Production-ready AI agent tools for developers building intelligent chatbots and AI systems.**
 
-This collection provides five comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
+This collection provides six comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
 
 ## 🚀 Features
 
@@ -14,6 +14,7 @@ This collection provides five comprehensive toolkits designed for AI agents that
 - **🔍 Intelligent Search**: Web search with content extraction and parsing
 - **💭 Structured Thinking**: Cognitive frameworks with quality assessment
 - **📈 Financial Data**: Comprehensive stock market and financial information
+- **🧮 Financial Calculator**: Advanced financial calculations and basic arithmetic operations
 - **🎥 YouTube Integration**: Video metadata and transcript extraction
 - **⚡ Production Ready**: Robust error handling, caching, and rate limiting
 - **🔧 Highly Configurable**: Extensive customization options for each tool
@@ -27,18 +28,15 @@ from searxng import EnhancedSearxngTools
 from thinking import EnhancedThinkingTools
 from yfinance import EnhancedYFinanceTools
 from youtube import EnhancedYouTubeTools
+from calculator import EnhancedCalculatorTools
 
 # Initialize tools
 reasoning = EnhancedReasoningTools()
-search = EnhancedSearxngTools(host="https://your-searxng-instance.com")
+search = EnhancedSearxngTools(host="http://searxng:8080")
 thinking = EnhancedThinkingTools()
 finance = EnhancedYFinanceTools()
 youtube = EnhancedYouTubeTools()
-
-# Use with your AI agent
-agent.add_toolkit(reasoning)
-agent.add_toolkit(search)
-# ... add other toolkits as needed
+calculator = EnhancedCalculatorTools()
 ```
 
 ## 🧠 Enhanced Reasoning Tools
@@ -50,34 +48,6 @@ agent.add_toolkit(search)
 - **Bias Detection**: Automatic identification of cognitive biases
 - **Session Tracking**: Reasoning step history and workflow management
 - **Quality Assessment**: Confidence levels and evidence evaluation
-
-### Usage Example
-
-```python
-from reasoning import EnhancedReasoningTools, ReasoningType
-
-reasoning_tools = EnhancedReasoningTools(
-    reasoning_depth=5,
-    enable_bias_detection=True
-)
-
-# Single reasoning analysis
-result = reasoning_tools.reason(
-    agent,
-    problem="Should we invest in renewable energy stocks?",
-    reasoning_type=ReasoningType.PROBABILISTIC,
-    evidence=["Market trends show 15% growth", "Government incentives increasing"],
-    context="Investment decision for Q2 2024"
-)
-
-# Multi-modal reasoning
-result = reasoning_tools.multi_modal_reason(
-    agent,
-    problem="Evaluate market entry strategy",
-    reasoning_types=[ReasoningType.DEDUCTIVE, ReasoningType.CAUSAL, ReasoningType.PROBABILISTIC],
-    evidence=["Competitor analysis", "Market size data", "Customer surveys"]
-)
-```
 
 ### Available Methods
 - `reason()` - Apply specific reasoning type to a problem
@@ -97,28 +67,6 @@ result = reasoning_tools.multi_modal_reason(
 - **Rate Limiting**: Built-in request throttling and retry logic
 - **Input Validation**: URL validation and query sanitization
 
-### Usage Example
-
-```python
-from searxng import EnhancedSearxngTools
-
-search_tools = EnhancedSearxngTools(
-    host="https://searx.example.com",
-    max_results=10,
-    enable_content_fetching=True,
-    byparr_enabled=True
-)
-
-# Web search
-results = search_tools.search_web("AI agent frameworks 2024", max_results=5)
-
-# News search
-news = search_tools.search_news("artificial intelligence breakthrough")
-
-# Get full page content
-content = search_tools.get_page_content("https://example.com/article")
-```
-
 ### Available Methods
 - `search_web()` - General web search
 - `search_news()` - News article search
@@ -137,28 +85,6 @@ content = search_tools.get_page_content("https://example.com/article")
 - **Quality Assessment**: Depth, clarity, evidence integration analysis
 - **Thinking Evolution**: Track thinking patterns and progression
 
-### Usage Example
-
-```python
-from thinking import EnhancedThinkingTools, ThinkingType
-
-thinking_tools = EnhancedThinkingTools(
-    enable_bias_detection=True,
-    enable_quality_assessment=True,
-    thinking_depth=3
-)
-
-# Structured thinking
-result = thinking_tools.think(
-    agent,
-    thought="We need to analyze the competitive landscape before launching",
-    thinking_type=ThinkingType.ANALYSIS,
-    context="Product launch planning",
-    evidence=["Market research", "Competitor pricing", "User feedback"],
-    confidence="quite confident"
-)
-```
-
 ### Available Methods
 - `think()` - Process thoughts with structured cognitive frameworks
 
@@ -172,30 +98,6 @@ result = thinking_tools.think(
 - **Caching System**: Configurable response caching with TTL
 - **Rate Limiting**: Built-in request throttling
 - **Error Recovery**: Comprehensive error handling and retry logic
-
-### Usage Example
-
-```python
-from yfinance import EnhancedYFinanceTools
-
-finance_tools = EnhancedYFinanceTools(
-    enable_caching=True,
-    cache_ttl=300,  # 5 minutes
-    rate_limit_delay=0.1
-)
-
-# Get current stock price
-price = finance_tools.get_current_price("AAPL")
-
-# Get company information
-info = finance_tools.get_company_information("TSLA")
-
-# Get news
-news = finance_tools.get_news_for_ticker("MSFT", max_articles=5)
-
-# Get price history
-history = finance_tools.get_price_history("GOOGL", period="1y", interval="1d")
-```
 
 ### Available Methods
 - `get_current_price()` - Current stock price with change data
@@ -212,6 +114,56 @@ history = finance_tools.get_price_history("GOOGL", period="1y", interval="1d")
 - `get_sustainability_scores()` - ESG scores
 - `get_price_history()` - Historical price data
 
+## 🧮 Enhanced Calculator Tools
+
+**Comprehensive financial calculations and basic arithmetic operations with advanced algorithms.**
+
+### Key Features
+- **Basic Arithmetic**: Addition, subtraction, multiplication, division, exponentiation, square root, factorial, prime checking
+- **Time Value of Money**: Present value, future value, annuities, perpetuities
+- **Investment Analysis**: NPV, IRR, CAGR, ROI, Sharpe ratio, volatility
+- **Loan Calculations**: Payment calculations, complete amortization schedules
+- **Bond Analysis**: Bond pricing and yield to maturity calculations
+- **Risk Metrics**: Sharpe ratio, volatility (standard deviation)
+- **Depreciation**: Straight-line and declining balance methods
+- **Business Analysis**: Break-even point calculations
+- **Utilities**: Currency conversion, inflation adjustments
+- **Advanced Algorithms**: Newton-Raphson for IRR, iterative approximation for YTM
+
+### Available Methods
+
+#### Basic Arithmetic Operations
+- `add()` - Add two numbers
+- `subtract()` - Subtract two numbers
+- `multiply()` - Multiply two numbers
+- `divide()` - Divide two numbers
+- `exponentiate()` - Raise to power
+- `square_root()` - Calculate square root
+- `factorial()` - Calculate factorial
+- `is_prime()` - Check if number is prime
+
+#### Financial Calculations
+- `calculate_present_value()` - Present value of future sum
+- `calculate_future_value()` - Future value of present sum
+- `calculate_net_present_value()` - NPV of cash flow series
+- `calculate_internal_rate_of_return()` - IRR using Newton-Raphson method
+- `calculate_loan_payment()` - Periodic loan payment
+- `generate_amortization_schedule()` - Complete loan payment schedule
+- `calculate_compound_annual_growth_rate()` - CAGR calculation
+- `calculate_return_on_investment()` - ROI percentage
+- `calculate_bond_price()` - Bond pricing based on cash flows
+- `calculate_yield_to_maturity()` - YTM using iterative approximation
+- `calculate_annuity_present_value()` - PV of ordinary annuity
+- `calculate_annuity_future_value()` - FV of ordinary annuity
+- `calculate_perpetuity_value()` - Present value of perpetuity
+- `calculate_straight_line_depreciation()` - Linear depreciation
+- `calculate_declining_balance_depreciation()` - Accelerated depreciation
+- `calculate_sharpe_ratio()` - Risk-adjusted returns
+- `calculate_volatility()` - Standard deviation of returns
+- `calculate_break_even_point()` - Business break-even analysis
+- `convert_currency()` - Simple currency conversion
+- `adjust_for_inflation()` - Inflation adjustment calculations
+
 ## 🎥 Enhanced YouTube Tools
 
 **Video metadata and transcript extraction with multi-language support.**
@@ -222,34 +174,6 @@ history = finance_tools.get_price_history("GOOGL", period="1y", interval="1d")
 - **URL Flexibility**: Support for various YouTube URL formats
 - **Transcript Analysis**: Language detection and availability checking
 - **Rate Limiting**: Built-in request throttling and retry logic
-
-### Usage Example
-
-```python
-from youtube import EnhancedYouTubeTools
-
-youtube_tools = EnhancedYouTubeTools(
-    rate_limit_delay=0.5,
-    timeout=30,
-    max_retries=3
-)
-
-# Get video metadata
-metadata = youtube_tools.get_video_metadata("https://www.youtube.com/watch?v=VIDEO_ID")
-
-# Get transcript
-transcript = youtube_tools.get_video_transcript(
-    "https://www.youtube.com/watch?v=VIDEO_ID",
-    language="en",
-    auto_generated=True
-)
-
-# Check available transcript languages
-languages = youtube_tools.get_transcript_languages("https://www.youtube.com/watch?v=VIDEO_ID")
-
-# Get comprehensive video info
-info = youtube_tools.get_video_info("https://www.youtube.com/watch?v=VIDEO_ID", include_transcript=True)
-```
 
 ### Available Methods
 - `get_video_metadata()` - Comprehensive video metadata
@@ -312,6 +236,9 @@ youtube = EnhancedYouTubeTools(
     timeout=30,
     max_retries=3
 )
+
+# Calculator Tools
+calculator = EnhancedCalculatorTools()
 ```
 
 ## 🔧 Requirements
