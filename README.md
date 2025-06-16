@@ -6,13 +6,14 @@
 
 **Production-ready AI agent tools for developers building intelligent chatbots and AI systems.**
 
-This collection provides six comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
+This collection provides seven comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
 
 ## 🚀 Features
 
 - **🧠 Advanced Reasoning**: Multi-modal reasoning with cognitive bias detection
 - **🔍 Intelligent Search**: Web search with content extraction and parsing
 - **💭 Structured Thinking**: Cognitive frameworks with quality assessment
+- **📁 Secure File Operations**: Enterprise-grade file handling with comprehensive security controls
 - **📈 Financial Data**: Comprehensive stock market and financial information
 - **🧮 Financial Calculator**: Advanced financial calculations and basic arithmetic operations
 - **🎥 YouTube Integration**: Video metadata and transcript extraction
@@ -26,17 +27,19 @@ This collection provides six comprehensive toolkits designed for AI agents that 
 from reasoning import EnhancedReasoningTools
 from searxng import EnhancedSearxngTools
 from thinking import EnhancedThinkingTools
+from files import EnhancedFilesTools
 from yfinance import EnhancedYFinanceTools
 from youtube import EnhancedYouTubeTools
 from calculator import EnhancedCalculatorTools
 
 # Initialize tools
-reasoning = EnhancedReasoningTools()
-search = EnhancedSearxngTools(host="http://searxng:8080")
-thinking = EnhancedThinkingTools()
-finance = EnhancedYFinanceTools()
-youtube = EnhancedYouTubeTools()
-calculator = EnhancedCalculatorTools()
+reasoning_tool = EnhancedReasoningTools()
+search_tool = EnhancedSearxngTools(host="http://searxng:8080")
+thinking_tool = EnhancedThinkingTools()
+files_tool = EnhancedFilesTools()
+finance_tool = EnhancedYFinanceTools()
+youtube_tool = EnhancedYouTubeTools()
+calculator_tool = EnhancedCalculatorTools()
 ```
 
 ## 🧠 Enhanced Reasoning Tools
@@ -84,6 +87,35 @@ calculator = EnhancedCalculatorTools()
 - **Cognitive Bias Detection**: Identify thinking biases and suggest improvements
 - **Quality Assessment**: Depth, clarity, evidence integration analysis
 - **Thinking Evolution**: Track thinking patterns and progression
+## 📁 Secure Files Toolkit
+
+**Enterprise-grade file operations with comprehensive security controls and atomic operations.**
+
+### Key Features
+- **Path Traversal Protection**: Robust validation against directory traversal attacks
+- **File Type Validation**: Whitelist-based file extension filtering
+- **Resource Limits**: Configurable file size, chunk size, and line length limits
+- **Atomic Operations**: All write operations use temporary files with atomic replacement
+- **File Locking**: Prevents race conditions with proper file locking mechanisms
+- **Memory Optimization**: Stream-based reading for large files, efficient line counting
+- **Security Controls**: Symlink blocking, input sanitization, and blocked pattern detection
+- **Comprehensive Logging**: Secure audit trail without information disclosure
+
+### Security Configuration
+- **Max File Size**: 100MB (configurable)
+- **Max Chunk Size**: 10,000 lines
+- **Max Line Length**: 10,000 characters
+- **Allowed Extensions**: `.txt`, `.py`, `.js`, `.json`, `.md`, `.csv`, `.log`, `.yaml`, `.yml`, `.xml`
+- **Blocked Patterns**: `..`, `~`, `$`, `;`, `|`, `&`, `<`, `>`
+
+### Available Methods
+- `read_file_chunk()` - Read file chunks with security validation
+- `edit_file_chunk()` - Replace lines with atomic operations
+- `insert_file_chunk()` - Insert lines with security validation
+- `delete_file_chunk()` - Delete lines with atomic operations
+- `save_file()` - Save files with comprehensive security checks
+- `get_file_metadata()` - Get secure file metadata
+- `list_files()` - List files with safety filtering
 
 ### Available Methods
 - `think()` - Process thoughts with structured cognitive frameworks
@@ -235,6 +267,11 @@ youtube = EnhancedYouTubeTools(
     rate_limit_delay=0.5,
     timeout=30,
     max_retries=3
+)
+
+# Files Tools
+files = EnhancedFilesTools(
+    base_dir="/secure/workspace",     # Base directory for operations
 )
 
 # Calculator Tools
