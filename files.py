@@ -1,5 +1,5 @@
 """
-Enhanced Secure Files Toolkit v2.0
+Enhanced Files Tools v2.0
 
 Provides robust, secure file operations with comprehensive security controls,
 resource limits, and proper error handling for LLM interactions.
@@ -34,7 +34,7 @@ class FileOperationError(Exception):
     pass
 
 
-class SecureFilesToolkit(Toolkit):
+class EnhancedFilesTools(Toolkit):
     """
     Secure toolkit for file operations with comprehensive security controls.
     """
@@ -411,4 +411,3 @@ class SecureFilesToolkit(Toolkit):
     def _timestamp(self) -> str:
         """Generate ISO timestamp."""
         return datetime.now().isoformat()
-
