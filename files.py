@@ -411,3 +411,65 @@ class EnhancedFilesTools(Toolkit):
     def _timestamp(self) -> str:
         """Generate ISO timestamp."""
         return datetime.now().isoformat()
+
+    @staticmethod
+    def get_llm_usage_instructions() -> str:
+        """
+        Returns detailed instructions for LLMs on how to use each tool in EnhancedFilesTools.
+        Each instruction includes the method name, description, parameters, types, example values, and security notes.
+        """
+        instructions = """
+*** Secure Files Toolkit Instructions ***
+
+This toolkit provides robust, secure file operations for LLMs. All operations are subject to strict security validation, resource limits, and atomicity guarantees. Use the following tools:
+
+- read_file_chunk: Read a chunk of lines from a file.
+   Parameters:
+      - file_name (str): File path, e.g., "data/example.txt"
+      - chunk_size (int, optional): Number of lines to read (default: 100, max: 10000)
+      - offset (int, optional): Line offset to start reading from (default: 0)
+   Notes: Only certain file types are allowed (.txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml), max file size 100MB.
+
+- edit_file_chunk: Replace lines in a file atomically.
+   Parameters:
+      - file_name (str): File path, e.g., "notes.md"
+      - new_lines (List[str]): List of new lines to write, e.g., ["line1", "line2"]
+      - offset (int): Line offset to start replacing, e.g., 10
+      - length (int): Number of lines to replace, e.g., 2
+
+- insert_file_chunk: Insert lines at a specific offset.
+   Parameters:
+      - file_name (str): File path, e.g., "script.py"
+      - new_lines (List[str]): Lines to insert, e.g., ["import os"]
+      - offset (int): Line offset to insert at, e.g., 5
+
+- delete_file_chunk: Delete lines from a file.
+   Parameters:
+      - file_name (str): File path, e.g., "data.csv"
+      - offset (int): Line offset to start deleting, e.g., 20
+      - length (int): Number of lines to delete, e.g., 3
+
+- save_file: Save contents to a file.
+   Parameters:
+      - contents (str): File contents, e.g., "# Title\nContent"
+      - file_name (str): File path, e.g., "output.txt"
+      - overwrite (bool, optional): Overwrite if file exists (default: True)
+
+- get_file_metadata: Get metadata for a file.
+   Parameters:
+      - file_name (str): File path, e.g., "report.json"
+
+- list_files: List files matching a pattern.
+   Parameters:
+      - pattern (str, optional): Glob pattern (default: "**/*"), e.g., "*.py"
+
+**Security Notes:**
+- Allowed extensions: .txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml
+- Max file size: 100MB
+- Max chunk size: 10000 lines
+- Max line length: 10000 characters
+- Blocked patterns: "..", "~", "$", "`", ";", "|", "&", "<", ">"
+- All operations are atomic and errors are returned in a secure, non-leaky format.
+- All file operations are subject to comprehensive validation and security checks.
+"""
+        return instructions
