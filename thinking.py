@@ -66,14 +66,13 @@ class EnhancedThinkingTools(Toolkit):
         enable_bias_detection: bool = True,
         enable_quality_assessment: bool = True,
         thinking_depth: int = 3,
-        instructions: Optional[str] = None,
-        add_instructions: bool = False,
+        add_instructions: bool = True,
         **kwargs,
     ):
         # Enhanced instructions that build on Agno pattern
-        if instructions is None:
-            self.instructions = dedent(
-                """\
+        self.add_instructions = add_instructions
+        self.instructions = dedent(
+            """\
                 ## Using the Enhanced Thinking Tool
 
                 The Enhanced Thinking Tool is your advanced cognitive scratchpad for developing, organizing, and improving your thought process before taking action or responding to the user. It produces natural language output with reasoning depth, cognitive insights, and actionable suggestions.
@@ -105,9 +104,7 @@ class EnhancedThinkingTools(Toolkit):
                 - Plan next steps or strategies based on your analysis
                 - Reflect on your reasoning to identify gaps or biases
                 """
-            )
-        else:
-            self.instructions = instructions
+        )
 
         # Configuration
         self.enable_bias_detection = enable_bias_detection

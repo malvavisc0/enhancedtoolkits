@@ -101,6 +101,9 @@ class EnhancedYFinanceTools(Toolkit):
             cache_ttl: Cache time-to-live in seconds
             rate_limit_delay: Delay between API requests in seconds
         """
+        self.add_instructions = True
+        self.instructions = EnhancedYFinanceTools.get_llm_usage_instructions()
+
         super().__init__(name="enhanced_yfinance_tools", **kwargs)
 
         # Configuration

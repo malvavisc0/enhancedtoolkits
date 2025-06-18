@@ -59,6 +59,9 @@ class EnhancedFilesTools(Toolkit):
 
     def __init__(self, base_dir: Optional[Path] = None, **kwargs):
         self.base_dir = Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
+        self.add_instructions = True
+        self.instructions = EnhancedFilesTools.get_llm_usage_instructions()
+
         super().__init__(name="secure_files_toolkit", **kwargs)
         self.register(self.read_file_chunk)
         self.register(self.edit_file_chunk)

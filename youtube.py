@@ -114,6 +114,9 @@ class EnhancedYouTubeTools(Toolkit):
             timeout: Request timeout in seconds
             max_retries: Maximum number of retry attempts
         """
+        self.add_instructions = True
+        self.instructions = EnhancedYouTubeTools.get_llm_usage_instructions()
+
         super().__init__(name="enhanced_youtube_tools", **kwargs)
 
         # Configuration

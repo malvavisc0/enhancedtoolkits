@@ -54,6 +54,9 @@ class EnhancedCalculatorTools(Toolkit):
 
     def __init__(self, **kwargs):
         """Initialize Enhanced Calculator Tools."""
+        self.add_instructions = True
+        self.instructions = EnhancedCalculatorTools.get_llm_usage_instructions()
+
         super().__init__(name="financial_calculator_tools", **kwargs)
 
         # Register basic arithmetic operations

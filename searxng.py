@@ -79,8 +79,9 @@ class EnhancedSearxngTools(Toolkit):
         host: str,
         max_results: Optional[int] = 10,
         timeout: int = 30,
-        enable_content_fetching: bool = False,
+        enable_content_fetching: Optional[bool] = False,
         byparr_enabled: Optional[bool] = False,
+        add_instructions: bool = True,
         **kwargs,
     ):
         """
@@ -93,13 +94,18 @@ class EnhancedSearxngTools(Toolkit):
             enable_content_fetching: Whether to fetch full content from URLs
             byparr_enabled: Override for Byparr usage (None = auto-detect)
         """
-        super().__init__(name="enhanced_searxng_tools", **kwargs)
+        if not host:
+            raise ValueError("Invalid SearxNG host URL")
 
         # Configuration
         self.host = self._validate_host(host)
         self.max_results = max(1, min(30, max_results or 10))  # Limit between 1-30
         self.timeout = max(5, min(120, timeout))  # Limit between 5-120 seconds
         self.enable_content_fetching = enable_content_fetching
+        self.add_instructions = add_instructions
+        self.instructions = EnhancedSearxngTools.get_llm_usage_instructions()
+
+        super().__init__(name="enhanced_searxng_tools", **kwargs)
 
         # Byparr configuration (optional)
         if byparr_enabled is not None:

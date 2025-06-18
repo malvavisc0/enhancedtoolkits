@@ -109,44 +109,13 @@ class EnhancedReasoningTools(Toolkit):
         self,
         reasoning_depth: int = 5,
         enable_bias_detection: bool = True,
-        instructions: Optional[str] = None,
-        add_instructions: bool = False,
+        add_instructions: bool = True,
         **kwargs,
     ):
         # Enhanced instructions
-        if instructions is None:
-            self.instructions = dedent(
-                """\
-                ## Enhanced Universal Reasoning Tools
-
-                The Enhanced Universal Reasoning Toolkit empowers you to perform advanced, multi-modal reasoning, detect cognitive biases, and manage reasoning sessions for complex problem solving. All outputs are designed to be human-like, conversational, and provide natural language explanations and bias alerts.
-
-                ### Features
-
-                - Multi-modal reasoning: Deductive, inductive, abductive, causal, probabilistic, and analogical approaches.
-                - Cognitive bias detection with natural language feedback.
-                - Iterative, bias-aware reasoning: After each reasoning step, bias detection is run. If a major bias is found, the reasoning is automatically refined and repeated until no major bias is detected or a maximum iteration count is reached. The process and answer evolution are narrated in natural language.
-                - Session management and stepwise reasoning history.
-                - Human-like, conversational output—never expose tool calls or code in user-facing responses.
-
-                ### Best Practices
-
-                - Choose reasoning approaches that best fit the problem's nature.
-                - Provide high-quality, relevant evidence to strengthen your analysis.
-                - Be explicit about uncertainties and consider alternative explanations.
-                - Remain vigilant for cognitive biases; the toolkit will alert you to detected biases if enabled.
-                - Use iterative and multi-step reasoning for complex or ambiguous problems.
-                - Document your reasoning steps for transparency and review.
-                - If you use another tool (such as a search, data, or external API tool), incorporate the results into your reasoning and final answer if they add value or relevant context.
-
-                ### Notes
-
-                - Reasoning sessions track your steps and progress. Use session management features to review or reset your reasoning process as needed.
-                - All outputs should be natural, conversational, and free of explicit tool call references, code, or numeric confidence scores.
-                """
-            )
-        else:
-            self.instructions = instructions
+        self.add_instructions = add_instructions
+        if self.add_instructions:
+            self.instructions = EnhancedReasoningTools.get_llm_usage_instructions()
 
         super().__init__(
             name="enhanced_reasoning_tools",
