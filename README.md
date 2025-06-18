@@ -21,25 +21,42 @@ This collection provides seven comprehensive toolkits designed for AI agents tha
 - **🔧 Highly Configurable**: Extensive customization options for each tool
 - **📊 Session Management**: Built-in state tracking and reasoning chains
 
+## 📦 Installation
+
+Install directly from GitHub:
+
+```bash
+# Install with core dependencies
+pip install git+https://github.com/malvavisc0/enhancedtoolkits.git
+
+# Install with all optional dependencies
+pip install "enhancedtoolkits[full] @ git+https://github.com/malvavisc0/enhancedtoolkits.git"
+
+# Install with specific optional dependencies
+pip install "enhancedtoolkits[youtube,content] @ git+https://github.com/malvavisc0/enhancedtoolkits.git"
+```
+
 ## 📦 Quick Start
 
 ```python
-from reasoning import EnhancedReasoningTools
-from searxng import EnhancedSearxngTools
-from thinking import EnhancedThinkingTools
-from files import EnhancedFilesTools
-from yfinance import EnhancedYFinanceTools
-from youtube import EnhancedYouTubeTools
-from calculator import EnhancedCalculatorTools
+from enhancedtoolkits import (
+    ReasoningTools,
+    SearxngTools,
+    ThinkingTools,
+    FilesTools,
+    YFinanceTools,
+    YouTubeTools,
+    CalculatorTools
+)
 
 # Initialize tools
-reasoning_tool = EnhancedReasoningTools()
-search_tool = EnhancedSearxngTools(host="http://searxng:8080")
-thinking_tool = EnhancedThinkingTools()
-files_tool = EnhancedFilesTools()
-finance_tool = EnhancedYFinanceTools()
-youtube_tool = EnhancedYouTubeTools()
-calculator_tool = EnhancedCalculatorTools()
+reasoning_tool = ReasoningTools()
+search_tool = SearxngTools(host="http://searxng:8080")
+thinking_tool = ThinkingTools()
+files_tool = FilesTools()
+finance_tool = YFinanceTools()
+youtube_tool = YouTubeTools()
+calculator_tool = CalculatorTools()
 ```
 
 ## 🧠 Enhanced Reasoning Tools
@@ -47,12 +64,14 @@ calculator_tool = EnhancedCalculatorTools()
 **Multi-modal reasoning with cognitive bias detection and session management.**
 
 ### Key Features
+
 - **6 Reasoning Types**: Deductive, Inductive, Abductive, Causal, Probabilistic, Analogical
 - **Bias Detection**: Automatic identification of cognitive biases
 - **Session Tracking**: Reasoning step history and workflow management
 - **Quality Assessment**: Confidence levels and evidence evaluation
 
 ### Available Methods
+
 - `reason()` - Apply specific reasoning type to a problem
 - `multi_modal_reason()` - Combine multiple reasoning approaches
 - `analyze_reasoning()` - Evaluate reasoning results and determine next actions
@@ -64,6 +83,7 @@ calculator_tool = EnhancedCalculatorTools()
 **Comprehensive web search with optional content fetching and parsing.**
 
 ### Key Features
+
 - **Multiple Search Categories**: General, news, images, videos, files, science
 - **Content Extraction**: Full webpage content parsing with MarkItDown
 - **Byparr Integration**: Optional CloudFlare bypass for protected sites
@@ -71,6 +91,7 @@ calculator_tool = EnhancedCalculatorTools()
 - **Input Validation**: URL validation and query sanitization
 
 ### Available Methods
+
 - `search_web()` - General web search
 - `search_news()` - News article search
 - `search_images()` - Image search
@@ -83,15 +104,18 @@ calculator_tool = EnhancedCalculatorTools()
 **Structured thinking frameworks with cognitive awareness and quality assessment.**
 
 ### Key Features
+
 - **8 Thinking Types**: Analysis, Synthesis, Evaluation, Reflection, Planning, Problem-solving, Creative, Critical
 - **Cognitive Bias Detection**: Identify thinking biases and suggest improvements
 - **Quality Assessment**: Depth, clarity, evidence integration analysis
 - **Thinking Evolution**: Track thinking patterns and progression
+
 ## 📁 Secure Files Toolkit
 
 **Enterprise-grade file operations with comprehensive security controls and atomic operations.**
 
 ### Key Features
+
 - **Path Traversal Protection**: Robust validation against directory traversal attacks
 - **File Type Validation**: Whitelist-based file extension filtering
 - **Resource Limits**: Configurable file size, chunk size, and line length limits
@@ -102,6 +126,7 @@ calculator_tool = EnhancedCalculatorTools()
 - **Comprehensive Logging**: Secure audit trail without information disclosure
 
 ### Security Configuration
+
 - **Max File Size**: 100MB (configurable)
 - **Max Chunk Size**: 10,000 lines
 - **Max Line Length**: 10,000 characters
@@ -109,6 +134,7 @@ calculator_tool = EnhancedCalculatorTools()
 - **Blocked Patterns**: `..`, `~`, `$`, `;`, `|`, `&`, `<`, `>`
 
 ### Available Methods
+
 - `read_file_chunk()` - Read file chunks with security validation
 - `edit_file_chunk()` - Replace lines with atomic operations
 - `insert_file_chunk()` - Insert lines with security validation
@@ -118,6 +144,7 @@ calculator_tool = EnhancedCalculatorTools()
 - `list_files()` - List files with safety filtering
 
 ### Available Methods
+
 - `think()` - Process thoughts with structured cognitive frameworks
 
 ## 📈 Enhanced YFinance Tools
@@ -125,6 +152,7 @@ calculator_tool = EnhancedCalculatorTools()
 **Comprehensive financial data retrieval with robust error handling and caching.**
 
 ### Key Features
+
 - **Complete Financial Data**: Prices, company info, financials, news, recommendations
 - **Input Validation**: Ticker symbol validation and normalization
 - **Caching System**: Configurable response caching with TTL
@@ -132,6 +160,7 @@ calculator_tool = EnhancedCalculatorTools()
 - **Error Recovery**: Comprehensive error handling and retry logic
 
 ### Available Methods
+
 - `get_current_price()` - Current stock price with change data
 - `get_company_information()` - Comprehensive company details
 - `get_news_for_ticker()` - Latest news articles
@@ -151,6 +180,7 @@ calculator_tool = EnhancedCalculatorTools()
 **Comprehensive financial calculations and basic arithmetic operations with advanced algorithms.**
 
 ### Key Features
+
 - **Basic Arithmetic**: Addition, subtraction, multiplication, division, exponentiation, square root, factorial, prime checking
 - **Time Value of Money**: Present value, future value, annuities, perpetuities
 - **Investment Analysis**: NPV, IRR, CAGR, ROI, Sharpe ratio, volatility
@@ -165,6 +195,7 @@ calculator_tool = EnhancedCalculatorTools()
 ### Available Methods
 
 #### Basic Arithmetic Operations
+
 - `add()` - Add two numbers
 - `subtract()` - Subtract two numbers
 - `multiply()` - Multiply two numbers
@@ -175,6 +206,7 @@ calculator_tool = EnhancedCalculatorTools()
 - `is_prime()` - Check if number is prime
 
 #### Financial Calculations
+
 - `calculate_present_value()` - Present value of future sum
 - `calculate_future_value()` - Future value of present sum
 - `calculate_net_present_value()` - NPV of cash flow series
@@ -201,6 +233,7 @@ calculator_tool = EnhancedCalculatorTools()
 **Video metadata and transcript extraction with multi-language support.**
 
 ### Key Features
+
 - **Comprehensive Metadata**: Title, author, thumbnails, duration, statistics
 - **Multi-language Transcripts**: Support for multiple languages and auto-generated content
 - **URL Flexibility**: Support for various YouTube URL formats
@@ -208,6 +241,7 @@ calculator_tool = EnhancedCalculatorTools()
 - **Rate Limiting**: Built-in request throttling and retry logic
 
 ### Available Methods
+
 - `get_video_metadata()` - Comprehensive video metadata
 - `get_video_transcript()` - Video transcript with language support
 - `get_available_transcripts()` - List available transcript languages
@@ -232,15 +266,25 @@ LOG_LEVEL=INFO
 ### Advanced Configuration
 
 ```python
+from enhancedtoolkits import (
+    ReasoningTools,
+    SearxngTools,
+    ThinkingTools,
+    FilesTools,
+    YFinanceTools,
+    YouTubeTools,
+    CalculatorTools
+)
+
 # Reasoning Tools
-reasoning = EnhancedReasoningTools(
+reasoning = ReasoningTools(
     reasoning_depth=5,           # Max reasoning steps
     enable_bias_detection=True,  # Cognitive bias detection
     instructions="Custom instructions..."
 )
 
 # Search Tools
-search = EnhancedSearxngTools(
+search = SearxngTools(
     host="https://searx.example.com",
     max_results=10,
     timeout=30,
@@ -249,33 +293,33 @@ search = EnhancedSearxngTools(
 )
 
 # Thinking Tools
-thinking = EnhancedThinkingTools(
+thinking = ThinkingTools(
     enable_bias_detection=True,
     enable_quality_assessment=True,
     thinking_depth=3
 )
 
 # Finance Tools
-finance = EnhancedYFinanceTools(
+finance = YFinanceTools(
     enable_caching=True,
     cache_ttl=300,
     rate_limit_delay=0.1
 )
 
 # YouTube Tools
-youtube = EnhancedYouTubeTools(
+youtube = YouTubeTools(
     rate_limit_delay=0.5,
     timeout=30,
     max_retries=3
 )
 
 # Files Tools
-files = EnhancedFilesTools(
+files = FilesTools(
     base_dir="/secure/workspace",     # Base directory for operations
 )
 
 # Calculator Tools
-calculator = EnhancedCalculatorTools()
+calculator = CalculatorTools()
 ```
 
 ## 🔧 Requirements
