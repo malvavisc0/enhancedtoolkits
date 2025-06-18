@@ -24,7 +24,8 @@ keywords = [
     "search",
     "finance",
     "youtube",
-    "calculator"
+    "calculator",
+    "weather"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -53,12 +54,20 @@ dependencies = [
 full = [
     "youtube-transcript-api",
     "markitdown",
+    "pywttr",
+    "pywttr-models",
+    "pydantic",
 ]
 youtube = [
     "youtube-transcript-api",
 ]
 content = [
     "markitdown",
+]
+weather = [
+    "pywttr",
+    "pywttr-models",
+    "pydantic",
 ]
 dev = [
     "pytest",

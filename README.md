@@ -6,7 +6,7 @@
 
 **Production-ready AI agent tools for developers building intelligent chatbots and AI systems.**
 
-This collection provides seven comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
+This collection provides eight comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
 
 ## 🚀 Features
 
@@ -17,6 +17,7 @@ This collection provides seven comprehensive toolkits designed for AI agents tha
 - **📈 Financial Data**: Comprehensive stock market and financial information
 - **🧮 Financial Calculator**: Advanced financial calculations and basic arithmetic operations
 - **🎥 YouTube Integration**: Video metadata and transcript extraction
+- **☁️ Weather Data**: Current conditions, forecasts, and temperature data in multiple languages
 - **⚡ Production Ready**: Robust error handling, caching, and rate limiting
 - **🔧 Highly Configurable**: Extensive customization options for each tool
 - **📊 Session Management**: Built-in state tracking and reasoning chains
@@ -46,7 +47,8 @@ from enhancedtoolkits import (
     FilesTools,
     YFinanceTools,
     YouTubeTools,
-    CalculatorTools
+    CalculatorTools,
+    WeatherTools
 )
 
 # Initialize tools
@@ -57,6 +59,7 @@ files_tool = FilesTools()
 finance_tool = YFinanceTools()
 youtube_tool = YouTubeTools()
 calculator_tool = CalculatorTools()
+weather_tool = WeatherTools()
 ```
 
 ## 🧠 Enhanced Reasoning Tools
@@ -228,6 +231,27 @@ calculator_tool = CalculatorTools()
 - `convert_currency()` - Simple currency conversion
 - `adjust_for_inflation()` - Inflation adjustment calculations
 
+## ☁️ Enhanced Weather Tools
+
+**Comprehensive weather data with multi-language support and robust error handling.**
+
+### Key Features
+
+- **Current Weather**: Temperature, humidity, wind speed, precipitation, and more
+- **Weather Forecasts**: Multi-day forecasts with detailed conditions
+- **Temperature Data**: Current, feels like, min/max temperatures in both Celsius and Fahrenheit
+- **Weather Descriptions**: Textual descriptions of weather conditions
+- **Multi-language Support**: Over 30 supported languages for global use
+- **Location Flexibility**: City names, addresses, or latitude/longitude coordinates
+- **Custom API URL**: Optional custom base URL for the weather API
+
+### Available Methods
+
+- `get_current_weather()` - Current weather conditions for a location
+- `get_weather_forecast()` - Multi-day weather forecast
+- `get_temperature()` - Detailed temperature data
+- `get_weather_description()` - Textual weather description
+
 ## 🎥 Enhanced YouTube Tools
 
 **Video metadata and transcript extraction with multi-language support.**
@@ -261,6 +285,9 @@ BYPARR_ENABLED=false
 
 # General
 LOG_LEVEL=INFO
+
+# Weather Tools
+WEATHER_API_URL=https://wttr.in
 ```
 
 ### Advanced Configuration
@@ -273,7 +300,8 @@ from enhancedtoolkits import (
     FilesTools,
     YFinanceTools,
     YouTubeTools,
-    CalculatorTools
+    CalculatorTools,
+    WeatherTools
 )
 
 # Reasoning Tools
@@ -313,6 +341,12 @@ youtube = YouTubeTools(
     max_retries=3
 )
 
+# Weather Tools
+weather = WeatherTools(
+    timeout=30,
+    base_url="https://wttr.in"
+)
+
 # Files Tools
 files = FilesTools(
     base_dir="/secure/workspace",     # Base directory for operations
@@ -327,7 +361,7 @@ calculator = CalculatorTools()
 - **Python**: 3.8+
 - **Agno Framework**: Latest version
 - **Core Dependencies**: `httpx`, `yfinance`, `youtube-transcript-api`
-- **Optional Dependencies**: `markitdown` (for content parsing)
+- **Optional Dependencies**: `markitdown` (for content parsing), `pywttr` and `pywttr-models` (for weather data)
 
 ## 🤝 Contributing
 
