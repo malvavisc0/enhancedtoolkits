@@ -572,6 +572,7 @@ class EnhancedWeatherTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
+<weather_tools_instructions>
 *** Weather Tools Instructions ***
 
 By leveraging the following set of tools, you can retrieve current weather conditions, forecasts, temperature data, and weather descriptions for locations worldwide. These tools provide accurate, real-time weather information in multiple languages. Here are the detailed instructions for using each tool:
@@ -603,5 +604,6 @@ Notes:
 - Location can be specified as a city name, address, or latitude,longitude coordinates.
 - Temperature values are provided in both Celsius and Fahrenheit where available.
 - Weather data is sourced from wttr.in, which aggregates data from various weather services.
+</weather_tools_instructions>
 """
         return instructions

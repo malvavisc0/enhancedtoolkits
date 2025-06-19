@@ -1608,7 +1608,8 @@ class EnhancedCalculatorTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
-*** Financial Calculator Tools Instructions ***
+<calcutator_tools_instructions>
+*** Calculator Tools Instructions ***
 
 By leveraging the following comprehensive set of calculation tools, you can perform both basic arithmetic operations and advanced financial computations including time value of money calculations, investment analysis, loan calculations, bond pricing, risk metrics, depreciation, and utility functions. These tools provide accurate calculations with detailed results and metadata. Here are the detailed instructions for using each tool:
 
@@ -1789,5 +1790,6 @@ By leveraging the following comprehensive set of calculation tools, you can perf
 - All monetary amounts should be positive unless specifically noted
 - Results include detailed metadata and calculation summaries
 - Error handling provides clear validation messages for invalid inputs
+</calcutator_tools_instructions>
 """
         return instructions

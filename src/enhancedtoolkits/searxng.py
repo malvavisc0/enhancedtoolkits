@@ -572,6 +572,7 @@ class EnhancedSearxngTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
+<internet_search_tools_instructions>
 *** SearxNG Search Tools Instructions ***
 
 By leveraging the following set of tools, you can perform web, news, image, and video searches, as well as fetch content from URLs (if enabled). These tools empower you to deliver accurate, real-time search results and content extraction with ease. Here are the detailed instructions for using the set of tools:
@@ -610,6 +611,7 @@ Notes:
 - The get_page_content tool is only available if content fetching is enabled during initialization.
 - The max_results parameter is always optional and defaults to the toolkit's configuration.
 - The category parameter for search_category must be one of: general, news, images, videos, music, files, science, social.
+</internet_search_tools_instructions>
 """
         return instructions
 

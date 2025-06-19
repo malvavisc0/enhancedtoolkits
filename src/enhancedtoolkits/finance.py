@@ -1051,6 +1051,7 @@ class EnhancedYFinanceTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
+<yahoo_finance_tools_instructions>
 *** Yahoo Finance Data Tools Instructions ***
 
 By leveraging the following set of tools, you can instantly access up-to-date stock prices, company fundamentals, financial statements, news, analyst insights, and historical market data for any publicly traded company. These tools empower you to deliver accurate, real-time financial intelligence and comprehensive market analysis with ease. Here are the detailed instructions for using the set of tools:
@@ -1120,5 +1121,6 @@ By leveraging the following set of tools, you can instantly access up-to-date st
    Notes:
       - Valid periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max.
       - Valid intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo.
+</yahoo_finance_tools_instructions>
 """
         return instructions

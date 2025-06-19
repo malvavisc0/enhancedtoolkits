@@ -73,6 +73,7 @@ class EnhancedThinkingTools(Toolkit):
         self.add_instructions = add_instructions
         self.instructions = dedent(
             """\
+                <thinking_instructions>
                 ## Using the Enhanced Thinking Tool
 
                 The Enhanced Thinking Tool is your advanced cognitive scratchpad for developing, organizing, and improving your thought process before taking action or responding to the user. It produces natural language output with reasoning depth, cognitive insights, and actionable suggestions.
@@ -103,6 +104,7 @@ class EnhancedThinkingTools(Toolkit):
                 - Evaluate the strengths and weaknesses of different approaches
                 - Plan next steps or strategies based on your analysis
                 - Reflect on your reasoning to identify gaps or biases
+                </thinking_instructions>
                 """
         )
 

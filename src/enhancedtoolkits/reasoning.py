@@ -980,6 +980,7 @@ class EnhancedReasoningTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
+<reasoning_tools_instructions>
 *** Universal Reasoning Tools Instructions ***
 
 By leveraging the following set of tools, you can perform advanced reasoning, bias detection, and session management for complex problem solving. These tools empower you to deliver structured, multi-modal, and human-like reasoning with step tracking and bias awareness. Here are the detailed instructions for using the set of tools:
@@ -1024,5 +1025,6 @@ Notes:
 - The reasoning_type parameter for reason and multi_modal_reason must be one of: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical".
 - The detect_biases tool is only available if bias detection is enabled during initialization.
 - All tools expect agent_or_team to be an object or identifier representing the current agent or team context.
+</reasoning_tools_instructions>
 """
         return instructions

@@ -706,6 +706,7 @@ class EnhancedYouTubeTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, and example values.
         """
         instructions = """
+<youtube_tools_instructions>
 *** YouTube Tools Instructions ***
 
 By leveraging the following set of tools, you can retrieve comprehensive metadata, transcripts, and video information from YouTube. These tools empower you to deliver accurate, real-time video intelligence and content extraction with ease. Here are the detailed instructions for using the set of tools:
@@ -749,5 +750,6 @@ Notes:
 - Transcript-related tools (get_video_transcript, get_available_transcripts, get_transcript_languages) require the youtube-transcript-api package to be installed.
 - The language parameter for transcripts should be a valid language code, e.g., "en" for English, "es" for Spanish.
 - The auto_generated parameter controls whether to include auto-generated transcripts.
+</youtube_tools_instructions>
 """
         return instructions

@@ -422,6 +422,7 @@ class EnhancedFilesTools(Toolkit):
         Each instruction includes the method name, description, parameters, types, example values, and security notes.
         """
         instructions = """
+<file_tools_instructions>
 *** Secure Files Toolkit Instructions ***
 
 This toolkit provides robust, secure file operations for LLMs. All operations are subject to strict security validation, resource limits, and atomicity guarantees. Use the following tools:
@@ -474,5 +475,6 @@ This toolkit provides robust, secure file operations for LLMs. All operations ar
 - Blocked patterns: "..", "~", "$", "`", ";", "|", "&", "<", ">"
 - All operations are atomic and errors are returned in a secure, non-leaky format.
 - All file operations are subject to comprehensive validation and security checks.
+</file_tools_instructions>
 """
         return instructions
