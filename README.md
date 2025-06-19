@@ -6,7 +6,7 @@
 
 **Production-ready AI agent tools for developers building intelligent chatbots and AI systems.**
 
-This collection provides eight comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
+This collection provides nine comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
 
 ## 🚀 Features
 
@@ -18,6 +18,7 @@ This collection provides eight comprehensive toolkits designed for AI agents tha
 - **🧮 Financial Calculator**: Advanced financial calculations and basic arithmetic operations
 - **🎥 YouTube Integration**: Video metadata and transcript extraction
 - **☁️ Weather Data**: Current conditions, forecasts, and temperature data in multiple languages
+- **📥 Universal File Downloader**: Anti-bot bypass with smart content processing for any file type
 - **⚡ Production Ready**: Robust error handling, caching, and rate limiting
 - **🔧 Highly Configurable**: Extensive customization options for each tool
 - **📊 Session Management**: Built-in state tracking and reasoning chains
@@ -48,7 +49,8 @@ from enhancedtoolkits import (
     YFinanceTools,
     YouTubeTools,
     CalculatorTools,
-    WeatherTools
+    WeatherTools,
+    DownloaderTools
 )
 
 # Initialize tools
@@ -60,6 +62,7 @@ finance_tool = YFinanceTools()
 youtube_tool = YouTubeTools()
 calculator_tool = CalculatorTools()
 weather_tool = WeatherTools()
+downloader_tool = DownloaderTools()
 ```
 
 ## 🧠 Enhanced Reasoning Tools
@@ -273,15 +276,60 @@ weather_tool = WeatherTools()
 - `extract_video_id()` - Extract video ID from various URL formats
 - `get_video_info()` - Complete video information with optional transcript
 
+## 📥 Enhanced URL Content Downloader
+
+**Universal file downloading with anti-bot bypass and smart content processing.**
+
+### Key Features
+
+- **Universal File Support**: Download any file type (HTML, PDF, Word, Excel, images, videos, etc.)
+- **Anti-Bot Bypass**: BYPARR integration with CloudFlare bypass capabilities
+- **Smart Content Processing**: MarkItDown integration for automatic content extraction
+- **Multiple Output Formats**: Auto-detection, markdown, text, html, binary
+- **User-Agent Rotation**: Advanced header spoofing and rotation techniques
+- **Robust Error Handling**: Retry logic with exponential backoff and comprehensive error recovery
+- **Content Validation**: URL validation, format checking, and accessibility testing
+- **Batch Processing**: Support for downloading multiple URLs simultaneously
+
+### Available Methods
+
+- `download_url_content()` - Download and parse content from a URL (legacy method)
+- `download_file()` - Download any file with smart content processing
+- `download_multiple_urls()` - Batch download content from multiple URLs
+- `get_url_metadata()` - Extract metadata without downloading full content
+- `check_url_accessibility()` - Test URL accessibility and response time
+
+### Supported Formats
+
+- **Auto**: Automatically detects best format based on content type
+- **Markdown**: Converts HTML to markdown using MarkItDown
+- **Text**: Plain text extraction with HTML tag removal
+- **HTML**: Raw HTML content preservation
+- **Binary**: File information for binary files with MarkItDown processing when possible
+
+### Content Type Support
+
+- **HTML/Web Pages**: Full content extraction and conversion
+- **PDF Documents**: Text extraction via MarkItDown
+- **Microsoft Office**: Word, Excel, PowerPoint document processing
+- **Images**: Metadata extraction and file information
+- **Videos/Audio**: File information and metadata
+- **Archives**: ZIP, RAR, 7z file handling
+- **Any File Type**: Universal download capability
+
 ## ⚙️ Configuration
 
 ### Environment Variables
 
 ```bash
-# SearxNG Tools
+# SearxNG Tools & URL Downloader
 BYPARR_URL=http://byparr:8191/v1
 BYPARR_TIMEOUT=60
 BYPARR_ENABLED=false
+
+# URL Downloader Tools
+URL_DOWNLOADER_MAX_RETRIES=3
+URL_DOWNLOADER_TIMEOUT=30
 
 # General
 LOG_LEVEL=INFO
@@ -301,7 +349,8 @@ from enhancedtoolkits import (
     YFinanceTools,
     YouTubeTools,
     CalculatorTools,
-    WeatherTools
+    WeatherTools,
+    DownloaderTools
 )
 
 # Reasoning Tools
@@ -354,6 +403,15 @@ files = FilesTools(
 
 # Calculator Tools
 calculator = CalculatorTools()
+
+# URL Downloader Tools
+downloader = DownloaderTools(
+    byparr_enabled=True,
+    max_retries=3,
+    timeout=30,
+    user_agent_rotation=True,
+    enable_caching=True
+)
 ```
 
 ## 🔧 Requirements
