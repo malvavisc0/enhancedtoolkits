@@ -16,7 +16,9 @@ Version: 2.0.0
 
 import json
 import os
+import random
 import tempfile
+import time
 import urllib.parse
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
@@ -30,16 +32,16 @@ BYPARR_URL = os.environ.get("BYPARR_URL", "http://byparr:8191/v1")
 BYPARR_TIMEOUT = int(os.environ.get("BYPARR_TIMEOUT", "60"))
 BYPARR_ENABLED = os.environ.get("BYPARR_ENABLED", "false").lower() == "true"
 
-# Optional MarkItDown import
+# Required MarkItDown import
 try:
     from markitdown import MarkItDown
 
-    MARKITDOWN_AVAILABLE = True
     markitdown_converter = MarkItDown()
 except ImportError:
-    MARKITDOWN_AVAILABLE = False
-    markitdown_converter = None
-    log_warning("MarkItDown not available. Content parsing will be limited.")
+    raise ImportError(
+        "MarkItDown is required for EnhancedSearxngTools. "
+        "Please install it with: pip install markitdown"
+    )
 
 
 class SearxngSearchError(Exception):
@@ -50,6 +52,18 @@ class SearxngSearchError(Exception):
 
 class SearxngContentError(Exception):
     """Custom exception for content fetching errors."""
+
+    pass
+
+
+class FileDownloadError(SearxngContentError):
+    """Custom exception for file download errors."""
+
+    pass
+
+
+class UnsupportedFileTypeError(SearxngContentError):
+    """Custom exception for unsupported file types."""
 
     pass
 
@@ -80,7 +94,10 @@ class EnhancedSearxngTools(Toolkit):
         max_results: Optional[int] = 10,
         timeout: int = 30,
         enable_content_fetching: Optional[bool] = False,
-        byparr_enabled: Optional[bool] = False,
+        enable_file_downloads: Optional[bool] = True,
+        max_file_size_mb: int = 10,
+        file_download_timeout: int = 60,
+        byparr_enabled: Optional[bool] = True,
         add_instructions: bool = True,
         **kwargs,
     ):
@@ -92,6 +109,9 @@ class EnhancedSearxngTools(Toolkit):
             max_results: Maximum number of search results to return
             timeout: Request timeout in seconds
             enable_content_fetching: Whether to fetch full content from URLs
+            enable_file_downloads: Whether to download and process files (PDF, TXT, MD)
+            max_file_size_mb: Maximum file size to download in MB
+            file_download_timeout: Timeout for file downloads in seconds
             byparr_enabled: Override for Byparr usage (None = auto-detect)
         """
         if not host:
@@ -102,6 +122,14 @@ class EnhancedSearxngTools(Toolkit):
         self.max_results = max(1, min(30, max_results or 10))  # Limit between 1-30
         self.timeout = max(5, min(120, timeout))  # Limit between 5-120 seconds
         self.enable_content_fetching = enable_content_fetching
+        self.enable_file_downloads = enable_file_downloads
+        self.supported_file_types = ["pdf", "txt", "md"]
+        self.max_file_size_mb = max(
+            1, min(500, max_file_size_mb)
+        )  # Limit between 1-500 MB
+        self.file_download_timeout = max(
+            10, min(300, file_download_timeout)
+        )  # 10-300 seconds
         self.add_instructions = add_instructions
         self.instructions = EnhancedSearxngTools.get_llm_usage_instructions()
 
@@ -120,6 +148,16 @@ class EnhancedSearxngTools(Toolkit):
             headers={"User-Agent": "Enhanced-SearxNG-Tools/2.0 (Python/httpx)"},
         )
 
+        # File download client configuration (separate timeout)
+        if self.enable_file_downloads:
+            self.file_client = httpx.Client(
+                timeout=httpx.Timeout(self.file_download_timeout),
+                follow_redirects=True,
+                headers=self._get_file_download_headers(),
+            )
+        else:
+            self.file_client = None
+
         # Register search methods
         self.register(self.search_web)
         self.register(self.search_news)
@@ -127,12 +165,10 @@ class EnhancedSearxngTools(Toolkit):
         self.register(self.search_videos)
         self.register(self.search_category)
 
-        # Register content fetching if enabled
-        if self.enable_content_fetching:
-            self.register(self.get_page_content)
-
         log_info(
-            f"Enhanced SearxNG Tools initialized - Host: {self.host}, Max Results: {self.max_results}, Content Fetching: {self.enable_content_fetching}, Byparr: {self.byparr_enabled}"
+            f"Enhanced SearxNG Tools initialized - Host: {self.host}, Max Results: {self.max_results}, "
+            f"Content Fetching: {self.enable_content_fetching}, File Downloads: {self.enable_file_downloads}, "
+            f"Supported Files: {self.supported_file_types}, Byparr: {self.byparr_enabled}"
         )
 
     def search_web(self, query: str, max_results: Optional[int] = None) -> str:
@@ -224,9 +260,9 @@ class EnhancedSearxngTools(Toolkit):
 
         return self._search(query, category=category, max_results=max_results)
 
-    def get_page_content(self, url: str) -> str:
+    def _get_page_content(self, url: str) -> str:
         """
-        Fetch and parse content from a webpage.
+        Fetch and parse content from a webpage or file.
 
         Args:
             url: URL to fetch content from
@@ -247,7 +283,20 @@ class EnhancedSearxngTools(Toolkit):
             parsed_url = self._validate_url(url)
             log_debug(f"Fetching content from: {parsed_url}")
 
-            # Try Byparr first if enabled
+            # Get content-type for better file detection
+            content_type = (
+                self._get_content_type(parsed_url) if self.enable_file_downloads else None
+            )
+
+            # Check if this is a supported file type
+            if self._is_supported_file_type(parsed_url, content_type):
+                file_type = self._detect_file_type(parsed_url, content_type)
+                log_info(
+                    f"Detected {file_type} file (content-type: {content_type}), processing with file downloader"
+                )
+                return self._download_and_process_file(parsed_url, file_type)
+
+            # Try Byparr first if enabled for HTML content
             if self.byparr_enabled:
                 try:
                     content = self._fetch_content_with_byparr(parsed_url)
@@ -259,12 +308,363 @@ class EnhancedSearxngTools(Toolkit):
                         f"Byparr error for {url}: {e}, falling back to direct fetch"
                     )
 
-            # Fallback to direct HTTP request
+            # Fallback to direct HTTP request for HTML content
             return self._fetch_content_direct(url)
 
         except Exception as e:
             log_error(f"Error fetching content from {url}: {e}")
             raise SearxngContentError(f"Failed to fetch content from {url}: {e}")
+
+    def _detect_file_type(self, url: str, content_type: Optional[str] = None) -> str:
+        """
+        Detect file type from URL extension and content-type header.
+
+        Args:
+            url: URL to analyze
+            content_type: HTTP content-type header (optional)
+
+        Returns:
+            File type ('pdf', 'txt', 'md', 'html', or 'unknown')
+        """
+        try:
+            # First check content-type if available (more reliable)
+            if content_type:
+                content_type_lower = content_type.lower()
+                if "application/pdf" in content_type_lower:
+                    return "pdf"
+                elif any(ct in content_type_lower for ct in ["text/plain", "text/txt"]):
+                    return "txt"
+                elif any(
+                    ct in content_type_lower
+                    for ct in ["text/markdown", "text/x-markdown"]
+                ):
+                    return "md"
+                elif any(
+                    ct in content_type_lower
+                    for ct in ["text/html", "application/xhtml+xml"]
+                ):
+                    return "html"
+
+            # Fallback to URL extension
+            parsed_url = urlparse(url)
+            path = parsed_url.path.lower()
+
+            if path.endswith(".pdf"):
+                return "pdf"
+            elif path.endswith((".txt", ".text")):
+                return "txt"
+            elif path.endswith((".md", ".markdown")):
+                return "md"
+            elif path.endswith((".html", ".htm")):
+                return "html"
+            else:
+                return "unknown"
+        except Exception:
+            return "unknown"
+
+    def _is_supported_file_type(
+        self, url: str, content_type: Optional[str] = None
+    ) -> bool:
+        """
+        Check if URL points to a supported file type.
+
+        Args:
+            url: URL to check
+            content_type: HTTP content-type header (optional)
+
+        Returns:
+            True if file type is supported
+        """
+        if not self.enable_file_downloads:
+            return False
+
+        file_type = self._detect_file_type(url, content_type)
+        return file_type in self.supported_file_types
+
+    def _get_content_type(self, url: str) -> Optional[str]:
+        """
+        Get content-type header from URL using HEAD request.
+
+        Args:
+            url: URL to check
+
+        Returns:
+            Content-type string or None if unavailable
+        """
+        try:
+            if self.file_client:
+                response = self.file_client.head(url, timeout=10)
+                return response.headers.get("content-type")
+        except Exception as e:
+            log_debug(f"Failed to get content-type for {url}: {e}")
+        return None
+
+    def _download_and_process_file(self, url: str, file_type: str) -> str:
+        """
+        Download and process files based on type.
+
+        Args:
+            url: URL to download from
+            file_type: Type of file ('pdf', 'txt', 'md')
+
+        Returns:
+            Processed file content
+
+        Raises:
+            FileDownloadError: If download or processing fails
+        """
+        try:
+            log_debug(f"Downloading {file_type} file from: {url}")
+
+            if file_type == "pdf":
+                return self._process_pdf_content(url)
+            elif file_type == "txt":
+                return self._process_text_file(url)
+            elif file_type == "md":
+                return self._process_markdown_file(url)
+            else:
+                raise UnsupportedFileTypeError(f"Unsupported file type: {file_type}")
+
+        except (FileDownloadError, UnsupportedFileTypeError):
+            raise
+        except Exception as e:
+            log_error(f"Error processing {file_type} file from {url}: {e}")
+            raise FileDownloadError(f"Failed to process {file_type} file: {e}")
+
+    def _process_pdf_content(self, url: str) -> str:
+        """
+        Download PDF and extract content using MarkItDown.
+
+        Args:
+            url: URL of PDF file
+
+        Returns:
+            Extracted content as markdown
+
+        Raises:
+            FileDownloadError: If download or processing fails
+        """
+        try:
+            # Download PDF content
+            response = self._fetch_file_with_antibot(url)
+            content_type = response.headers.get("content-type", "").lower()
+
+            # Validate content-type matches expectation
+            if "application/pdf" not in content_type:
+                log_warning(f"Expected PDF content type, got: {content_type}")
+                # Still proceed but log the mismatch
+
+            # Check file size
+            content_length = response.headers.get("content-length")
+            if (
+                content_length
+                and int(content_length) > self.max_file_size_mb * 1024 * 1024
+            ):
+                raise FileDownloadError(f"PDF file too large: {content_length} bytes")
+
+            # Process with MarkItDown
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file_path = os.path.join(temp_dir, "document.pdf")
+                with open(temp_file_path, "wb") as temp_file:
+                    temp_file.write(response.content)
+
+                markdown_content = markitdown_converter.convert(temp_file_path).markdown
+                return self._clean_text(markdown_content)
+
+        except Exception as e:
+            log_error(f"PDF processing failed for {url}: {e}")
+            raise FileDownloadError(f"Failed to process PDF: {e}")
+
+    def _process_text_file(self, url: str) -> str:
+        """
+        Download and return text file content.
+
+        Args:
+            url: URL of text file
+
+        Returns:
+            Text file content
+
+        Raises:
+            FileDownloadError: If download fails
+        """
+        try:
+            # Download text content
+            response = self._fetch_file_with_antibot(url)
+            content_type = response.headers.get("content-type", "").lower()
+
+            # Validate content-type for text files
+            if content_type and not any(
+                ct in content_type
+                for ct in ["text/plain", "text/txt", "text/", "application/octet-stream"]
+            ):
+                log_warning(f"Expected text content type, got: {content_type}")
+
+            # Check file size
+            content_length = response.headers.get("content-length")
+            if (
+                content_length
+                and int(content_length) > self.max_file_size_mb * 1024 * 1024
+            ):
+                raise FileDownloadError(f"Text file too large: {content_length} bytes")
+
+            # Try to decode as text
+            try:
+                content = response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    content = response.content.decode("latin-1")
+                except UnicodeDecodeError:
+                    content = response.content.decode("utf-8", errors="replace")
+
+            return self._clean_text(content)
+
+        except Exception as e:
+            log_error(f"Text file processing failed for {url}: {e}")
+            raise FileDownloadError(f"Failed to process text file: {e}")
+
+    def _process_markdown_file(self, url: str) -> str:
+        """
+        Download and return markdown file content.
+
+        Args:
+            url: URL of markdown file
+
+        Returns:
+            Markdown file content
+
+        Raises:
+            FileDownloadError: If download fails
+        """
+        try:
+            # Download markdown content
+            response = self._fetch_file_with_antibot(url)
+            content_type = response.headers.get("content-type", "").lower()
+
+            # Validate content-type for markdown files
+            if content_type and not any(
+                ct in content_type
+                for ct in [
+                    "text/markdown",
+                    "text/x-markdown",
+                    "text/plain",
+                    "text/",
+                    "application/octet-stream",
+                ]
+            ):
+                log_warning(f"Expected markdown content type, got: {content_type}")
+
+            # Check file size
+            content_length = response.headers.get("content-length")
+            if (
+                content_length
+                and int(content_length) > self.max_file_size_mb * 1024 * 1024
+            ):
+                raise FileDownloadError(
+                    f"Markdown file too large: {content_length} bytes"
+                )
+
+            # Try to decode as text
+            try:
+                content = response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    content = response.content.decode("latin-1")
+                except UnicodeDecodeError:
+                    content = response.content.decode("utf-8", errors="replace")
+
+            return self._clean_text(content)
+
+        except Exception as e:
+            log_error(f"Markdown file processing failed for {url}: {e}")
+            raise FileDownloadError(f"Failed to process markdown file: {e}")
+
+    def _fetch_file_with_antibot(self, url: str) -> httpx.Response:
+        """
+        Fetch file with anti-bot bypass techniques.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            HTTP response object
+
+        Raises:
+            FileDownloadError: If fetch fails
+        """
+        if not self.file_client:
+            raise FileDownloadError("File download client not initialized")
+
+        max_retries = 3
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                # Apply anti-bot techniques
+                headers = self._get_file_download_headers()
+
+                # Add random delay between attempts
+                if attempt > 0:
+                    delay = min(2**attempt, 10) + random.uniform(0, 1)
+                    log_debug(f"Waiting {delay:.1f}s before retry {attempt + 1}")
+                    time.sleep(delay)
+
+                response = self.file_client.get(url, headers=headers)
+                response.raise_for_status()
+
+                return response
+
+            except httpx.TimeoutException as e:
+                last_error = f"Request timeout (attempt {attempt + 1}/{max_retries})"
+                log_warning(last_error)
+            except httpx.HTTPStatusError as e:
+                last_error = f"HTTP error {e.response.status_code}"
+                log_warning(last_error)
+                if e.response.status_code in [403, 429]:  # Likely anti-bot
+                    continue
+                else:
+                    break  # Don't retry other HTTP errors
+            except Exception as e:
+                last_error = f"Request failed: {e}"
+                log_error(last_error)
+                break
+
+        raise FileDownloadError(
+            f"Failed to fetch file after {max_retries} attempts: {last_error}"
+        )
+
+    def _get_file_download_headers(self) -> Dict[str, str]:
+        """
+        Get headers for file downloads with anti-bot techniques.
+
+        Returns:
+            Dictionary of HTTP headers
+        """
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+        ]
+
+        headers = {
+            "User-Agent": random.choice(user_agents),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        }
+
+        # Add random referer
+        referers = [
+            "https://www.google.com/",
+            "https://www.bing.com/",
+            "https://duckduckgo.com/",
+        ]
+        headers["Referer"] = random.choice(referers)
+
+        return headers
 
     def _search(
         self,
@@ -404,15 +804,46 @@ class EnhancedSearxngTools(Toolkit):
                         }
                     )
 
+                # Check if this is a supported file type
+                content_type = None
+                file_type = (
+                    self._detect_file_type(result["url"]) if result["url"] else "unknown"
+                )
+
+                # Get content-type for better detection if file downloads are enabled
+                if (
+                    self.enable_file_downloads
+                    and result["url"]
+                    and file_type != "unknown"
+                ):
+                    content_type = self._get_content_type(result["url"])
+                    # Re-detect with content-type for accuracy
+                    file_type = self._detect_file_type(result["url"], content_type)
+
+                if file_type != "unknown":
+                    result["file_type"] = file_type
+                    if content_type:
+                        result["content_type"] = content_type
+
                 # Add content if fetching is enabled and URL is valid
                 if (
                     self.enable_content_fetching
                     and result["url"]
-                    and category in ["general", "news"]
+                    and category in ["general", "news", "files"]
                     and len(results) < 3
                 ):  # Limit content fetching to first 3 results
                     try:
-                        result["content"] = self._fetch_content_safe(result["url"])
+                        # Check if this is a supported file type for download
+                        if self._is_supported_file_type(result["url"], content_type):
+                            log_info(
+                                f"Processing {file_type} file: {result['url']} (content-type: {content_type})"
+                            )
+                            result["content"] = self._download_and_process_file(
+                                result["url"], file_type
+                            )
+                        else:
+                            # Regular HTML content fetching
+                            result["content"] = self._fetch_content_safe(result["url"])
                     except Exception as e:
                         log_debug(f"Content fetching failed for {result['url']}: {e}")
                         result["content"] = ""
@@ -475,39 +906,38 @@ class EnhancedSearxngTools(Toolkit):
 
     def _parse_html_content(self, html_content: str) -> str:
         """
-        Parse HTML content to markdown or plain text.
+        Parse HTML content to markdown using MarkItDown.
+
+        Args:
+            html_content: HTML content to parse
+
+        Returns:
+            Processed markdown content
+
+        Raises:
+            SearxngContentError: If content parsing fails
         """
         if not html_content:
             return ""
 
         try:
-            if MARKITDOWN_AVAILABLE and markitdown_converter is not None:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file_path = os.path.join(temp_dir, "content.html")
-                    with open(temp_file_path, "w", encoding="utf-8") as temp_file:
-                        temp_file.write(html_content)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file_path = os.path.join(temp_dir, "content.html")
+                with open(temp_file_path, "w", encoding="utf-8") as temp_file:
+                    temp_file.write(html_content)
 
-                    markdown_content = markitdown_converter.convert(
-                        temp_file_path
-                    ).markdown
-                    return self._clean_text(markdown_content)
-            else:
-                # Basic HTML stripping if MarkItDown is not available
-                import re
-
-                text = re.sub(r"<[^>]+>", "", html_content)
-                return self._clean_text(text)
-
+                markdown_content = markitdown_converter.convert(temp_file_path).markdown
+                return self._clean_text(markdown_content)
         except Exception as e:
-            log_warning(f"HTML parsing failed: {e}")
-            return "Content parsing failed"
+            log_error(f"HTML parsing failed: {e}")
+            raise SearxngContentError(f"Failed to parse HTML content: {e}")
 
     def _fetch_content_safe(self, url: str) -> str:
         """
         Safely fetch content with error handling.
         """
         try:
-            return self.get_page_content(url)
+            return self._get_page_content(url)
         except Exception:
             return ""
 
@@ -573,9 +1003,9 @@ class EnhancedSearxngTools(Toolkit):
         """
         instructions = """
 <internet_search_tools_instructions>
-*** SearxNG Search Tools Instructions ***
+*** Enhanced SearxNG Search Tools Instructions ***
 
-By leveraging the following set of tools, you can perform web, news, image, and video searches, as well as fetch content from URLs (if enabled). These tools empower you to deliver accurate, real-time search results and content extraction with ease. Here are the detailed instructions for using the set of tools:
+By leveraging the following set of tools, you can perform web, news, image, and video searches, as well as fetch content from URLs and download files (if enabled). These tools empower you to deliver accurate, real-time search results and comprehensive content extraction with ease. Here are the detailed instructions for using the set of tools:
 
 - Use search_web to perform a general web search.
    Parameters:
@@ -603,24 +1033,34 @@ By leveraging the following set of tools, you can perform web, news, image, and 
       - category (str): One of: general, news, images, videos, music, files, science, social.
       - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
 
-- Use get_page_content to fetch and parse content from a webpage (only if content fetching is enabled).
-   Parameters:
-      - url (str): The URL to fetch, e.g., "https://example.com/article".
+
+Enhanced File Processing Features:
+- Automatic file type detection for PDF, TXT, and Markdown files in search results
+- PDF files are automatically processed using MarkItDown to extract readable content
+- TXT files are downloaded and returned with proper encoding detection
+- Markdown files are downloaded and returned with preserved formatting
+- Search results include 'file_type' field when files are detected
+- Anti-bot bypass techniques are applied for file downloads
+- File size limits and timeout protection are enforced
 
 Notes:
-- The get_page_content tool is only available if content fetching is enabled during initialization.
+- File download capabilities require both content fetching and file downloads to be enabled.
 - The max_results parameter is always optional and defaults to the toolkit's configuration.
 - The category parameter for search_category must be one of: general, news, images, videos, music, files, science, social.
+- File processing is automatically applied when supported file types are detected in URLs.
+- Large files are subject to size limits (configurable, default 50MB) and download timeouts.
 </internet_search_tools_instructions>
 """
         return instructions
 
     def __del__(self):
         """
-        Cleanup HTTP client on destruction.
+        Cleanup HTTP clients on destruction.
         """
         try:
             if hasattr(self, "client"):
                 self.client.close()
+            if hasattr(self, "file_client") and self.file_client:
+                self.file_client.close()
         except Exception:
             pass
