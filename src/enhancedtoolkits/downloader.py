@@ -161,8 +161,8 @@ class URLContentDownloader(Toolkit):
         self.content_cache = {} if enable_caching else None
 
         # Register methods
-        self.register(self.download_url_content)
-        self.register(self.download_file)
+        self.register(self.access_website_content)
+        self.register(self.get_file_from_url)
         self.register(self.download_multiple_urls)
         self.register(self.get_url_metadata)
         self.register(self.check_url_accessibility)
@@ -172,9 +172,9 @@ class URLContentDownloader(Toolkit):
             f"Max Retries: {self.max_retries}, Timeout: {self.timeout}s"
         )
 
-    def download_url_content(self, url: str, format: str = "auto") -> str:
+    def access_website_content(self, url: str, format: str = "auto") -> str:
         """
-        Download and parse content from a URL with anti-bot bypass.
+        Access, download and parse Website content using URL with anti-bot bypass.
         Automatically detects content type and applies appropriate processing.
 
         Args:
@@ -188,9 +188,9 @@ class URLContentDownloader(Toolkit):
             URLDownloadError: If download fails
             ContentParsingError: If content parsing fails
         """
-        return self.download_file(url, format)
+        return self.get_file_from_url(url, format)
 
-    def download_file(self, url: str, format: str = "auto") -> str:
+    def get_file_from_url(self, url: str, format: str = "auto") -> str:
         """
         Download any file from a URL with smart content processing.
         Uses MarkItDown for HTML content, handles binary files appropriately.
@@ -286,7 +286,7 @@ class URLContentDownloader(Toolkit):
         results = []
         for i, url in enumerate(urls):
             try:
-                content = self.download_url_content(url, format)
+                content = self.access_website_content(url, format)
                 results.append(
                     {"url": url, "success": True, "content": content, "error": None}
                 )
@@ -822,12 +822,12 @@ class URLContentDownloader(Toolkit):
 
 Use this tool to download and parse content from any URL with advanced anti-bot bypass capabilities.
 
-- Use download_url_content to fetch content from a single URL (legacy method, calls download_file).
+- Use access_website_content to fetch content from a single URL.
    Parameters:
       - url (str): The URL to download, e.g., "https://example.com/article"
       - format (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
 
-- Use download_file to fetch any file from a URL with smart content processing.
+- Use get_file_from_url to fetch any file from a URL with smart content processing.
    Parameters:
       - url (str): The URL to download, e.g., "https://example.com/document.pdf"
       - format (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
