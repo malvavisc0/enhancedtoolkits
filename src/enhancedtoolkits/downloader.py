@@ -172,7 +172,7 @@ class URLContentDownloader(Toolkit):
             f"Max Retries: {self.max_retries}, Timeout: {self.timeout}s"
         )
 
-    def access_website_content(self, url: str, format: str = "auto") -> str:
+    def access_website_content(self, url: str, output: str = "auto") -> str:
         """
         Access, download and parse Website content using URL with anti-bot bypass.
         Automatically detects content type and applies appropriate processing.
@@ -188,16 +188,16 @@ class URLContentDownloader(Toolkit):
             URLDownloadError: If download fails
             ContentParsingError: If content parsing fails
         """
-        return self.get_file_from_url(url, format)
+        return self.get_file_from_url(url, output)
 
-    def get_file_from_url(self, url: str, format: str = "auto") -> str:
+    def get_file_from_url(self, url: str, output: str = "auto") -> str:
         """
         Download any file from a URL with smart content processing.
         Uses MarkItDown for HTML content, handles binary files appropriately.
 
         Args:
             url: URL to download file from
-            format: Output format ("auto", "markdown", "text", "html", or "binary")
+            output: Output format ("auto", "markdown", "text", "html", or "binary")
 
         Returns:
             Processed content or file information
@@ -209,7 +209,7 @@ class URLContentDownloader(Toolkit):
         try:
             # Validate inputs
             validated_url = self._validate_url(url)
-            validated_format = self._validate_format(format)
+            validated_format = self._validate_format(output)
 
             log_debug(f"Downloading file from: {validated_url}")
 
