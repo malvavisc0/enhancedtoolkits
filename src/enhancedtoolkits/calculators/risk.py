@@ -10,7 +10,11 @@ from typing import List
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
+from .base import (
+    BaseCalculatorTools,
+    FinancialComputationError,
+    FinancialValidationError,
+)
 
 
 class RiskMetricsCalculatorTools(BaseCalculatorTools):
@@ -20,9 +24,9 @@ class RiskMetricsCalculatorTools(BaseCalculatorTools):
         """Initialize the risk metrics calculator and register all methods."""
         self.add_instructions = True
         self.instructions = RiskMetricsCalculatorTools.get_llm_usage_instructions()
-        
+
         super().__init__(name="risk_metrics_calculator", **kwargs)
-        
+
         # Register all risk metrics methods
         self.register(self.calculate_sharpe_ratio)
         self.register(self.calculate_volatility)

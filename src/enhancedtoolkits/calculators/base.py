@@ -36,7 +36,7 @@ class FinancialComputationError(FinancialCalculationError):
 class BaseCalculatorTools(StrictToolkit):
     """
     Base calculator class providing shared utilities and validation methods.
-    
+
     All specialized calculator classes inherit from this base to ensure
     consistent validation, error handling, and response formatting.
     Each calculator can be used independently as a StrictToolkit.

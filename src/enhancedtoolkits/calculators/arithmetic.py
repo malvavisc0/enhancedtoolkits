@@ -14,7 +14,11 @@ from typing import List
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
+from .base import (
+    BaseCalculatorTools,
+    FinancialComputationError,
+    FinancialValidationError,
+)
 
 
 class ArithmeticCalculatorTools(BaseCalculatorTools):
@@ -24,9 +28,9 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """Initialize the arithmetic calculator and register all methods."""
         self.add_instructions = True
         self.instructions = ArithmeticCalculatorTools.get_llm_usage_instructions()
-        
+
         super().__init__(name="basic_arithmetic_calculator", **kwargs)
-        
+
         # Register all arithmetic methods
         self.register(self.add)
         self.register(self.subtract)

@@ -349,29 +349,44 @@ class EnhancedFilesTools(StrictToolkit):
     ):
         """Atomic edit operation."""
         current_line = 0
+        lines_skipped = 0
+
         for line in src_file:
             if current_line < offset:
+                # Write lines before the edit point
                 tmp_file.write(line)
             elif current_line == offset:
+                # Write new lines at the edit point
                 for new_line in new_lines:
                     tmp_file.write(new_line + "\n")
-                # Skip 'length' lines
-                for _ in range(length - 1):
-                    next(src_file, None)
-                    current_line += 1
-            elif current_line >= offset + length:
+                # Skip this line (it's being replaced)
+                lines_skipped = 1
+            elif lines_skipped < length:
+                # Skip lines that are being replaced
+                lines_skipped += 1
+            else:
+                # Write lines after the edit range
                 tmp_file.write(line)
             current_line += 1
 
     def _atomic_insert(self, src_file, tmp_file, new_lines: List[str], offset: int):
         """Atomic insert operation."""
         current_line = 0
+        inserted = False
+
         for line in src_file:
-            if current_line == offset:
+            if current_line == offset and not inserted:
+                # Insert new lines at the specified offset
                 for new_line in new_lines:
                     tmp_file.write(new_line + "\n")
+                inserted = True
             tmp_file.write(line)
             current_line += 1
+
+        # Handle insertion at end of file
+        if not inserted and current_line == offset:
+            for new_line in new_lines:
+                tmp_file.write(new_line + "\n")
 
     def _atomic_delete(self, src_file, tmp_file, offset: int, length: int):
         """Atomic delete operation."""
@@ -389,7 +404,7 @@ class EnhancedFilesTools(StrictToolkit):
                 and not file_path.is_symlink()
                 and file_path.stat().st_size <= self.MAX_FILE_SIZE
             )
-        except:
+        except (OSError, PermissionError, FileNotFoundError):
             return False
 
     def _safe_json(self, data: Dict[str, Any]) -> str:
@@ -402,7 +417,15 @@ class EnhancedFilesTools(StrictToolkit):
 
     def _error_response(self, operation: str, file_name: str, exc: Exception) -> str:
         """Secure error response without information disclosure."""
-        error_msg = "Operation failed" if isinstance(exc, FileSecurityError) else str(exc)
+        if isinstance(exc, FileSecurityError):
+            error_msg = f"Security validation failed: {str(exc)}"
+        elif isinstance(exc, FileOperationError):
+            error_msg = f"File operation failed: {str(exc)}"
+        elif isinstance(exc, (OSError, PermissionError)):
+            error_msg = "File access denied or not found"
+        else:
+            error_msg = f"Unexpected error: {str(exc)}"
+
         log_error(f"{operation} failed for {file_name}: {exc}")
         return self._safe_json(
             {
@@ -476,6 +499,7 @@ This toolkit provides robust, secure file operations for LLMs. All operations ar
 - Blocked patterns: "..", "~", "$", "`", ";", "|", "&", "<", ">"
 - All operations are atomic and errors are returned in a secure, non-leaky format.
 - All file operations are subject to comprehensive validation and security checks.
+
 </file_tools_instructions>
 """
         return instructions

@@ -49,6 +49,17 @@ class CognitiveBias(Enum):
     FRAMING_EFFECT = "framing_effect"
 
 
+# Major biases that require iterative correction
+MAJOR_THINKING_BIASES = {
+    "confirmation_bias",
+    "anchoring_bias",
+    "overconfidence_bias",
+    "availability_heuristic",
+    "hindsight_bias",
+    "framing_effect",
+}
+
+
 class EnhancedThinkingTools(StrictToolkit):
     """
     Enhanced Thinking Tools
@@ -63,7 +74,6 @@ class EnhancedThinkingTools(StrictToolkit):
 
     def __init__(
         self,
-        think: bool = True,
         enable_bias_detection: bool = True,
         enable_quality_assessment: bool = True,
         thinking_depth: int = 3,
@@ -72,42 +82,89 @@ class EnhancedThinkingTools(StrictToolkit):
     ):
         # Enhanced instructions that build on Agno pattern
         self.add_instructions = add_instructions
-        self.instructions = dedent(
-            """\
-                <thinking_instructions>
-                ## Using the Enhanced Thinking Tool
+        self.instructions = """
+<thinking_instructions>
+## Using the Thinking Tools
 
-                The Enhanced Thinking Tool is your advanced cognitive scratchpad for developing, organizing, and improving your thought process before taking action or responding to the user. It produces natural language output with reasoning depth, cognitive insights, and actionable suggestions.
+The Thinking Tools provide two complementary approaches for developing, organizing, and improving your thought process with cognitive awareness and quality assessment. Both tools produce natural language output with reasoning depth, cognitive insights, and actionable suggestions.
 
-                ### What this tool enables you to do
+### Available Tools
 
-                - Apply structured thinking approaches: analysis, synthesis, evaluation, reflection, planning, problem solving, creative, and critical thinking
-                - Integrate specific context and available evidence into your thoughts
-                - Detect and report potential cognitive biases, helping you actively mitigate them
-                - Build logical chains of reasoning toward problem resolution
-                - Reflect on the quality, clarity, and depth of your thinking process
-                - Receive feedback and suggestions to improve your thought quality with each step
+**think**: Single-pass thinking with bias detection and quality assessment
+- Use for: Initial analysis, quick insights, structured reasoning on straightforward problems
+- Features: Cognitive bias detection, quality scoring, session tracking, thinking suggestions
+- Best for: When you need immediate structured analysis without iterative refinement
 
-                ### Best Practices
+**iterative_think**: Multi-iteration thinking with bias correction and quality improvement
+- Use for: Complex problems requiring refinement, bias mitigation, thought evolution
+- Features: Automatic bias correction, quality improvement cycles, convergence detection
+- Best for: When initial thinking may contain biases or when deeper analysis is needed
 
-                - Select the most appropriate thinking type for your current cognitive task
-                - Explicitly connect your thoughts to the specific problem, context, and supporting evidence
-                - Express your confidence level in natural language (e.g., "quite confident", "uncertain")—avoid numeric confidence scores
-                - Remain vigilant for cognitive biases; the tool will also highlight any it detects in your reasoning
-                - Use the tool iteratively to develop, refine, and deepen your insights
-                - When using another tool (such as a search, data, or external API tool), incorporate its results into your thinking and final answer if they add value or relevant context
-                - Reflect on your thinking process and seek opportunities for improvement
+### Tool Parameters
 
-                ### Example Usage
+**thinking_type** (choose the most appropriate):
+- analysis: Break down and examine components, factors, relationships
+- synthesis: Combine and integrate information from multiple sources
+- evaluation: Assess, judge, compare options or approaches
+- reflection: Think about thinking, consider approaches and meta-cognition
+- planning: Develop strategies, next steps, action plans
+- problem_solving: Focus on solutions, resolution approaches
+- creative: Generate innovative, alternative, or novel approaches
+- critical: Question assumptions, challenge ideas, verify claims
 
-                - Break down a complex problem before proposing a solution
-                - Synthesize information from multiple sources and evidence
-                - Evaluate the strengths and weaknesses of different approaches
-                - Plan next steps or strategies based on your analysis
-                - Reflect on your reasoning to identify gaps or biases
-                </thinking_instructions>
+**context**: Problem context, situation details, or background information
+**evidence**: Supporting data points, information sources, or factual basis
+**confidence**: Natural language confidence expression (e.g., "quite confident", "uncertain", "moderately sure")
+**max_iterations**: Maximum refinement cycles for iterative_think (default: 3)
+
+### Cognitive Bias Detection
+
+Automatically detects and reports 6 major cognitive biases:
+- **Confirmation bias**: Favoring information that supports existing beliefs
+- **Anchoring bias**: Over-relying on initial information or first impressions
+- **Availability heuristic**: Overweighting recent or easily recalled examples
+- **Overconfidence bias**: Expressing more certainty than evidence warrants
+- **Hindsight bias**: Believing outcomes were more predictable than they were
+- **Framing effect**: Being influenced by how information is presented
+
+### Quality Assessment
+
+Evaluates thinking across 5 key dimensions:
+- **Depth**: Thoroughness and analytical rigor of reasoning
+- **Clarity**: Structure and coherence of thought expression
+- **Evidence integration**: How well supporting evidence is incorporated
+- **Context relevance**: Alignment with the specific problem context
+- **Type appropriateness**: How well the thinking type matches the content
+
+### Session Management
+
+- Maintains thinking history and patterns across your session
+- Tracks thinking type usage and bias detection trends
+- Provides evolution insights showing your reasoning development
+- Suggests complementary thinking approaches based on your patterns
+
+### Best Practices
+
+- **Tool Selection**: Use `think` for initial analysis, `iterative_think` for complex or biased reasoning
+- **Thinking Types**: Select the most appropriate type for your cognitive task
+- **Context Integration**: Explicitly connect thoughts to specific problems and supporting evidence
+- **Confidence Expression**: Use natural language confidence levels, avoid numeric scores
+- **Bias Awareness**: Remain vigilant for cognitive biases; the tools will highlight detected biases
+- **Iterative Development**: Use tools multiple times to develop, refine, and deepen insights
+- **Tool Integration**: Incorporate results from other tools (search, data, APIs) into your thinking
+- **Meta-Reflection**: Regularly reflect on your thinking process and seek improvement opportunities
+
+### Example Usage Scenarios
+
+- **Complex Problem Analysis**: Use `iterative_think` with analysis type to break down multi-faceted issues
+- **Information Synthesis**: Use `think` with synthesis type to combine insights from multiple sources
+- **Decision Evaluation**: Use `think` with evaluation type to assess different options
+- **Strategy Planning**: Use `think` with planning type to develop action plans
+- **Bias Mitigation**: Use `iterative_think` when you suspect your reasoning may contain biases
+- **Quality Improvement**: Use `iterative_think` to refine and enhance initial thoughts
+
+</thinking_instructions>
                 """
-        )
 
         # Configuration
         self.enable_bias_detection = enable_bias_detection
@@ -117,19 +174,16 @@ class EnhancedThinkingTools(StrictToolkit):
         # Bias detection patterns
         self.bias_patterns = self._initialize_bias_patterns()
 
-        # Register tools
-        tools = []
-        if think:
-            tools.append(self.iterative_think)
-            tools.append(self.think)
-
         super().__init__(
             name="enhanced_thinking_tools",
             instructions=self.instructions,
             add_instructions=add_instructions,
-            tools=tools,
             **kwargs,
         )
+
+        # Register tools
+        self.register(self.think)
+        self.register(self.iterative_think)
 
     def iterative_think(
         self,
@@ -156,14 +210,6 @@ class EnhancedThinkingTools(StrictToolkit):
         Returns:
             Natural language summary of the iterative thinking process and final thought
         """
-        major_biases = {
-            "confirmation_bias",
-            "anchoring_bias",
-            "overconfidence_bias",
-            "availability_heuristic",
-            "hindsight_bias",
-            "framing_effect",
-        }
         min_quality = 0.6  # Minimum acceptable overall quality score
         history = []
         current_thought = thought
@@ -174,6 +220,7 @@ class EnhancedThinkingTools(StrictToolkit):
         iteration = 0
         last_biases = []
         last_quality = 1.0
+        previous_bias_sets = []  # Track bias history to detect improvement
 
         while iteration < max_iterations:
             # Step 1: Generate enhanced thought
@@ -185,8 +232,21 @@ class EnhancedThinkingTools(StrictToolkit):
                 current_evidence,
                 current_confidence,
             )
-            # Retrieve last enhanced thought from session state
-            enhanced_thought = agent.session_state["enhanced_thoughts"][-1]
+
+            # Safely retrieve last enhanced thought from session state
+            if (
+                not hasattr(agent, "session_state")
+                or agent.session_state is None
+                or "enhanced_thoughts" not in agent.session_state
+                or not agent.session_state["enhanced_thoughts"]
+            ):
+                # Fallback if session state is not properly initialized
+                enhanced_thought = {
+                    "detected_biases": [],
+                    "quality_assessment": {"overall_score": 0.8},
+                }
+            else:
+                enhanced_thought = agent.session_state["enhanced_thoughts"][-1]
             detected_biases = enhanced_thought.get("detected_biases", [])
             quality_assessment = enhanced_thought.get("quality_assessment", {})
             overall_quality = quality_assessment.get("overall_score", 1.0)
@@ -199,7 +259,16 @@ class EnhancedThinkingTools(StrictToolkit):
                 }
             )
             # Step 2: Check for major bias or low quality
-            major_found = [b for b in detected_biases if b in major_biases]
+            major_found = [b for b in detected_biases if b in MAJOR_THINKING_BIASES]
+
+            # Check if we're making progress (fewer biases or different biases)
+            if iteration > 0:
+                bias_set = set(major_found)
+                if bias_set in previous_bias_sets:
+                    # Same biases detected again, stop to avoid infinite loop
+                    break
+                previous_bias_sets.append(bias_set)
+
             if not major_found and overall_quality >= min_quality:
                 break
             # Step 3: Reframe thought to address bias/quality
@@ -242,6 +311,10 @@ class EnhancedThinkingTools(StrictToolkit):
         if (last_biases or last_quality < min_quality) and iteration == max_iterations:
             output_parts.append(
                 "\nMaximum iterations reached. Some bias or quality issues may remain, and further review is recommended."
+            )
+        elif last_biases and len(previous_bias_sets) > 1:
+            output_parts.append(
+                "\nThinking refinement reached a stable state. Further manual review may be needed."
             )
         else:
             output_parts.append(

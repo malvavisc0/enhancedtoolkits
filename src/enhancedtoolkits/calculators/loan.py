@@ -8,7 +8,11 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
+from .base import (
+    BaseCalculatorTools,
+    FinancialComputationError,
+    FinancialValidationError,
+)
 
 
 class LoanCalculatorTools(BaseCalculatorTools):
@@ -18,9 +22,9 @@ class LoanCalculatorTools(BaseCalculatorTools):
         """Initialize the loan calculator and register all methods."""
         self.add_instructions = True
         self.instructions = LoanCalculatorTools.get_llm_usage_instructions()
-        
+
         super().__init__(name="loan_calculator", **kwargs)
-        
+
         # Register all loan methods
         self.register(self.calculate_loan_payment)
         self.register(self.generate_amortization_schedule)

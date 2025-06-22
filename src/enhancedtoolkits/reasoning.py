@@ -197,7 +197,7 @@ class EnhancedReasoningTools(StrictToolkit):
     ) -> str:
         """
         Improved iterative reasoning with explicit bias feedback integration and stepwise narration.
-        
+
         Args:
             agent_or_team: The agent or team requesting reasoning
             problem: The problem or question to analyze
@@ -205,13 +205,13 @@ class EnhancedReasoningTools(StrictToolkit):
             evidence: Supporting evidence or data points
             context: Additional context for the problem
             max_iterations: Maximum number of iterations to attempt
-            
+
         Returns:
             Iterative reasoning analysis with bias detection and correction
         """
         try:
             log_debug(f"Starting iterative reasoning: {problem[:50]}...")
-            
+
             history = []
             current_answer = None
             current_problem = problem
@@ -236,7 +236,7 @@ class EnhancedReasoningTools(StrictToolkit):
                         f"Add counterarguments, alternative perspectives, or express more uncertainty as needed. "
                         f"Narrate what you changed and why."
                     )
-                
+
                 # Use a dedicated method to generate the answer from the prompt
                 answer = self._generate_reasoning_step(
                     agent_or_team,
@@ -245,14 +245,14 @@ class EnhancedReasoningTools(StrictToolkit):
                     current_evidence,
                     current_context,
                 )
-                
+
                 # Step 2: Detect biases in the generated answer
                 detected_biases = []
                 if self.enable_bias_detection:
                     detected_biases = self._detect_biases_in_content(
                         answer, current_evidence or [], current_context
                     )
-                
+
                 history.append(
                     {
                         "iteration": iteration + 1,
@@ -260,10 +260,10 @@ class EnhancedReasoningTools(StrictToolkit):
                         "biases": detected_biases,
                     }
                 )
-                
+
                 # Step 3: Check for major bias and improvement
                 major_found = [b for b in detected_biases if b in MAJOR_BIASES]
-                
+
                 # Check if we're making progress (fewer biases or different biases)
                 if iteration > 0:
                     bias_set = set(major_found)
@@ -271,10 +271,10 @@ class EnhancedReasoningTools(StrictToolkit):
                         # Same biases detected again, stop to avoid infinite loop
                         break
                     previous_bias_sets.append(bias_set)
-                
+
                 if not major_found:
                     break
-                    
+
                 last_biases = major_found
                 current_answer = answer
                 iteration += 1
@@ -305,7 +305,7 @@ class EnhancedReasoningTools(StrictToolkit):
                 )
 
             return "\n\n".join(output_parts)
-            
+
         except Exception as e:
             log_error(f"Error in iterative reasoning: {e}")
             return f"I encountered an issue during iterative reasoning: {e}. Let me try a simpler approach."
@@ -642,7 +642,10 @@ class EnhancedReasoningTools(StrictToolkit):
 
     def _initialize_session_state(self, agent_or_team: Any) -> None:
         """Initialize session state for reasoning tracking."""
-        if not hasattr(agent_or_team, "session_state") or agent_or_team.session_state is None:
+        if (
+            not hasattr(agent_or_team, "session_state")
+            or agent_or_team.session_state is None
+        ):
             agent_or_team.session_state = {}
 
         if "reasoning_steps" not in agent_or_team.session_state:
@@ -978,7 +981,7 @@ class EnhancedReasoningTools(StrictToolkit):
 
         explanations = []
         content_length = len(content)
-        
+
         for bias in detected_biases:
             if bias == "confirmation_bias":
                 explanations.append(
@@ -1005,7 +1008,7 @@ class EnhancedReasoningTools(StrictToolkit):
             result = ". Additionally, ".join(explanations) + "."
         else:
             result = explanations[0] + "."
-            
+
         result += f"\n\nTo improve reasoning quality in this {content_length}-character analysis, consider actively seeking contradictory evidence, questioning initial assumptions, and being more explicit about uncertainties."
 
         return result
@@ -1020,9 +1023,9 @@ class EnhancedReasoningTools(StrictToolkit):
 <reasoning_tools_instructions>
 *** Universal Reasoning Tools Instructions ***
 
-These tools enable advanced reasoning, bias detection, and session management for complex problem solving. They facilitate structured, multi-modal, and human-like reasoning with step tracking and bias awareness.
+These tools provide you with advanced reasoning capabilities, the ability to detect biases, and manage sessions for solving complex problems. They support structured, multi-modal, and human-like reasoning while allowing you to track steps and be aware of biases.
 
-**Available Tools**:
+### Functions Tools
 
 1. **reason**: Apply structured reasoning to a problem.
    - Parameters:

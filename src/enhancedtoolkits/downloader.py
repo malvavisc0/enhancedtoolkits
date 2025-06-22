@@ -823,52 +823,59 @@ class URLContentDownloader(StrictToolkit):
 
 Use this tool to download and parse content from any URL with advanced anti-bot bypass capabilities.
 
-- Use access_website_content to fetch content from a single URL.
-   Parameters:
-      - url (str): The URL to download, e.g., "https://example.com/article"
-      - format (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+### Functions Tools
 
-- Use get_file_from_url to fetch any file from a URL with smart content processing.
-   Parameters:
-      - url (str): The URL to download, e.g., "https://example.com/document.pdf"
-      - format (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+1. **access_website_content**: Fetch content from a single URL.
+     - Parameters:
+       - `url` (str): The URL to download, e.g., "https://example.com/article"
+       - `format` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
 
-- Use download_multiple_urls to fetch content from multiple URLs in batch.
-   Parameters:
-      - urls (list): List of URLs to download, e.g., ["https://site1.com", "https://site2.com"]
-      - format (str, optional): Output format for all URLs - "auto" (default), "markdown", "text", "html", or "binary"
+2. **get_file_from_url**: Fetch any file from a URL with smart content processing.
+     - Parameters:
+       - `url` (str): The URL to download, e.g., "https://example.com/document.pdf"
+       - `format` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
 
-- Use get_url_metadata to extract metadata without downloading full content.
-   Parameters:
-      - url (str): The URL to analyze, e.g., "https://example.com"
+3. **download_multiple_urls**: Fetch content from multiple URLs in batch.
+     - Parameters:
+       - `urls` (list): List of URLs to download, e.g., ["https://site1.com", "https://site2.com"]
+       - `format` (str, optional): Output format for all URLs - "auto" (default), "markdown", "text", "html", or "binary"
 
-- Use check_url_accessibility to test if a URL is accessible.
-   Parameters:
-      - url (str): The URL to check, e.g., "https://example.com"
+4. **get_url_metadata**: Extract metadata without downloading full content.
+     - Parameters:
+       - `url` (str): The URL to analyze, e.g., "https://example.com"
 
-Features:
-- Universal file downloading (HTML, PDF, Word docs, images, etc.)
-- Smart content processing: MarkItDown for HTML content, binary handling for files
-- Automatic BYPARR integration for anti-bot bypass
-- User-agent rotation and header spoofing
-- Retry logic with exponential backoff
-- Support for multiple output formats with auto-detection
-- Comprehensive error handling
+5. **check_url_accessibility**: Test if a URL is accessible.
+     - Parameters:
+       - `url` (str): The URL to check, e.g., "https://example.com"
 
-Format Options:
-- "auto": Automatically detects best format (markdown for HTML, binary info for files)
-- "markdown": Converts HTML to markdown using MarkItDown
-- "text": Plain text extraction
-- "html": Raw HTML content
-- "binary": File information for binary files, MarkItDown processing when possible
+### Features
 
-The tool automatically handles:
-- Any file type (HTML, PDF, Word, Excel, images, etc.)
-- Anti-bot detection and bypass
-- Content parsing and formatting based on file type
-- Error recovery and retries
-- Timeout management
-- Binary file processing with MarkItDown integration
+- Universal file downloading support for various formats including HTML, PDF, Word documents, images, etc.
+- Smart content processing: Uses MarkItDown for HTML and binary handling for files.
+- Automatic BYPARR integration for anti-bot bypass capabilities.
+- User-agent rotation and header spoofing to avoid detection.
+- Robust retry logic with exponential backoff to handle transient errors.
+- Multiple output format support with automatic detection based on content type.
+- Comprehensive error handling mechanisms.
+
+### Format Options
+
+- `auto`: Automatically detects the best format (markdown for HTML, binary info for files).
+- `markdown`: Converts HTML to markdown using MarkItDown.
+- `text`: Extracts plain text from content.
+- `html`: Returns raw HTML content.
+- `binary`: Provides file information and processes binary data using MarkItDown when possible.
+
+### Automatic Handling
+
+The tool automatically manages:
+- Any type of file including HTML, PDF, Word documents, Excel spreadsheets, images, etc.
+- Anti-bot detection and bypass mechanisms.
+- Content parsing and formatting based on the detected file type.
+- Error recovery strategies and retries.
+- Timeout management for long-running requests.
+- Integration with MarkItDown for enhanced binary processing.
+
 </content_downloader_tools_instructions>
 """
         return instructions

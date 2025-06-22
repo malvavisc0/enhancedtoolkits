@@ -6,7 +6,6 @@ specialized classes for better maintainability and code organization.
 """
 
 from .arithmetic import ArithmeticCalculatorTools
-
 from .bond import BondCalculatorTools
 from .business import BusinessAnalysisCalculatorTools
 from .depreciation import DepreciationCalculatorTools

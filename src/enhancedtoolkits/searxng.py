@@ -1004,52 +1004,64 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         instructions = """
 <internet_search_tools_instructions>
-*** Enhanced SearxNG Search Tools Instructions ***
+*** Web Search Tools Instructions using SearxNG ***
 
-By leveraging the following set of tools, you can perform web, news, image, and video searches, as well as fetch content from URLs and download files (if enabled). These tools empower you to deliver accurate, real-time search results and comprehensive content extraction with ease. Here are the detailed instructions for using the set of tools:
+These tools enable you to perform various web searches and manage the results. They provide accurate, real-time information with improved file handling capabilities.
 
-- Use search_web to perform a general web search.
-   Parameters:
-      - query (str): The search query, e.g., "climate change".
-      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+**General Instructions:**
+- All methods return a dictionary with 'results' (list) and 'status' (str) keys.
+- Each result is a dictionary containing relevant data based on the search type.
+- The 'file_type' field will be present if supported file types are detected in URLs.
+- If errors occur, an error message will be returned under the 'error' key.
 
-- Use search_news to search for news articles.
-   Parameters:
-      - query (str): The search query, e.g., "AI regulation".
-      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+### Functions Tools
 
-- Use search_images to search for images.
-   Parameters:
-      - query (str): The search query, e.g., "Eiffel Tower".
-      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+1. **search_web**: Perform a web search.
+   - Parameters:
+     - `query` (str): Search term or phrase, e.g., "climate change impacts".
+     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
+   - *Example:* `search_web("python best practices", max_results=7)`
 
-- Use search_videos to search for videos.
-   Parameters:
-      - query (str): The search query, e.g., "machine learning tutorial".
-      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+2. **search_news**: Search for news articles.
+   - Parameters:
+     - `query` (str): Search term or phrase, e.g., "AI in healthcare".
+     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
+   - *Example:* `search_news("space exploration", max_results=5)`
 
-- Use search_category to search in a specific category.
-   Parameters:
-      - query (str): The search query, e.g., "quantum computing".
-      - category (str): One of: general, news, images, videos, music, files, science, social.
-      - max_results (int, optional): Maximum number of results (default: 10, range: 1-30).
+3. **search_media**: Search for images and videos with a single method.
+   - Parameters:
+     - `query` (str): Search term or phrase, e.g., "coffee shop interior".
+     - `media_type` (str): Either "images" or "videos".
+     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
+   - *Examples:*
+     - Images: `search_media("dog breeds", media_type="images")`
+     - Videos: `search_media("language learning", media_type="videos", max_results=8)`
 
+4. **search_category**: Search within a specific category.
+   - Parameters:
+     - `query` (str): Search term or phrase, e.g., "quantum computing advancements".
+     - `category` (str): One of: general, news, images, videos, music, files, science, social, or it.
+     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
+   - *Example:* `search_category("cybersecurity trends", category="it")`
 
-Enhanced File Processing Features:
-- Automatic file type detection for PDF, TXT, and Markdown files in search results
-- PDF files are automatically processed using MarkItDown to extract readable content
-- TXT files are downloaded and returned with proper encoding detection
-- Markdown files are downloaded and returned with preserved formatting
-- Search results include 'file_type' field when files are detected
-- Anti-bot bypass techniques are applied for file downloads
-- File size limits and timeout protection are enforced
+**File Processing Features:**
+- Automatically detects PDF, TXT, and Markdown files in search results.
+- Extracts readable content from PDFs using MarkItDown.
+- Preserves formatting when downloading Markdown files.
+- Handles TXT file downloads with proper encoding detection.
 
-Notes:
-- File download capabilities require both content fetching and file downloads to be enabled.
-- The max_results parameter is always optional and defaults to the toolkit's configuration.
-- The category parameter for search_category must be one of: general, news, images, videos, music, files, science, social.
+**Configuration Options:**
+- Max file download size (default: 50MB)
+- Download timeout protection
+- Enable/disable URL content fetching and file downloads
+
+**Additional Notes:**
+- Ensure the category parameter in `search_category` matches one of the accepted values.
 - File processing is automatically applied when supported file types are detected in URLs.
-- Large files are subject to size limits (configurable, default 50MB) and download timeouts.
+
+**Error Handling:**
+If any errors occur during execution (e.g., invalid parameters, connectivity issues), appropriate error messages will be returned under the 'error' key to guide troubleshooting.
+
 </internet_search_tools_instructions>
 """
         return instructions

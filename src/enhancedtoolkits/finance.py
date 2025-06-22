@@ -105,7 +105,12 @@ class EnhancedYFinanceTools(StrictToolkit):
         self.add_instructions = True
         self.instructions = EnhancedYFinanceTools.get_llm_usage_instructions()
 
-        super().__init__(name="enhanced_yfinance_tools", **kwargs)
+        super().__init__(
+            name="enhanced_yfinance_tools",
+            instructions=self.instructions,
+            add_instructions=True,
+            **kwargs,
+        )
 
         # Configuration
         self.enable_caching = enable_caching
@@ -186,7 +191,7 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             # Calculate day change if possible
             prev_close = info.get("previousClose")
-            if prev_close and current_price:
+            if prev_close and current_price and prev_close != 0:
                 day_change = current_price - prev_close
                 day_change_percent = (day_change / prev_close) * 100
                 result.update(
@@ -1053,75 +1058,97 @@ class EnhancedYFinanceTools(StrictToolkit):
         """
         instructions = """
 <yahoo_finance_tools_instructions>
-*** Yahoo Finance Data Tools Instructions ***
+*** Yahoo Finance Tools - LLM Usage Guide ***
 
-By leveraging the following set of tools, you can instantly access up-to-date stock prices, company fundamentals, financial statements, news, analyst insights, and historical market data for any publicly traded company. These tools empower you to deliver accurate, real-time financial intelligence and comprehensive market analysis with ease. Here are the detailed instructions for using the set of tools:
+Use these tools to retrieve financial data for stocks. Each tool returns JSON data that you can analyze and present to users.
 
-- Use get_current_price to retrieve the current price of a stock.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "AAPL".
+### When to Use Each Tool
 
-- Use get_company_information to retrieve comprehensive company information.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "GOOGL".
+**For current stock prices and basic info:**
+- get_current_price: When user asks for current/latest price, today's performance, or market status
+- get_company_information: When user asks about company details, business description, financial metrics, or company profile
 
-- Use get_news_for_ticker to retrieve the latest news articles for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "MSFT".
-      - max_articles (int, optional): Maximum number of articles to return (default: 10, range: 1-50).
+**For financial analysis:**
+- get_income_statement: When analyzing profitability, revenue, expenses, or annual financial performance
+- get_quarterly_financials: When user wants recent quarterly results or quarterly trends
+- get_balance_sheet: When analyzing company assets, liabilities, debt, or financial position
+- get_quarterly_balance_sheet: When user wants recent quarterly balance sheet data
+- get_cashflow: When analyzing cash generation, operating cash flow, or annual cash trends
+- get_quarterly_cashflow: When user wants recent quarterly cash flow data
 
-- Use get_earnings_history to retrieve the earnings history for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "TSLA".
+**For market intelligence:**
+- get_news_for_ticker: When user asks about recent news, events, or what's happening with a stock
+- get_earnings_history: When analyzing earnings trends, EPS history, or earnings surprises
+- get_recommendations: When user asks about analyst opinions, price targets, or buy/sell ratings
+- get_sustainability_scores: When user asks about ESG ratings, environmental impact, or sustainability
 
-- Use get_income_statement to retrieve the income statement for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "AMZN".
+**For ownership and trading data:**
+- get_major_holders: When user asks about major shareholders, insider ownership, or who owns the stock
+- get_institutional_holders: When analyzing institutional ownership or fund holdings
+- get_price_history: When user wants charts, historical prices, or technical analysis data
 
-- Use get_quarterly_financials to retrieve quarterly financials for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "NFLX".
+### Tool Parameters
 
-- Use get_balance_sheet to retrieve the balance sheet for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "META".
+**All tools require:**
+- ticker (str): Stock symbol like "AAPL", "GOOGL", "TSLA" (automatically converted to uppercase)
 
-- Use get_quarterly_balance_sheet to retrieve the quarterly balance sheet for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "NVDA".
+**Special parameters:**
+- get_news_for_ticker: max_articles (int, 1-50, default 10) - how many news articles to return
+- get_price_history:
+  - period (str): "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"
+  - interval (str): "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"
 
-- Use get_cashflow to retrieve the annual cash flow statement for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "BABA".
+### Common Usage Patterns
 
-- Use get_quarterly_cashflow to retrieve the quarterly cash flow statement for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "ORCL".
+**User asks "How is AAPL doing?"**
+→ Use get_current_price for price, then get_news_for_ticker for recent developments
 
-- Use get_major_holders to retrieve the list of major shareholders for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "INTC".
+**User asks "Tell me about Microsoft"**
+→ Use get_company_information for comprehensive company profile
 
-- Use get_institutional_holders to retrieve the list of institutional shareholders for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "CSCO".
+**User asks "Show me TSLA's financials"**
+→ Use get_income_statement, get_balance_sheet, and get_cashflow for complete picture
 
-- Use get_recommendations to retrieve stock recommendations for a ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "ADBE".
+**User asks "What do analysts think about NVDA?"**
+→ Use get_recommendations for analyst ratings and price targets
 
-- Use get_sustainability_scores to retrieve sustainability (ESG) scores for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "CRM".
+**User asks "AMZN news today"**
+→ Use get_news_for_ticker with max_articles=5 for recent news
 
-- Use get_price_history to retrieve historical price data for a stock ticker.
-   Parameters:
-      - ticker (str): The stock ticker symbol, e.g., "AAPL".
-      - period (str): The time period, e.g., "1y", "2y", "1mo", "max".
-      - interval (str): The data interval, e.g., "1d", "1wk", "1mo".
-   Notes:
-      - Valid periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max.
-      - Valid intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo.
+**User asks "GOOGL stock chart"**
+→ Use get_price_history with appropriate period (default "1y" and "1d")
+
+### Data Interpretation
+
+**Price data includes:**
+- Current price, daily change, percentage change, currency, market state
+
+**Company information includes:**
+- Business description, sector, industry, financial ratios, market cap, employee count
+
+**Financial statements include:**
+- Income: Revenue, expenses, profit margins, EPS
+- Balance: Assets, liabilities, debt levels, cash position
+- Cash flow: Operating, investing, financing cash flows
+
+**News data includes:**
+- Article titles, summaries, publication dates, source names
+
+### Error Handling
+
+If a tool returns an error or no data:
+- Inform user that data is not available for that ticker
+- Suggest checking the ticker symbol spelling
+- For international stocks, mention they may need exchange suffix (e.g., "ASML.AS")
+
+### Response Guidelines
+
+- Always mention the data source (Yahoo Finance) and timestamp when presenting financial data
+- For price data, include currency and market state context
+- When showing financial metrics, explain what they mean in simple terms
+- For news, summarize key points and mention publication dates
+- If data seems outdated, mention the timestamp to user
+
 </yahoo_finance_tools_instructions>
 """
         return instructions
