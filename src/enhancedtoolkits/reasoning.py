@@ -42,6 +42,15 @@ class NextAction(Enum):
     FINAL_ANSWER = "final_answer"
 
 
+# Major biases that require iterative correction
+MAJOR_BIASES = {
+    "confirmation_bias",
+    "anchoring_bias",
+    "overconfidence_bias",
+    "availability_heuristic",
+}
+
+
 class ReasoningStep:
     """Represents a single reasoning step with metadata."""
 
@@ -168,11 +177,12 @@ class EnhancedReasoningTools(StrictToolkit):
         }
 
         # Register tools
-        # Register iterative_reason as the default reasoning tool
-        self.register(self.iterative_reason)
         self.register(self.reason)
         self.register(self.multi_modal_reason)
         self.register(self.analyze_reasoning)
+        self.register(self.iterative_reason)
+        self.register(self.get_reasoning_history)
+        self.register(self.clear_reasoning_session)
         if enable_bias_detection:
             self.register(self.detect_biases)
 
@@ -187,87 +197,118 @@ class EnhancedReasoningTools(StrictToolkit):
     ) -> str:
         """
         Improved iterative reasoning with explicit bias feedback integration and stepwise narration.
+        
+        Args:
+            agent_or_team: The agent or team requesting reasoning
+            problem: The problem or question to analyze
+            reasoning_type: Type of reasoning to apply
+            evidence: Supporting evidence or data points
+            context: Additional context for the problem
+            max_iterations: Maximum number of iterations to attempt
+            
+        Returns:
+            Iterative reasoning analysis with bias detection and correction
         """
-        major_biases = {
-            "confirmation_bias",
-            "anchoring_bias",
-            "overconfidence_bias",
-            "availability_heuristic",
-        }
-        history = []
-        current_answer = None
-        current_problem = problem
-        current_reasoning_type = reasoning_type
-        current_evidence = evidence
-        current_context = context
-        iteration = 0
-        last_biases = []
+        try:
+            log_debug(f"Starting iterative reasoning: {problem[:50]}...")
+            
+            history = []
+            current_answer = None
+            current_problem = problem
+            current_reasoning_type = reasoning_type
+            current_evidence = evidence
+            current_context = context
+            iteration = 0
+            last_biases = []
+            previous_bias_sets = []  # Track bias history to detect improvement
 
-        while iteration < max_iterations:
-            # Step 1: Generate answer (pass previous answer and bias feedback if not first iteration)
-            if iteration == 0:
-                prompt = current_problem
-            else:
-                bias_names = [b.replace("_", " ").title() for b in last_biases]
-                bias_text = ", ".join(bias_names)
-                prompt = (
-                    f"Previous answer:\n{current_answer}\n\n"
-                    f"Bias detected: {bias_text}.\n"
-                    f"Revise your answer by explicitly addressing this bias. "
-                    f"Add counterarguments, alternative perspectives, or express more uncertainty as needed. "
-                    f"Narrate what you changed and why."
+            while iteration < max_iterations:
+                # Step 1: Generate answer (pass previous answer and bias feedback if not first iteration)
+                if iteration == 0:
+                    prompt = current_problem
+                else:
+                    bias_names = [b.replace("_", " ").title() for b in last_biases]
+                    bias_text = ", ".join(bias_names)
+                    prompt = (
+                        f"Previous answer:\n{current_answer}\n\n"
+                        f"Bias detected: {bias_text}.\n"
+                        f"Revise your answer by explicitly addressing this bias. "
+                        f"Add counterarguments, alternative perspectives, or express more uncertainty as needed. "
+                        f"Narrate what you changed and why."
+                    )
+                
+                # Use a dedicated method to generate the answer from the prompt
+                answer = self._generate_reasoning_step(
+                    agent_or_team,
+                    prompt,
+                    current_reasoning_type,
+                    current_evidence,
+                    current_context,
                 )
-            # Use a dedicated method to generate the answer from the prompt
-            answer = self._generate_reasoning_step(
-                agent_or_team,
-                prompt,
-                current_reasoning_type,
-                current_evidence,
-                current_context,
-            )
-            # Step 2: Detect biases
-            detected_biases = []
-            if self.enable_bias_detection:
-                detected_biases = self._detect_biases_in_content(
-                    answer, current_evidence or [], current_context
+                
+                # Step 2: Detect biases in the generated answer
+                detected_biases = []
+                if self.enable_bias_detection:
+                    detected_biases = self._detect_biases_in_content(
+                        answer, current_evidence or [], current_context
+                    )
+                
+                history.append(
+                    {
+                        "iteration": iteration + 1,
+                        "answer": answer,
+                        "biases": detected_biases,
+                    }
                 )
-            history.append(
-                {
-                    "iteration": iteration + 1,
-                    "answer": answer,
-                    "biases": detected_biases,
-                }
-            )
-            # Step 3: Check for major bias
-            major_found = [b for b in detected_biases if b in major_biases]
-            if not major_found:
-                break
-            last_biases = major_found
-            current_answer = answer
-            iteration += 1
+                
+                # Step 3: Check for major bias and improvement
+                major_found = [b for b in detected_biases if b in MAJOR_BIASES]
+                
+                # Check if we're making progress (fewer biases or different biases)
+                if iteration > 0:
+                    bias_set = set(major_found)
+                    if bias_set in previous_bias_sets:
+                        # Same biases detected again, stop to avoid infinite loop
+                        break
+                    previous_bias_sets.append(bias_set)
+                
+                if not major_found:
+                    break
+                    
+                last_biases = major_found
+                current_answer = answer
+                iteration += 1
 
-        # Compose output
-        output_parts = []
-        for step in history:
-            output_parts.append(
-                f"**Iteration {step['iteration']} Reasoning:**\n{step['answer']}"
-            )
-            if step["biases"]:
-                bias_names = [b.replace("_", " ").title() for b in step["biases"]]
-                output_parts.append(f"\nBiases detected: {', '.join(bias_names)}")
+            # Compose output
+            output_parts = []
+            for step in history:
+                output_parts.append(
+                    f"**Iteration {step['iteration']} Reasoning:**\n{step['answer']}"
+                )
+                if step["biases"]:
+                    bias_names = [b.replace("_", " ").title() for b in step["biases"]]
+                    output_parts.append(f"\nBiases detected: {', '.join(bias_names)}")
+                else:
+                    output_parts.append("\nNo major bias detected.")
+
+            if last_biases and iteration == max_iterations:
+                output_parts.append(
+                    "\nMaximum iterations reached. Some bias may remain, and further review is recommended."
+                )
+            elif last_biases and len(previous_bias_sets) > 1:
+                output_parts.append(
+                    "\nBias correction reached a stable state. Further manual review may be needed."
+                )
             else:
-                output_parts.append("\nNo major bias detected.")
+                output_parts.append(
+                    "\nFinal answer is considered balanced and bias-mitigated."
+                )
 
-        if last_biases and iteration == max_iterations:
-            output_parts.append(
-                "\nMaximum iterations reached. Some bias may remain, and further review is recommended."
-            )
-        else:
-            output_parts.append(
-                "\nFinal answer is considered balanced and bias-mitigated."
-            )
-
-        return "\n\n".join(output_parts)
+            return "\n\n".join(output_parts)
+            
+        except Exception as e:
+            log_error(f"Error in iterative reasoning: {e}")
+            return f"I encountered an issue during iterative reasoning: {e}. Let me try a simpler approach."
 
     def _generate_reasoning_step(
         self,
@@ -586,14 +627,9 @@ class EnhancedReasoningTools(StrictToolkit):
         try:
             if hasattr(agent_or_team, "session_state") and agent_or_team.session_state:
                 if "reasoning_steps" in agent_or_team.session_state:
-                    if (
-                        hasattr(agent_or_team, "run_id")
-                        and agent_or_team.run_id
-                        in agent_or_team.session_state["reasoning_steps"]
-                    ):
-                        del agent_or_team.session_state["reasoning_steps"][
-                            agent_or_team.run_id
-                        ]
+                    run_id = getattr(agent_or_team, "run_id", "default")
+                    if run_id in agent_or_team.session_state["reasoning_steps"]:
+                        del agent_or_team.session_state["reasoning_steps"][run_id]
                         return "Reasoning session cleared successfully."
 
             return "No active reasoning session found to clear."
@@ -606,20 +642,14 @@ class EnhancedReasoningTools(StrictToolkit):
 
     def _initialize_session_state(self, agent_or_team: Any) -> None:
         """Initialize session state for reasoning tracking."""
-        if (
-            not hasattr(agent_or_team, "session_state")
-            or agent_or_team.session_state is None
-        ):
+        if not hasattr(agent_or_team, "session_state") or agent_or_team.session_state is None:
             agent_or_team.session_state = {}
 
         if "reasoning_steps" not in agent_or_team.session_state:
             agent_or_team.session_state["reasoning_steps"] = {}
 
-        if (
-            not hasattr(agent_or_team, "run_id")
-            or agent_or_team.run_id not in agent_or_team.session_state["reasoning_steps"]
-        ):
-            run_id = getattr(agent_or_team, "run_id", "default")
+        run_id = getattr(agent_or_team, "run_id", "default")
+        if run_id not in agent_or_team.session_state["reasoning_steps"]:
             agent_or_team.session_state["reasoning_steps"][run_id] = []
 
     def _store_reasoning_step(self, agent_or_team: Any, step: ReasoningStep) -> None:
@@ -942,35 +972,41 @@ class EnhancedReasoningTools(StrictToolkit):
         return "\n".join(output_parts)
 
     def _explain_biases_naturally(self, detected_biases: List[str], content: str) -> str:
-        """Explain detected biases naturally."""
+        """Explain detected biases naturally with context from the reasoning content."""
         if not detected_biases:
             return "The reasoning appears well-balanced without obvious cognitive biases."
 
         explanations = []
+        content_length = len(content)
+        
         for bias in detected_biases:
             if bias == "confirmation_bias":
                 explanations.append(
-                    "I notice confirmation bias - the reasoning seems to favor information that supports a particular viewpoint"
+                    f"I notice confirmation bias in the {content_length}-character reasoning - it seems to favor information that supports a particular viewpoint. "
+                    "In the analyzed content, this appears as selective focus on supporting evidence."
                 )
             elif bias == "anchoring_bias":
                 explanations.append(
-                    "There's evidence of anchoring bias - the analysis appears heavily influenced by initial information"
+                    f"There's evidence of anchoring bias in the reasoning - the analysis appears heavily influenced by initial information. "
+                    "The reasoning may be overly weighted toward early assumptions or data points."
                 )
             elif bias == "availability_heuristic":
                 explanations.append(
-                    "I see signs of availability bias - recent or easily recalled examples seem to be given more weight"
+                    f"I see signs of availability bias - recent or easily recalled examples seem to be given more weight. "
+                    "The reasoning may overemphasize readily accessible information."
                 )
             elif bias == "overconfidence_bias":
                 explanations.append(
-                    "There's overconfidence bias - the reasoning expresses more certainty than the evidence may warrant"
+                    f"There's overconfidence bias - the reasoning expresses more certainty than the evidence may warrant. "
+                    "Consider the strength of conclusions relative to available evidence."
                 )
 
-        result = (
-            ". Additionally, ".join(explanations) + "."
-            if len(explanations) > 1
-            else explanations[0] + "."
-        )
-        result += "\n\nTo improve reasoning quality, consider actively seeking contradictory evidence, questioning initial assumptions, and being more explicit about uncertainties."
+        if len(explanations) > 1:
+            result = ". Additionally, ".join(explanations) + "."
+        else:
+            result = explanations[0] + "."
+            
+        result += f"\n\nTo improve reasoning quality in this {content_length}-character analysis, consider actively seeking contradictory evidence, questioning initial assumptions, and being more explicit about uncertainties."
 
         return result
 
@@ -984,48 +1020,59 @@ class EnhancedReasoningTools(StrictToolkit):
 <reasoning_tools_instructions>
 *** Universal Reasoning Tools Instructions ***
 
-By leveraging the following set of tools, you can perform advanced reasoning, bias detection, and session management for complex problem solving. These tools empower you to deliver structured, multi-modal, and human-like reasoning with step tracking and bias awareness. Here are the detailed instructions for using the set of tools:
+These tools enable advanced reasoning, bias detection, and session management for complex problem solving. They facilitate structured, multi-modal, and human-like reasoning with step tracking and bias awareness.
 
-- Use reason to apply structured reasoning to a problem.
-   Parameters:
-      - agent_or_team: The agent or team requesting reasoning (object or identifier).
-      - problem (str): The problem or question to analyze, e.g., "What are the causes of climate change?".
-      - reasoning_type (str, optional): Type of reasoning to apply, one of: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical" (default: "deductive").
-      - evidence (list of str, optional): Supporting evidence or data points.
-      - context (str, optional): Additional context for the problem.
+**Available Tools**:
 
-- Use multi_modal_reason to apply multiple reasoning approaches and integrate insights.
-   Parameters:
-      - agent_or_team: The agent or team requesting reasoning.
-      - problem (str): The problem to analyze.
-      - reasoning_types (list of str): List of reasoning types to apply, e.g., ["deductive", "abductive"].
-      - evidence (list of str, optional): Supporting evidence or data points.
+1. **reason**: Apply structured reasoning to a problem.
+   - Parameters:
+     - `agent_or_team`: The agent or team requesting reasoning (object or identifier).
+     - `problem` (str): The problem or question to analyze, e.g., "What are the causes of climate change?".
+     - `reasoning_type` (str, optional): Type of reasoning to apply. Choose from: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical". Default: "deductive".
+     - `evidence` (list of str, optional): Supporting evidence or data points.
+     - `context` (str, optional): Additional context for the problem.
 
-- Use analyze_reasoning to analyze reasoning results and determine next actions.
-   Parameters:
-      - agent_or_team: The agent or team requesting analysis.
-      - result (str): The outcome of the previous reasoning step.
-      - analysis (str): Your analysis of the results.
-      - next_action (str, optional): What to do next ("continue", "validate", or "final_answer") (default: "continue").
-      - confidence (str, optional): Confidence level in this analysis (default: "moderately confident").
+2. **multi_modal_reason**: Apply multiple reasoning approaches and integrate insights.
+   - Parameters:
+     - `agent_or_team`: The agent or team requesting reasoning.
+     - `problem` (str): The problem to analyze.
+     - `reasoning_types` (list of str): List of reasoning types to apply, e.g., ["deductive", "abductive"].
+     - `evidence` (list of str, optional): Supporting evidence or data points.
 
-- Use detect_biases to detect cognitive biases in reasoning content (only if bias detection is enabled).
-   Parameters:
-      - agent_or_team: The agent or team requesting bias detection.
-      - reasoning_content (str): The reasoning text to analyze for biases.
+3. **analyze_reasoning**: Analyze reasoning results and determine next actions.
+   - Parameters:
+     - `agent_or_team`: The agent or team requesting analysis.
+     - `result` (str): The outcome of the previous reasoning step.
+     - `analysis` (str): Your analysis of the results.
+     - `next_action` (str, optional): What to do next. Choose from: "continue", "validate", "final_answer". Default: "continue".
+     - `confidence` (str, optional): Confidence level in this analysis. Default: "moderately confident".
 
-- Use get_reasoning_history to get the reasoning history for the current session.
-   Parameters:
-      - agent_or_team: The agent or team to get history for.
+4. **iterative_reason**: Apply iterative reasoning with bias detection and correction.
+   - Parameters:
+     - `agent_or_team`: The agent or team requesting reasoning.
+     - `problem` (str): The problem or question to analyze.
+     - `reasoning_type` (str, optional): Type of reasoning to apply. Default: "deductive".
+     - `evidence` (list of str, optional): Supporting evidence or data points.
+     - `context` (str, optional): Additional context for the problem.
+     - `max_iterations` (int, optional): Maximum number of iterations to attempt. Default: 3.
 
-- Use clear_reasoning_session to clear the reasoning session state.
-   Parameters:
-      - agent_or_team: The agent or team to clear session for.
+5. **get_reasoning_history**: Get the reasoning history for the current session.
+   - Parameters:
+     - `agent_or_team`: The agent or team to get history for.
 
-Notes:
-- The reasoning_type parameter for reason and multi_modal_reason must be one of: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical".
-- The detect_biases tool is only available if bias detection is enabled during initialization.
-- All tools expect agent_or_team to be an object or identifier representing the current agent or team context.
+6. **clear_reasoning_session**: Clear the reasoning session state.
+   - Parameters:
+     - `agent_or_team`: The agent or team to clear session for.
+
+7. **detect_biases**: Detect cognitive biases in reasoning content.
+   - Parameters:
+     - `agent_or_team`: The agent or team requesting bias detection.
+     - `reasoning_content` (str): The reasoning text to analyze for biases.
+
+**General Notes:**
+- All tools require an `agent_or_team` parameter, which should be an object or identifier representing the current agent or team context.
+- For tools with optional parameters, defaults are provided if no value is given.
+
 </reasoning_tools_instructions>
 """
         return instructions
