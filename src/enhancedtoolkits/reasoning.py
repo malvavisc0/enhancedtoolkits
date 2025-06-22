@@ -560,12 +560,12 @@ class EnhancedReasoningTools(StrictToolkit):
 
             detected_biases = self._identify_biases(reasoning_content)
 
-            # Store detected biases in agent_or_team.session_state for context-awareness
-            if (
-                hasattr(agent_or_team, "session_state")
-                and agent_or_team.session_state is not None
-            ):
-                agent_or_team.session_state["last_detected_biases"] = detected_biases
+            # Store detected biases in session_state for context-awareness
+            try:
+                session_state = self._get_session_state(agent_or_team)
+                session_state["last_detected_biases"] = detected_biases
+            except Exception:
+                pass  # Silently fail if session state cannot be accessed
 
             if not detected_biases:
                 return "Looking at this reasoning, I don't notice any obvious cognitive biases. The thinking appears balanced and well-considered."
@@ -625,12 +625,12 @@ class EnhancedReasoningTools(StrictToolkit):
             Confirmation message
         """
         try:
-            if hasattr(agent_or_team, "session_state") and agent_or_team.session_state:
-                if "reasoning_steps" in agent_or_team.session_state:
-                    run_id = getattr(agent_or_team, "run_id", "default")
-                    if run_id in agent_or_team.session_state["reasoning_steps"]:
-                        del agent_or_team.session_state["reasoning_steps"][run_id]
-                        return "Reasoning session cleared successfully."
+            session_state = self._get_session_state(agent_or_team)
+            if "reasoning_steps" in session_state:
+                run_id = getattr(agent_or_team, "run_id", "default")
+                if run_id in session_state["reasoning_steps"]:
+                    del session_state["reasoning_steps"][run_id]
+                    return "Reasoning session cleared successfully."
 
             return "No active reasoning session found to clear."
 
@@ -640,36 +640,71 @@ class EnhancedReasoningTools(StrictToolkit):
 
     # Helper methods
 
+    def _get_session_state(self, agent_or_team: Any) -> dict:
+        """Safely get session state from agent or team object."""
+        # Try different access patterns based on object type
+        if isinstance(agent_or_team, dict):
+            return agent_or_team.setdefault("session_state", {})
+        elif hasattr(agent_or_team, "session_state"):
+            if agent_or_team.session_state is None:
+                if hasattr(agent_or_team, "__dict__"):
+                    agent_or_team.__dict__["session_state"] = {}
+                else:
+                    try:
+                        setattr(agent_or_team, "session_state", {})
+                    except (AttributeError, TypeError):
+                        # Fallback: store in a class attribute if possible
+                        if not hasattr(agent_or_team.__class__, "_session_states"):
+                            agent_or_team.__class__._session_states = {}
+                        obj_id = id(agent_or_team)
+                        agent_or_team.__class__._session_states[obj_id] = {}
+                        return agent_or_team.__class__._session_states[obj_id]
+            return agent_or_team.session_state
+        else:
+            # Object doesn't have session_state, try to add it
+            if hasattr(agent_or_team, "__dict__"):
+                agent_or_team.__dict__["session_state"] = {}
+                return agent_or_team.__dict__["session_state"]
+            else:
+                try:
+                    setattr(agent_or_team, "session_state", {})
+                    return agent_or_team.session_state
+                except (AttributeError, TypeError):
+                    # Fallback: store in a class attribute
+                    if not hasattr(agent_or_team.__class__, "_session_states"):
+                        agent_or_team.__class__._session_states = {}
+                    obj_id = id(agent_or_team)
+                    agent_or_team.__class__._session_states[obj_id] = {}
+                    return agent_or_team.__class__._session_states[obj_id]
+
     def _initialize_session_state(self, agent_or_team: Any) -> None:
         """Initialize session state for reasoning tracking."""
-        if (
-            not hasattr(agent_or_team, "session_state")
-            or agent_or_team.session_state is None
-        ):
-            agent_or_team.session_state = {}
-
-        if "reasoning_steps" not in agent_or_team.session_state:
-            agent_or_team.session_state["reasoning_steps"] = {}
+        session_state = self._get_session_state(agent_or_team)
+        
+        if "reasoning_steps" not in session_state:
+            session_state["reasoning_steps"] = {}
 
         run_id = getattr(agent_or_team, "run_id", "default")
-        if run_id not in agent_or_team.session_state["reasoning_steps"]:
-            agent_or_team.session_state["reasoning_steps"][run_id] = []
+        if run_id not in session_state["reasoning_steps"]:
+            session_state["reasoning_steps"][run_id] = []
 
     def _store_reasoning_step(self, agent_or_team: Any, step: ReasoningStep) -> None:
         """Store a reasoning step in session state."""
+        session_state = self._get_session_state(agent_or_team)
         run_id = getattr(agent_or_team, "run_id", "default")
-        agent_or_team.session_state["reasoning_steps"][run_id].append(step.to_dict())
+        session_state["reasoning_steps"][run_id].append(step.to_dict())
 
     def _get_reasoning_history(self, agent_or_team: Any) -> List[Dict[str, Any]]:
         """Get reasoning history for current session."""
-        if not hasattr(agent_or_team, "session_state") or not agent_or_team.session_state:
+        try:
+            session_state = self._get_session_state(agent_or_team)
+            if "reasoning_steps" not in session_state:
+                return []
+            
+            run_id = getattr(agent_or_team, "run_id", "default")
+            return session_state["reasoning_steps"].get(run_id, [])
+        except Exception:
             return []
-
-        if "reasoning_steps" not in agent_or_team.session_state:
-            return []
-
-        run_id = getattr(agent_or_team, "run_id", "default")
-        return agent_or_team.session_state["reasoning_steps"].get(run_id, [])
 
     def _analyze_problem(
         self,

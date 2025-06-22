@@ -234,19 +234,22 @@ Evaluates thinking across 5 key dimensions:
             )
 
             # Safely retrieve last enhanced thought from session state
-            if (
-                not hasattr(agent, "session_state")
-                or agent.session_state is None
-                or "enhanced_thoughts" not in agent.session_state
-                or not agent.session_state["enhanced_thoughts"]
-            ):
-                # Fallback if session state is not properly initialized
+            try:
+                session_state = self._get_session_state(agent)
+                if "enhanced_thoughts" not in session_state or not session_state["enhanced_thoughts"]:
+                    # Fallback if session state is not properly initialized
+                    enhanced_thought = {
+                        "detected_biases": [],
+                        "quality_assessment": {"overall_score": 0.8},
+                    }
+                else:
+                    enhanced_thought = session_state["enhanced_thoughts"][-1]
+            except Exception:
+                # Fallback if session state cannot be accessed
                 enhanced_thought = {
                     "detected_biases": [],
                     "quality_assessment": {"overall_score": 0.8},
                 }
-            else:
-                enhanced_thought = agent.session_state["enhanced_thoughts"][-1]
             detected_biases = enhanced_thought.get("detected_biases", [])
             quality_assessment = enhanced_thought.get("quality_assessment", {})
             overall_quality = quality_assessment.get("overall_score", 1.0)
@@ -407,12 +410,11 @@ Evaluates thinking across 5 key dimensions:
             log_debug(f"Enhanced Thought ({thinking_type.value}): {thought}")
 
             # Initialize session state if needed
-            if agent.session_state is None:
-                agent.session_state = {}
-            if "enhanced_thoughts" not in agent.session_state:
-                agent.session_state["enhanced_thoughts"] = []
-            if "thinking_patterns" not in agent.session_state:
-                agent.session_state["thinking_patterns"] = {
+            session_state = self._get_session_state(agent)
+            if "enhanced_thoughts" not in session_state:
+                session_state["enhanced_thoughts"] = []
+            if "thinking_patterns" not in session_state:
+                session_state["thinking_patterns"] = {
                     "type_counts": {},
                     "bias_detections": [],
                     "quality_scores": [],
@@ -449,7 +451,7 @@ Evaluates thinking across 5 key dimensions:
             }
 
             # Store the enhanced thought
-            agent.session_state["enhanced_thoughts"].append(enhanced_thought)
+            session_state["enhanced_thoughts"].append(enhanced_thought)
 
             # Update thinking patterns
             self._update_thinking_patterns(agent, enhanced_thought)
@@ -457,7 +459,7 @@ Evaluates thinking across 5 key dimensions:
             # Generate natural language output
             output = self._format_thinking_output(
                 enhanced_thought,
-                agent.session_state["enhanced_thoughts"],
+                session_state["enhanced_thoughts"],
                 detected_biases,
                 quality_assessment,
             )
@@ -659,7 +661,8 @@ Evaluates thinking across 5 key dimensions:
         self, agent: Any, enhanced_thought: Dict[str, Any]
     ) -> None:
         """Update thinking patterns tracking."""
-        patterns = agent.session_state["thinking_patterns"]
+        session_state = self._get_session_state(agent)
+        patterns = session_state["thinking_patterns"]
 
         # Update type counts
         thinking_type = enhanced_thought["type"]
@@ -822,3 +825,40 @@ Evaluates thinking across 5 key dimensions:
             suggestions.append("Gather additional evidence to support reasoning")
 
         return suggestions[:3]  # Limit to top 3 suggestions
+
+    def _get_session_state(self, agent: Any) -> dict:
+        """Safely get session state from agent object."""
+        # Try different access patterns based on object type
+        if isinstance(agent, dict):
+            return agent.setdefault("session_state", {})
+        elif hasattr(agent, "session_state"):
+            if agent.session_state is None:
+                if hasattr(agent, "__dict__"):
+                    agent.__dict__["session_state"] = {}
+                else:
+                    try:
+                        setattr(agent, "session_state", {})
+                    except (AttributeError, TypeError):
+                        # Fallback: store in a class attribute if possible
+                        if not hasattr(agent.__class__, "_session_states"):
+                            agent.__class__._session_states = {}
+                        obj_id = id(agent)
+                        agent.__class__._session_states[obj_id] = {}
+                        return agent.__class__._session_states[obj_id]
+            return agent.session_state
+        else:
+            # Object doesn't have session_state, try to add it
+            if hasattr(agent, "__dict__"):
+                agent.__dict__["session_state"] = {}
+                return agent.__dict__["session_state"]
+            else:
+                try:
+                    setattr(agent, "session_state", {})
+                    return agent.session_state
+                except (AttributeError, TypeError):
+                    # Fallback: store in a class attribute
+                    if not hasattr(agent.__class__, "_session_states"):
+                        agent.__class__._session_states = {}
+                    obj_id = id(agent)
+                    agent.__class__._session_states[obj_id] = {}
+                    return agent.__class__._session_states[obj_id]
