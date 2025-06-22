@@ -1023,58 +1023,127 @@ class EnhancedReasoningTools(StrictToolkit):
 <reasoning_tools_instructions>
 *** Universal Reasoning Tools Instructions ***
 
-These tools provide you with advanced reasoning capabilities, the ability to detect biases, and manage sessions for solving complex problems. They support structured, multi-modal, and human-like reasoning while allowing you to track steps and be aware of biases.
+## Core Philosophy
 
-### Functions Tools
+These tools provide you with advanced reasoning capabilities designed to help you think more systematically, detect cognitive biases, and maintain a structured thought process. The toolkit is built around three key principles:
+
+1. **Structured Reasoning**: Apply different reasoning methodologies systematically
+2. **Bias Awareness**: Identify and mitigate cognitive biases that can distort thinking
+3. **Iterative Improvement**: Refine your reasoning through multiple passes and reflection
+
+## Reasoning Workflow Guide
+
+For optimal results, follow this recommended workflow:
+
+### Step 1: Initial Analysis
+Start by applying structured reasoning to your problem using either:
+- `reason` for a single reasoning approach
+- `multi_modal_reason` for multiple complementary approaches
+
+### Step 2: Reflection
+Critically evaluate your initial reasoning:
+- Use `analyze_reasoning` to assess the quality of your conclusions
+- Determine if you should continue reasoning, validate externally, or finalize
+
+### Step 3: Bias Mitigation
+Check for and address cognitive biases:
+- Use `detect_biases` for a quick bias check
+- Or use `iterative_reason` for automated bias detection and correction
+
+### Step 4: Review
+Maintain awareness of your reasoning process:
+- Use `get_reasoning_history` to review your reasoning steps
+- Ensure your reasoning path is coherent and well-structured
+
+### Step 5: Cleanup
+When finished with a reasoning task:
+- Use `clear_reasoning_session` to reset for a new problem
+
+## Detailed Tool Reference
 
 1. **reason**: Apply structured reasoning to a problem.
-   - Parameters:
-     - `agent_or_team`: The agent or team requesting reasoning (object or identifier).
-     - `problem` (str): The problem or question to analyze, e.g., "What are the causes of climate change?".
-     - `reasoning_type` (str, optional): Type of reasoning to apply. Choose from: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical". Default: "deductive".
-     - `evidence` (list of str, optional): Supporting evidence or data points.
-     - `context` (str, optional): Additional context for the problem.
+   - **When to use**: For initial analysis of a problem using a single reasoning approach.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (must be consistent throughout a session).
+     - `problem` (str): The specific question or problem, e.g., "What are the most likely causes of the observed decline in pollinator populations?"
+     - `reasoning_type` (str, optional): Reasoning methodology to apply:
+       * `"deductive"`: Reason from general principles to specific conclusions
+       * `"inductive"`: Identify patterns from specific observations
+       * `"abductive"`: Find the most likely explanation for observations
+       * `"causal"`: Analyze cause-and-effect relationships
+       * `"probabilistic"`: Reason with uncertainties and likelihoods
+       * `"analogical"`: Draw insights from similar situations
+     - `evidence` (list of str, optional): Relevant facts, data points, or observations, e.g., ["Bee populations have declined 30% in the last decade", "Pesticide use has increased in the same regions"]
+     - `context` (str, optional): Background information or constraints, e.g., "Analysis limited to North American ecosystems"
 
 2. **multi_modal_reason**: Apply multiple reasoning approaches and integrate insights.
-   - Parameters:
-     - `agent_or_team`: The agent or team requesting reasoning.
+   - **When to use**: For complex problems that benefit from multiple perspectives or when you're uncertain which reasoning approach is best.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
      - `problem` (str): The problem to analyze.
-     - `reasoning_types` (list of str): List of reasoning types to apply, e.g., ["deductive", "abductive"].
+     - `reasoning_types` (list of str): List of reasoning types to apply, e.g., ["deductive", "causal", "probabilistic"]
      - `evidence` (list of str, optional): Supporting evidence or data points.
 
 3. **analyze_reasoning**: Analyze reasoning results and determine next actions.
-   - Parameters:
-     - `agent_or_team`: The agent or team requesting analysis.
-     - `result` (str): The outcome of the previous reasoning step.
-     - `analysis` (str): Your analysis of the results.
-     - `next_action` (str, optional): What to do next. Choose from: "continue", "validate", "final_answer". Default: "continue".
-     - `confidence` (str, optional): Confidence level in this analysis. Default: "moderately confident".
+   - **When to use**: After initial reasoning to evaluate quality and decide next steps.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
+     - `result` (str): The outcome or conclusion from your previous reasoning step.
+     - `analysis` (str): Your critical assessment of the reasoning quality.
+     - `next_action` (str, optional): Recommended next step:
+       * `"continue"`: More reasoning needed (default)
+       * `"validate"`: Seek external validation or evidence
+       * `"final_answer"`: Reasoning is sufficient for a conclusion
+     - `confidence` (str, optional): Your confidence level, e.g., "moderately confident", "highly uncertain"
 
-4. **iterative_reason**: Apply iterative reasoning with bias detection and correction.
-   - Parameters:
-     - `agent_or_team`: The agent or team requesting reasoning.
+4. **iterative_reason**: Apply iterative reasoning with automated bias detection and correction.
+   - **When to use**: For important decisions where bias mitigation is critical or when initial reasoning shows signs of bias.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
      - `problem` (str): The problem or question to analyze.
-     - `reasoning_type` (str, optional): Type of reasoning to apply. Default: "deductive".
+     - `reasoning_type` (str, optional): Type of reasoning to apply.
      - `evidence` (list of str, optional): Supporting evidence or data points.
      - `context` (str, optional): Additional context for the problem.
-     - `max_iterations` (int, optional): Maximum number of iterations to attempt. Default: 3.
+     - `max_iterations` (int, optional): Maximum number of bias-correction cycles (default: 3).
 
-5. **get_reasoning_history**: Get the reasoning history for the current session.
-   - Parameters:
-     - `agent_or_team`: The agent or team to get history for.
-
-6. **clear_reasoning_session**: Clear the reasoning session state.
-   - Parameters:
-     - `agent_or_team`: The agent or team to clear session for.
-
-7. **detect_biases**: Detect cognitive biases in reasoning content.
-   - Parameters:
-     - `agent_or_team`: The agent or team requesting bias detection.
+5. **detect_biases**: Detect cognitive biases in reasoning content.
+   - **When to use**: For spot-checking reasoning for potential biases or when you suspect bias in your thinking.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
      - `reasoning_content` (str): The reasoning text to analyze for biases.
 
-**General Notes:**
-- All tools require an `agent_or_team` parameter, which should be an object or identifier representing the current agent or team context.
-- For tools with optional parameters, defaults are provided if no value is given.
+6. **get_reasoning_history**: Get the reasoning history for the current session.
+   - **When to use**: To review your reasoning process, maintain context across complex problems, or prepare for summarization.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
+
+7. **clear_reasoning_session**: Clear the reasoning session state.
+   - **When to use**: When starting a new, unrelated reasoning task or when you want to reset your reasoning process.
+   - **Parameters**:
+     - `agent_or_team`: Your unique identifier (same as used with other tools).
+
+## Cognitive Biases to Watch For
+
+The toolkit automatically detects these common biases:
+
+- **Confirmation Bias**: Favoring information that confirms existing beliefs
+- **Anchoring Bias**: Over-relying on the first piece of information encountered
+- **Availability Heuristic**: Overweighting easily recalled examples
+- **Overconfidence Bias**: Excessive certainty in judgments or predictions
+
+## Session Management
+
+- The `agent_or_team` parameter acts as your session identifier and must be consistent across all tool calls within a reasoning session.
+- Each reasoning session maintains its own history and context.
+- Use the same identifier throughout a single reasoning task to maintain continuity.
+
+## Best Practices
+
+1. **Start Broad, Then Focus**: Begin with multi-modal reasoning for complex problems, then focus on the most promising approach.
+2. **Explicitly State Assumptions**: Include key assumptions in your reasoning to make them visible.
+3. **Seek Contradictory Evidence**: Actively look for information that challenges your initial conclusions.
+4. **Iterate When Biases Detected**: When biases are found, use iterative_reason to refine your thinking.
+5. **Document Uncertainty**: Express appropriate levels of confidence in your conclusions.
 
 </reasoning_tools_instructions>
 """
