@@ -8,11 +8,21 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class BusinessAnalysisCalculator(BaseCalculator):
+class BusinessAnalysisCalculatorTools(BaseCalculatorTools):
     """Calculator for business analysis calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the business analysis calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = BusinessAnalysisCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="business_analysis_calculator", **kwargs)
+        
+        # Register all business analysis methods
+        self.register(self.calculate_break_even_point)
 
     def calculate_break_even_point(
         self, fixed_costs: float, price_per_unit: float, variable_cost_per_unit: float

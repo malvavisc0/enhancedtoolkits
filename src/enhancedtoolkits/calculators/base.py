@@ -6,10 +6,13 @@ for all specialized calculator classes.
 """
 
 import json
-from abc import ABC
+import math
+from datetime import datetime
 from typing import List
 
-from agno.utils.log import log_error
+from agno.utils.log import log_error, log_info
+
+from ..base import StrictToolkit
 
 
 class FinancialCalculationError(Exception):
@@ -30,13 +33,18 @@ class FinancialComputationError(FinancialCalculationError):
     pass
 
 
-class BaseCalculator(ABC):
+class BaseCalculatorTools(StrictToolkit):
     """
     Base calculator class providing shared utilities and validation methods.
-
+    
     All specialized calculator classes inherit from this base to ensure
     consistent validation, error handling, and response formatting.
+    Each calculator can be used independently as a StrictToolkit.
     """
+
+    def __init__(self, name: str = "base_calculator", **kwargs):
+        """Initialize the base calculator with StrictToolkit functionality."""
+        super().__init__(name=name, **kwargs)
 
     def _validate_positive_amount(self, amount: float, field_name: str) -> float:
         """Validate that an amount is positive."""
@@ -167,11 +175,3 @@ class BaseCalculator(ABC):
         pv_coupons = coupon_payment * (1 - (1 + yield_rate) ** -periods) / yield_rate
         pv_face_value = face_value / ((1 + yield_rate) ** periods)
         return pv_coupons + pv_face_value
-
-    @staticmethod
-    def get_llm_usage_instructions() -> str:
-        """
-        Base method for LLM usage instructions.
-        Specialized calculators should override this method.
-        """
-        return ""

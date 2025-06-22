@@ -8,11 +8,22 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class UtilityCalculator(BaseCalculator):
+class UtilityCalculatorTools(BaseCalculatorTools):
     """Calculator for utility calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the utility calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = UtilityCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="utility_calculator", **kwargs)
+        
+        # Register all utility methods
+        self.register(self.convert_currency)
+        self.register(self.adjust_for_inflation)
 
     def convert_currency(self, amount: float, rate: float) -> str:
         """

@@ -14,11 +14,28 @@ from typing import List
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class BasicArithmeticCalculator(BaseCalculator):
+class ArithmeticCalculatorTools(BaseCalculatorTools):
     """Calculator for basic arithmetic operations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the arithmetic calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = ArithmeticCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="basic_arithmetic_calculator", **kwargs)
+        
+        # Register all arithmetic methods
+        self.register(self.add)
+        self.register(self.subtract)
+        self.register(self.multiply)
+        self.register(self.divide)
+        self.register(self.exponentiate)
+        self.register(self.square_root)
+        self.register(self.factorial)
+        self.register(self.is_prime)
 
     def add(self, a: float, b: float) -> str:
         """

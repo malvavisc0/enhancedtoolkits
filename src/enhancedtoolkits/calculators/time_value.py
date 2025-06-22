@@ -9,11 +9,25 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class TimeValueCalculator(BaseCalculator):
+class TimeValueCalculatorTools(BaseCalculatorTools):
     """Calculator for time value of money calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the time value calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = TimeValueCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="time_value_calculator", **kwargs)
+        
+        # Register all time value methods
+        self.register(self.calculate_present_value)
+        self.register(self.calculate_future_value)
+        self.register(self.calculate_annuity_present_value)
+        self.register(self.calculate_annuity_future_value)
+        self.register(self.calculate_perpetuity_value)
 
     def calculate_present_value(
         self, future_value: float, rate: float, periods: int

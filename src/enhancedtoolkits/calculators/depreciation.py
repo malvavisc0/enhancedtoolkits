@@ -8,11 +8,22 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class DepreciationCalculator(BaseCalculator):
+class DepreciationCalculatorTools(BaseCalculatorTools):
     """Calculator for depreciation calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the depreciation calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = DepreciationCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="depreciation_calculator", **kwargs)
+        
+        # Register all depreciation methods
+        self.register(self.calculate_straight_line_depreciation)
+        self.register(self.calculate_declining_balance_depreciation)
 
     def calculate_straight_line_depreciation(
         self, cost: float, salvage: float, life: int

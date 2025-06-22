@@ -9,11 +9,24 @@ from typing import List
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class InvestmentAnalysisCalculator(BaseCalculator):
+class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
     """Calculator for investment analysis calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the investment analysis calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = InvestmentAnalysisCalculatorTools.get_llm_usage_instructions()
+        
+        super().__init__(name="investment_analysis_calculator", **kwargs)
+        
+        # Register all investment analysis methods
+        self.register(self.calculate_net_present_value)
+        self.register(self.calculate_internal_rate_of_return)
+        self.register(self.calculate_compound_annual_growth_rate)
+        self.register(self.calculate_return_on_investment)
 
     def calculate_net_present_value(self, rate: float, cash_flows: List[float]) -> str:
         """

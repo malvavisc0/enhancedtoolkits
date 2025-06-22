@@ -8,11 +8,22 @@ from datetime import datetime
 
 from agno.utils.log import log_error, log_info
 
-from .base import BaseCalculator, FinancialComputationError, FinancialValidationError
+from .base import BaseCalculatorTools, FinancialComputationError, FinancialValidationError
 
 
-class BondCalculator(BaseCalculator):
+class BondCalculatorTools(BaseCalculatorTools):
     """Calculator for bond calculations."""
+
+    def __init__(self, **kwargs):
+        """Initialize the bond calculator and register all methods."""
+        self.add_instructions = True
+        self.instructions = BondCalculatorTools.get_llm_usage_instructions()
+
+        super().__init__(name="bond_calculator", **kwargs)
+        
+        # Register all bond methods
+        self.register(self.calculate_bond_price)
+        self.register(self.calculate_yield_to_maturity)
 
     def calculate_bond_price(
         self, face_value: float, coupon_rate: float, periods: int, yield_rate: float
