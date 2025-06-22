@@ -103,7 +103,6 @@ downloader_tool = DownloaderTools()
 - `search_images()` - Image search
 - `search_videos()` - Video search
 - `search_category()` - Search in specific categories
-- `get_page_content()` - Extract full webpage content
 
 ## 💭 Enhanced Thinking Tools
 
@@ -180,6 +179,8 @@ downloader_tool = DownloaderTools()
 - `get_recommendations()` - Analyst recommendations
 - `get_sustainability_scores()` - ESG scores
 - `get_price_history()` - Historical price data
+- `get_quarterly_cashflow()` - Retrieve the quarterly cash
+- `get_quarterly_balance_sheet()` - Retrieve the quarterly balance sheet
 
 ## 🧮 Enhanced Calculator Tools
 
@@ -293,8 +294,8 @@ downloader_tool = DownloaderTools()
 
 ### Available Methods
 
-- `download_url_content()` - Download and parse content from a URL (legacy method)
-- `download_file()` - Download any file with smart content processing
+- `access_website_content()` - Download and parse content from a URL (legacy method)
+- `get_file_from_url()` - Download any file with smart content processing
 - `download_multiple_urls()` - Batch download content from multiple URLs
 - `get_url_metadata()` - Extract metadata without downloading full content
 - `check_url_accessibility()` - Test URL accessibility and response time
