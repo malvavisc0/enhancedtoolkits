@@ -1031,6 +1031,20 @@ These tools provide you with advanced reasoning capabilities designed to help yo
 2. **Bias Awareness**: Identify and mitigate cognitive biases that can distort thinking
 3. **Iterative Improvement**: Refine your reasoning through multiple passes and reflection
 
+## CRITICAL: Incorporating Reasoning Tool Outputs
+
+When using any reasoning tool, you MUST follow these essential steps:
+
+1. **Wait for Tool Output**: After calling a reasoning tool, ALWAYS wait for the tool to complete and return its output.
+
+2. **Incorporate the Output**: You MUST include the reasoning tool's output in your response to the user. Never leave a reasoning tool call without incorporating its results.
+
+3. **Format the Output**: Present the reasoning output in a dedicated section titled "## Reasoning Analysis" that clearly shows the insights gained.
+
+4. **Reference the Insights**: Explicitly reference specific insights from the reasoning analysis in your final response to demonstrate how the reasoning informed your conclusions.
+
+5. **Complete the Loop**: After incorporating the reasoning output, either use another tool if needed or provide your final response that synthesizes all the information.
+
 ## Reasoning Workflow Guide
 
 For optimal results, follow this recommended workflow:
@@ -1122,6 +1136,22 @@ When finished with a reasoning task:
    - **Parameters**:
      - `agent_or_team`: Your unique identifier (same as used with other tools).
 
+## Presenting Reasoning Results to Users
+
+When presenting reasoning results to users, follow these guidelines:
+
+1. **Structured Format**: Present reasoning in a clear, structured format with headers and bullet points for key insights.
+
+2. **Highlight Key Insights**: Emphasize the most important conclusions or insights at the beginning or end of your response.
+
+3. **Acknowledge Limitations**: Be transparent about any limitations in your reasoning, such as incomplete evidence or potential biases.
+
+4. **Connect to the Original Question**: Explicitly show how your reasoning addresses the user's original question or problem.
+
+5. **Use Plain Language**: Translate technical reasoning concepts into accessible language while preserving the logical structure.
+
+6. **Provide Context**: Help users understand why certain reasoning approaches were chosen for their specific question.
+
 ## Cognitive Biases to Watch For
 
 The toolkit automatically detects these common biases:
@@ -1144,6 +1174,31 @@ The toolkit automatically detects these common biases:
 3. **Seek Contradictory Evidence**: Actively look for information that challenges your initial conclusions.
 4. **Iterate When Biases Detected**: When biases are found, use iterative_reason to refine your thinking.
 5. **Document Uncertainty**: Express appropriate levels of confidence in your conclusions.
+6. **ALWAYS Incorporate Tool Output**: Never leave a reasoning tool call without incorporating its output into your response.
+7. **Reference Specific Insights**: Explicitly mention how insights from the reasoning analysis informed your conclusions.
+8. **Complete the Reasoning Loop**: After incorporating reasoning output, either use another tool if needed or provide your final response.
+
+## Choosing the Right Reasoning Methodology
+
+Select the appropriate reasoning type based on your specific question:
+
+- **Deductive Reasoning**: Best for applying general principles to specific cases
+  - Example: "Given these laws of physics, what will happen in this specific scenario?"
+  
+- **Inductive Reasoning**: Best for identifying patterns from observations
+  - Example: "Based on these customer behaviors, what general trends can we identify?"
+  
+- **Abductive Reasoning**: Best for finding the most likely explanation
+  - Example: "What's the most plausible explanation for these symptoms?"
+  
+- **Causal Reasoning**: Best for understanding cause-and-effect relationships
+  - Example: "What factors are driving the observed changes in market share?"
+  
+- **Probabilistic Reasoning**: Best for situations with uncertainty
+  - Example: "What are the chances this investment will succeed given these variables?"
+  
+- **Analogical Reasoning**: Best for applying insights from similar situations
+  - Example: "How might lessons from previous technological transitions apply here?"
 
 </reasoning_tools_instructions>
 """
