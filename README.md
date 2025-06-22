@@ -182,58 +182,84 @@ downloader_tool = DownloaderTools()
 - `get_quarterly_cashflow()` - Retrieve the quarterly cash
 - `get_quarterly_balance_sheet()` - Retrieve the quarterly balance sheet
 
-## 🧮 Enhanced Calculator Tools
+## 🧮 Calculator Tools
 
-**Comprehensive financial calculations and basic arithmetic operations with advanced algorithms.**
+**Modular financial and mathematical calculation tools with comprehensive validation and error handling.**
 
-### Key Features
+### Available Calculator Classes
 
-- **Basic Arithmetic**: Addition, subtraction, multiplication, division, exponentiation, square root, factorial, prime checking
-- **Time Value of Money**: Present value, future value, annuities, perpetuities
-- **Investment Analysis**: NPV, IRR, CAGR, ROI, Sharpe ratio, volatility
-- **Loan Calculations**: Payment calculations, complete amortization schedules
-- **Bond Analysis**: Bond pricing and yield to maturity calculations
-- **Risk Metrics**: Sharpe ratio, volatility (standard deviation)
-- **Depreciation**: Straight-line and declining balance methods
-- **Business Analysis**: Break-even point calculations
-- **Utilities**: Currency conversion, inflation adjustments
-- **Advanced Algorithms**: Newton-Raphson for IRR, iterative approximation for YTM
+#### ArithmeticCalculatorTools
 
-### Available Methods
-
-#### Basic Arithmetic Operations
+**Basic arithmetic operations with comprehensive validation.**
 
 - `add()` - Add two numbers
-- `subtract()` - Subtract two numbers
+- `subtract()` - Subtract second number from first
 - `multiply()` - Multiply two numbers
-- `divide()` - Divide two numbers
-- `exponentiate()` - Raise to power
-- `square_root()` - Calculate square root
-- `factorial()` - Calculate factorial
-- `is_prime()` - Check if number is prime
+- `divide()` - Divide first number by second
+- `exponentiate()` - Raise first number to power of second
+- `square_root()` - Calculate square root of a number
+- `factorial()` - Calculate factorial of a non-negative integer
+- `is_prime()` - Check if a number is prime
 
-#### Financial Calculations
+#### TimeValueCalculatorTools
 
-- `calculate_present_value()` - Present value of future sum
-- `calculate_future_value()` - Future value of present sum
-- `calculate_net_present_value()` - NPV of cash flow series
-- `calculate_internal_rate_of_return()` - IRR using Newton-Raphson method
-- `calculate_loan_payment()` - Periodic loan payment
-- `generate_amortization_schedule()` - Complete loan payment schedule
-- `calculate_compound_annual_growth_rate()` - CAGR calculation
-- `calculate_return_on_investment()` - ROI percentage
-- `calculate_bond_price()` - Bond pricing based on cash flows
-- `calculate_yield_to_maturity()` - YTM using iterative approximation
-- `calculate_annuity_present_value()` - PV of ordinary annuity
-- `calculate_annuity_future_value()` - FV of ordinary annuity
-- `calculate_perpetuity_value()` - Present value of perpetuity
-- `calculate_straight_line_depreciation()` - Linear depreciation
-- `calculate_declining_balance_depreciation()` - Accelerated depreciation
-- `calculate_sharpe_ratio()` - Risk-adjusted returns
-- `calculate_volatility()` - Standard deviation of returns
-- `calculate_break_even_point()` - Business break-even analysis
-- `convert_currency()` - Simple currency conversion
-- `adjust_for_inflation()` - Inflation adjustment calculations
+**Time value of money calculations for financial planning.**
+
+- `calculate_present_value()` - Calculate present value of a future sum
+- `calculate_future_value()` - Calculate future value of a present sum
+- `calculate_annuity_present_value()` - Calculate present value of an ordinary annuity
+- `calculate_annuity_future_value()` - Calculate future value of an ordinary annuity
+- `calculate_perpetuity_value()` - Calculate present value of a perpetuity
+
+#### InvestmentAnalysisCalculatorTools
+
+**Investment analysis tools for evaluating financial opportunities.**
+
+- `calculate_net_present_value()` - Calculate NPV of a series of cash flows
+- `calculate_internal_rate_of_return()` - Calculate IRR using Newton-Raphson method
+- `calculate_compound_annual_growth_rate()` - Calculate CAGR between two values
+- `calculate_return_on_investment()` - Calculate ROI percentage
+
+#### LoanCalculatorTools
+
+**Loan analysis tools for payment calculations and amortization.**
+
+- `calculate_loan_payment()` - Calculate periodic payment for a loan
+- `generate_amortization_schedule()` - Generate complete loan payment schedule
+
+#### BondCalculatorTools
+
+**Bond valuation tools for pricing and yield calculations.**
+
+- `calculate_bond_price()` - Calculate price of a bond based on cash flows
+- `calculate_yield_to_maturity()` - Calculate YTM using iterative approximation
+
+#### RiskMetricsCalculatorTools
+
+**Risk assessment tools for investment analysis.**
+
+- `calculate_sharpe_ratio()` - Calculate risk-adjusted returns
+- `calculate_volatility()` - Calculate standard deviation of returns
+
+#### DepreciationCalculatorTools
+
+**Asset depreciation calculation tools.**
+
+- `calculate_straight_line_depreciation()` - Calculate linear depreciation
+- `calculate_declining_balance_depreciation()` - Calculate accelerated depreciation
+
+#### BusinessAnalysisCalculatorTools
+
+**Business analysis tools for financial planning.**
+
+- `calculate_break_even_point()` - Calculate break-even point in units or sales
+
+#### UtilityCalculatorTools
+
+**Utility calculations for financial adjustments.**
+
+- `convert_currency()` - Convert between currencies using exchange rate
+- `adjust_for_inflation()` - Adjust amounts for inflation over time
 
 ## ☁️ Enhanced Weather Tools
 
