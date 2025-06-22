@@ -18,8 +18,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_error, log_info
+
+from .base import StrictToolkit
 
 
 class FileSecurityError(Exception):
@@ -34,7 +35,7 @@ class FileOperationError(Exception):
     pass
 
 
-class EnhancedFilesTools(Toolkit):
+class EnhancedFilesTools(StrictToolkit):
     """
     Secure toolkit for file operations with comprehensive security controls.
     """

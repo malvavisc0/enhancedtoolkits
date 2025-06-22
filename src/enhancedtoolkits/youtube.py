@@ -24,8 +24,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, log_error, log_info, log_warning
+
+from .base import StrictToolkit
 
 # Optional youtube-transcript-api import
 try:
@@ -66,7 +67,7 @@ class YouTubeDataError(YouTubeError):
     pass
 
 
-class EnhancedYouTubeTools(Toolkit):
+class EnhancedYouTubeTools(StrictToolkit):
     """
     Enhanced YouTube Tools v2.0
 

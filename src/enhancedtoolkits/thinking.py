@@ -20,8 +20,9 @@ from enum import Enum
 from textwrap import dedent
 from typing import Any, Dict, List, Optional
 
-from agno.tools import Toolkit
 from agno.utils.log import log_debug, logger
+
+from .base import StrictToolkit
 
 
 class ThinkingType(Enum):
@@ -48,7 +49,7 @@ class CognitiveBias(Enum):
     FRAMING_EFFECT = "framing_effect"
 
 
-class EnhancedThinkingTools(Toolkit):
+class EnhancedThinkingTools(StrictToolkit):
     """
     Enhanced Thinking Tools
 

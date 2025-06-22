@@ -415,6 +415,10 @@ downloader = DownloaderTools(
 )
 ```
 
+## 🛡️ Why We Use StrictToolkit
+
+The EnhancedToolkits library uses StrictToolkit as its base class to ensure robust and predictable behavior when interacting with AI agents, particularly those using the OpenAI API. StrictToolkit extends the standard Agno Toolkit by enforcing that all parameters in registered functions are marked as required in the JSON schema, regardless of whether they have default values in the Python code. This strict parameter enforcement is crucial for AI agent compatibility as it prevents common issues where agents might omit parameters they incorrectly assume are optional, leading to runtime errors or unexpected behavior. By making all parameters explicitly required in the schema, we create a more consistent interface that guides AI agents to provide all necessary inputs, resulting in more reliable tool execution, clearer error messages, and improved debugging. This approach has proven especially valuable when working with complex financial calculations, data retrieval operations, and multi-step reasoning processes where parameter completeness is essential for accurate results.
+
 ## 🔧 Requirements
 
 - **Python**: 3.8+

@@ -18,8 +18,9 @@ from enum import Enum
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Sequence, Union
 
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, log_error
+
+from .base import StrictToolkit
 
 
 class ReasoningType(Enum):
@@ -97,7 +98,7 @@ class ReasoningStep:
         )
 
 
-class EnhancedReasoningTools(Toolkit):
+class EnhancedReasoningTools(StrictToolkit):
     """
     Enhanced Universal Reasoning Tools v4.0
 

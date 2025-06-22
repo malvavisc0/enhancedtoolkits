@@ -21,8 +21,9 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import yfinance as yf
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, log_error, log_info, log_warning
+
+from .base import StrictToolkit
 
 
 class YFinanceError(Exception):
@@ -43,7 +44,7 @@ class YFinanceDataError(YFinanceError):
     pass
 
 
-class EnhancedYFinanceTools(Toolkit):
+class EnhancedYFinanceTools(StrictToolkit):
     """
     Enhanced YFinance Tools v2.0
 

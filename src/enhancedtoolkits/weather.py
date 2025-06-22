@@ -18,8 +18,9 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, log_error, log_info, log_warning
+
+from .base import StrictToolkit
 
 # Note: This module requires the pywttr package to be installed
 # Install with: pip install -U pywttr pywttr-models
@@ -53,7 +54,7 @@ class WeatherValidationError(WeatherError):
     pass
 
 
-class EnhancedWeatherTools(Toolkit):
+class EnhancedWeatherTools(StrictToolkit):
     """
     Enhanced Weather Tools v1.0
 

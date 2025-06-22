@@ -16,8 +16,9 @@ import statistics
 from datetime import datetime
 from typing import List
 
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_error, log_info
+
+from .base import StrictToolkit
 
 
 class FinancialCalculationError(Exception):
@@ -38,7 +39,7 @@ class FinancialComputationError(FinancialCalculationError):
     pass
 
 
-class EnhancedCalculatorTools(Toolkit):
+class EnhancedCalculatorTools(StrictToolkit):
     """
     Enhanced Calculator Tools v1.0
 
@@ -469,7 +470,7 @@ class EnhancedCalculatorTools(Toolkit):
             log_error(f"Unexpected error in future value calculation: {e}")
             raise FinancialComputationError(f"Failed to calculate future value: {e}")
 
-    def calculate_net_present_value(self, rate: float, cash_flows: List[float]) -> str:
+    def calculate_net_present_value(self, rate: float, cash_flows: list) -> str:
         """
         Calculate the net present value of a series of cash flows.
 
@@ -1305,7 +1306,7 @@ class EnhancedCalculatorTools(Toolkit):
             log_error(f"Unexpected error in inflation adjustment: {e}")
             raise FinancialComputationError(f"Failed to adjust for inflation: {e}")
 
-    def calculate_sharpe_ratio(self, returns: List[float], risk_free_rate: float) -> str:
+    def calculate_sharpe_ratio(self, returns: list, risk_free_rate: float) -> str:
         """
         Calculate the Sharpe ratio for an investment.
 
@@ -1363,7 +1364,7 @@ class EnhancedCalculatorTools(Toolkit):
             log_error(f"Unexpected error in Sharpe ratio calculation: {e}")
             raise FinancialComputationError(f"Failed to calculate Sharpe ratio: {e}")
 
-    def calculate_volatility(self, returns: List[float]) -> str:
+    def calculate_volatility(self, returns: list) -> str:
         """
         Calculate the volatility (standard deviation) of returns.
 
@@ -1495,7 +1496,7 @@ class EnhancedCalculatorTools(Toolkit):
             raise FinancialValidationError("Periods cannot exceed 1000")
         return periods
 
-    def _validate_cash_flows(self, cash_flows: List[float]) -> List[float]:
+    def _validate_cash_flows(self, cash_flows: list) -> List[float]:
         """Validate cash flows list."""
         if not isinstance(cash_flows, list) or len(cash_flows) < 2:
             raise FinancialValidationError(
@@ -1510,7 +1511,7 @@ class EnhancedCalculatorTools(Toolkit):
 
         return validated_flows
 
-    def _validate_returns_list(self, returns: List[float]) -> List[float]:
+    def _validate_returns_list(self, returns: list) -> list:
         """Validate returns list."""
         if not isinstance(returns, list) or len(returns) < 1:
             raise FinancialValidationError("Returns must be a list with at least 1 value")
@@ -1671,7 +1672,7 @@ By leveraging the following comprehensive set of calculation tools, you can perf
 - Use calculate_net_present_value to calculate NPV of a series of cash flows.
    Parameters:
       - rate (float): Discount rate per period as decimal, e.g., 0.10 for 10%
-      - cash_flows (List[float]): List of cash flows, e.g., [-1000, 300, 400, 500, 600]
+      - cash_flows (list): List of cash flows, e.g., [-1000, 300, 400, 500, 600]
 
 - Use calculate_internal_rate_of_return to calculate IRR for a series of cash flows.
    Parameters:
@@ -1742,12 +1743,12 @@ By leveraging the following comprehensive set of calculation tools, you can perf
 
 - Use calculate_sharpe_ratio to calculate risk-adjusted returns.
    Parameters:
-      - returns (List[float]): List of periodic returns as decimals, e.g., [0.10, 0.15, -0.05, 0.20]
+      - returns (list): List of periodic returns as decimals, e.g., [0.10, 0.15, -0.05, 0.20]
       - risk_free_rate (float): Risk-free rate per period as decimal, e.g., 0.02
 
 - Use calculate_volatility to calculate standard deviation of returns.
    Parameters:
-      - returns (List[float]): List of periodic returns as decimals, e.g., [0.08, 0.12, -0.03, 0.18]
+      - returns (list): List of periodic returns as decimals, e.g., [0.08, 0.12, -0.03, 0.18]
 
 **DEPRECIATION CALCULATIONS:**
 

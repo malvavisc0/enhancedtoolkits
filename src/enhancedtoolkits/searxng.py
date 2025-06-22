@@ -24,8 +24,9 @@ from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 import httpx
-from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, log_error, log_info, log_warning
+
+from .base import StrictToolkit
 
 # Optional Byparr configuration
 BYPARR_URL = os.environ.get("BYPARR_URL", "http://byparr:8191/v1")
@@ -68,7 +69,7 @@ class UnsupportedFileTypeError(SearxngContentError):
     pass
 
 
-class EnhancedSearxngTools(Toolkit):
+class EnhancedSearxngTools(StrictToolkit):
     """
     Enhanced SearxNG Tools v2.0
 

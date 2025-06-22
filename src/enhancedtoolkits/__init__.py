@@ -1,3 +1,4 @@
+from .base import StrictToolkit
 from .calculator import EnhancedCalculatorTools as CalculatorTools
 from .downloader import URLContentDownloader as DownloaderTools
 from .files import EnhancedFilesTools as FilesTools
@@ -9,6 +10,7 @@ from .weather import EnhancedWeatherTools as WeatherTools
 from .youtube import EnhancedYouTubeTools as YouTubeTools
 
 __all__ = [
+    "StrictToolkit",
     "CalculatorTools",
     "DownloaderTools",
     "FilesTools",
