@@ -1,5 +1,4 @@
 from .base import StrictToolkit
-from .calculator import EnhancedCalculatorTools as CalculatorTools
 from .downloader import URLContentDownloader as DownloaderTools
 from .files import EnhancedFilesTools as FilesTools
 from .finance import EnhancedYFinanceTools as YFinanceTools
@@ -11,7 +10,6 @@ from .youtube import EnhancedYouTubeTools as YouTubeTools
 
 __all__ = [
     "StrictToolkit",
-    "CalculatorTools",
     "DownloaderTools",
     "FilesTools",
     "YFinanceTools",
