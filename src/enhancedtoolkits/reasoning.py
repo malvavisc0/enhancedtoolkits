@@ -15,8 +15,7 @@ Version: 4.0.0
 
 from datetime import datetime
 from enum import Enum
-from textwrap import dedent
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Union
 
 from agno.utils.log import log_debug, log_error
 
@@ -416,7 +415,7 @@ class EnhancedReasoningTools(StrictToolkit):
         self,
         agent_or_team: Any,
         problem: str,
-        reasoning_types: Sequence[str],
+        reasoning_types: Optional[List[str]] = None,
         evidence: Optional[List[str]] = None,
     ) -> str:
         """
@@ -432,6 +431,13 @@ class EnhancedReasoningTools(StrictToolkit):
             Integrated analysis using multiple reasoning approaches
         """
         try:
+            # Handle missing or invalid reasoning_types parameter
+            if reasoning_types is None or not reasoning_types:
+                reasoning_types = [
+                    "deductive",
+                    "inductive",
+                ]  # Default to two common types
+
             # Convert strings to enums
             converted_types = []
             for rt in reasoning_types:
