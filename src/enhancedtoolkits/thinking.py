@@ -236,7 +236,10 @@ Evaluates thinking across 5 key dimensions:
             # Safely retrieve last enhanced thought from session state
             try:
                 session_state = self._get_session_state(agent)
-                if "enhanced_thoughts" not in session_state or not session_state["enhanced_thoughts"]:
+                if (
+                    "enhanced_thoughts" not in session_state
+                    or not session_state["enhanced_thoughts"]
+                ):
                     # Fallback if session state is not properly initialized
                     enhanced_thought = {
                         "detected_biases": [],

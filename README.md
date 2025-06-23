@@ -23,6 +23,8 @@ This collection provides nine comprehensive toolkits designed for AI agents that
 - **🔧 Highly Configurable**: Extensive customization options for each tool
 - **📊 Session Management**: Built-in state tracking and reasoning chains
 
+🎉 ALL TOOLKITS are OpenAI compatible!
+
 ## 📦 Installation
 
 Install directly from GitHub:

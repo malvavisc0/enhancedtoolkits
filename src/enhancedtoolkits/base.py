@@ -4,6 +4,8 @@ from agno.tools.function import Function
 from agno.tools.toolkit import Toolkit
 from agno.utils.log import log_debug, logger
 
+from .utils.schema import OpenAISchemaValidator
+
 
 class StrictToolkit(Toolkit):
     """
@@ -15,7 +17,7 @@ class StrictToolkit(Toolkit):
 
     def register(self, function: Callable[..., Any], name: Optional[str] = None) -> None:
         """
-        Register a function with the toolkit, always using strict=True.
+        Register a function with the toolkit, always using strict=True and validating OpenAI compatibility.
 
         Args:
             function: The callable to register
@@ -31,6 +33,9 @@ class StrictToolkit(Toolkit):
             # Create Function directly with strict=True
             f = Function.from_callable(function, name=tool_name, strict=True)
 
+            # Validate OpenAI compatibility
+            self._validate_openai_compatibility(f, function)
+
             # Set all the necessary properties
             f.cache_results = self.cache_results
             f.cache_dir = self.cache_dir
@@ -44,7 +49,48 @@ class StrictToolkit(Toolkit):
 
             # Add to functions dictionary
             self.functions[f.name] = f
-            log_debug(f"Function: {f.name} registered with {self.name} (strict=True)")
+            log_debug(
+                f"Function: {f.name} registered with {self.name} (strict=True, OpenAI compatible)"
+            )
         except Exception as e:
             logger.warning(f"Failed to create Function for: {function.__name__}")
             raise e
+
+    def _validate_openai_compatibility(
+        self, function_obj: Function, original_func: Callable
+    ) -> None:
+        """
+        Validate that the function schema is OpenAI compatible.
+
+        Args:
+            function_obj: The Function object with generated schema
+            original_func: The original callable for analysis
+        """
+        try:
+            # Get the schema
+            schema = function_obj.to_dict()
+
+            # Validate with our validator
+            validator = OpenAISchemaValidator()
+            errors = validator.validate_schema(schema)
+
+            if errors:
+                logger.warning(
+                    f"OpenAI compatibility issues found in {function_obj.name}:"
+                )
+                for error in errors:
+                    logger.warning(f"  - {error}")
+
+                # Analyze the function signature for recommendations
+                analysis = validator.analyze_function_signature(original_func)
+                if analysis["recommendations"]:
+                    logger.warning(f"Recommendations for {function_obj.name}:")
+                    for rec in analysis["recommendations"]:
+                        logger.warning(f"  - {rec}")
+            else:
+                log_debug(f"Function {function_obj.name} is OpenAI compatible")
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to validate OpenAI compatibility for {function_obj.name}: {e}"
+            )

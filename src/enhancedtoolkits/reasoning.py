@@ -190,7 +190,7 @@ class EnhancedReasoningTools(StrictToolkit):
         self,
         agent_or_team: Any,
         problem: str,
-        reasoning_type: Union[ReasoningType, str] = ReasoningType.DEDUCTIVE,
+        reasoning_type: str = "deductive",
         evidence: Optional[List[str]] = None,
         context: Optional[str] = None,
         max_iterations: int = 3,
@@ -321,12 +321,19 @@ class EnhancedReasoningTools(StrictToolkit):
         """
         Generate a reasoning step from a prompt, using the LLM or self.reason as appropriate.
         """
+        # Convert reasoning_type to string if it's an enum
+        reasoning_type_str = (
+            reasoning_type.value
+            if isinstance(reasoning_type, ReasoningType)
+            else reasoning_type
+        )
+
         # If using an LLM, pass the prompt directly.
         # If using self.reason, you may need to adapt the method to accept a custom prompt.
         return self.reason(
             agent_or_team,
             prompt,
-            reasoning_type,
+            reasoning_type_str,
             evidence,
             context,
         )
@@ -335,7 +342,7 @@ class EnhancedReasoningTools(StrictToolkit):
         self,
         agent_or_team: Any,
         problem: str,
-        reasoning_type: Union[ReasoningType, str] = ReasoningType.DEDUCTIVE,
+        reasoning_type: str = "deductive",
         evidence: Optional[List[str]] = None,
         context: Optional[str] = None,
     ) -> str:
@@ -345,7 +352,7 @@ class EnhancedReasoningTools(StrictToolkit):
         Args:
             agent_or_team: The agent or team requesting reasoning
             problem: The problem or question to analyze
-            reasoning_type: Type of reasoning to apply
+            reasoning_type: Type of reasoning to apply. Valid values: "deductive", "inductive", "abductive", "causal", "probabilistic", "analogical"
             evidence: Supporting evidence or data points
             context: Additional context for the problem
 
@@ -354,20 +361,23 @@ class EnhancedReasoningTools(StrictToolkit):
         """
         try:
             # Convert string to enum if needed
+            reasoning_type_enum = ReasoningType.DEDUCTIVE  # default
             if isinstance(reasoning_type, str):
                 try:
-                    reasoning_type = ReasoningType(reasoning_type)
+                    reasoning_type_enum = ReasoningType(reasoning_type)
                 except ValueError:
-                    reasoning_type = ReasoningType.DEDUCTIVE
+                    reasoning_type_enum = ReasoningType.DEDUCTIVE
+            else:
+                reasoning_type_enum = reasoning_type
 
-            log_debug(f"Reasoning ({reasoning_type.value}): {problem[:50]}...")
+            log_debug(f"Reasoning ({reasoning_type_enum.value}): {problem[:50]}...")
 
             # Initialize session state
             self._initialize_session_state(agent_or_team)
 
             # Analyze the problem
             analysis = self._analyze_problem(
-                problem, reasoning_type, evidence or [], context
+                problem, reasoning_type_enum, evidence or [], context
             )
 
             # Detect biases if enabled
@@ -381,7 +391,7 @@ class EnhancedReasoningTools(StrictToolkit):
             reasoning_step = ReasoningStep(
                 step_type="reasoning",
                 content=problem,
-                reasoning_type=reasoning_type,
+                reasoning_type=reasoning_type_enum,
                 confidence=analysis.get("confidence_level", "moderately confident"),
                 evidence=evidence or [],
                 biases_detected=biases_detected,
@@ -393,7 +403,7 @@ class EnhancedReasoningTools(StrictToolkit):
 
             # Generate human-like output
             output = self._format_reasoning_output(
-                problem, reasoning_type, analysis, biases_detected, evidence or []
+                problem, reasoning_type_enum, analysis, biases_detected, evidence or []
             )
 
             return output
@@ -406,7 +416,7 @@ class EnhancedReasoningTools(StrictToolkit):
         self,
         agent_or_team: Any,
         problem: str,
-        reasoning_types: Sequence[Union[ReasoningType, str]],
+        reasoning_types: Sequence[str],
         evidence: Optional[List[str]] = None,
     ) -> str:
         """
@@ -680,7 +690,7 @@ class EnhancedReasoningTools(StrictToolkit):
     def _initialize_session_state(self, agent_or_team: Any) -> None:
         """Initialize session state for reasoning tracking."""
         session_state = self._get_session_state(agent_or_team)
-        
+
         if "reasoning_steps" not in session_state:
             session_state["reasoning_steps"] = {}
 
@@ -700,7 +710,7 @@ class EnhancedReasoningTools(StrictToolkit):
             session_state = self._get_session_state(agent_or_team)
             if "reasoning_steps" not in session_state:
                 return []
-            
+
             run_id = getattr(agent_or_team, "run_id", "default")
             return session_state["reasoning_steps"].get(run_id, [])
         except Exception:
