@@ -17,7 +17,6 @@ import hashlib
 import random
 from datetime import datetime
 from enum import Enum
-from textwrap import dedent
 from typing import Any, Dict, List, Optional
 
 from agno.utils.log import log_debug, logger
@@ -224,7 +223,6 @@ Evaluates thinking across 5 key dimensions:
         else:
             thinking_type_enum = thinking_type
 
-        current_thinking_type = thinking_type  # Keep as string for function calls
         current_context = context
         current_evidence = evidence
         current_confidence = confidence
@@ -238,7 +236,7 @@ Evaluates thinking across 5 key dimensions:
             output = self.think(
                 agent,
                 current_thought,
-                current_thinking_type,
+                thinking_type_enum.value,
                 current_context,
                 current_evidence,
                 current_confidence,
