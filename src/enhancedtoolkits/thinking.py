@@ -189,7 +189,7 @@ Evaluates thinking across 5 key dimensions:
         self,
         agent: Any,
         thought: str,
-        thinking_type: ThinkingType = ThinkingType.ANALYSIS,
+        thinking_type: str = "analysis",
         context: Optional[str] = None,
         evidence: Optional[List[str]] = None,
         confidence: Optional[str] = None,
@@ -201,7 +201,7 @@ Evaluates thinking across 5 key dimensions:
         Args:
             agent: The agent or team doing the thinking
             thought: The initial thought content to process
-            thinking_type: Type of thinking approach being used
+            thinking_type: Type of thinking approach being used. Valid values: "analysis", "synthesis", "evaluation", "reflection", "planning", "problem_solving", "creative", "critical"
             context: Additional context for the thought
             evidence: Supporting evidence or data points
             confidence: Natural language confidence expression
@@ -213,7 +213,18 @@ Evaluates thinking across 5 key dimensions:
         min_quality = 0.6  # Minimum acceptable overall quality score
         history = []
         current_thought = thought
-        current_thinking_type = thinking_type
+
+        # Convert string to enum if needed for internal processing
+        thinking_type_enum = ThinkingType.ANALYSIS  # default
+        if isinstance(thinking_type, str):
+            try:
+                thinking_type_enum = ThinkingType(thinking_type)
+            except ValueError:
+                thinking_type_enum = ThinkingType.ANALYSIS
+        else:
+            thinking_type_enum = thinking_type
+
+        current_thinking_type = thinking_type  # Keep as string for function calls
         current_context = context
         current_evidence = evidence
         current_confidence = confidence
@@ -390,7 +401,7 @@ Evaluates thinking across 5 key dimensions:
         self,
         agent: Any,
         thought: str,
-        thinking_type: ThinkingType = ThinkingType.ANALYSIS,
+        thinking_type: str = "analysis",
         context: Optional[str] = None,
         evidence: Optional[List[str]] = None,
         confidence: Optional[str] = None,
@@ -401,7 +412,7 @@ Evaluates thinking across 5 key dimensions:
         Args:
             agent: The agent or team doing the thinking
             thought: The thought content to process and store
-            thinking_type: Type of thinking approach being used
+            thinking_type: Type of thinking approach being used. Valid values: "analysis", "synthesis", "evaluation", "reflection", "planning", "problem_solving", "creative", "critical"
             context: Additional context for the thought (problem, situation, etc.)
             evidence: Supporting evidence or data points
             confidence: Natural language confidence expression (e.g., "quite confident", "uncertain")
@@ -410,7 +421,17 @@ Evaluates thinking across 5 key dimensions:
             Natural language summary of thinking progress with cognitive insights
         """
         try:
-            log_debug(f"Enhanced Thought ({thinking_type.value}): {thought}")
+            # Convert string to enum if needed
+            thinking_type_enum = ThinkingType.ANALYSIS  # default
+            if isinstance(thinking_type, str):
+                try:
+                    thinking_type_enum = ThinkingType(thinking_type)
+                except ValueError:
+                    thinking_type_enum = ThinkingType.ANALYSIS
+            else:
+                thinking_type_enum = thinking_type
+
+            log_debug(f"Enhanced Thought ({thinking_type_enum.value}): {thought}")
 
             # Initialize session state if needed
             session_state = self._get_session_state(agent)
@@ -436,14 +457,14 @@ Evaluates thinking across 5 key dimensions:
             quality_assessment = {}
             if self.enable_quality_assessment:
                 quality_assessment = self._assess_thought_quality(
-                    thought, thinking_type, context, evidence
+                    thought, thinking_type_enum, context, evidence
                 )
 
             # Create enhanced thought record
             enhanced_thought = {
                 "id": thought_id,
                 "content": thought,
-                "type": thinking_type.value,
+                "type": thinking_type_enum.value,
                 "timestamp": datetime.now().isoformat(),
                 "context": context,
                 "evidence": evidence or [],
