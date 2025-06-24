@@ -13,10 +13,11 @@ import fcntl
 import json
 import mimetypes
 import os
+import re
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from agno.utils.log import log_error, log_info
 
@@ -71,6 +72,8 @@ class EnhancedFilesTools(StrictToolkit):
         self.register(self.save_file)
         self.register(self.get_file_metadata)
         self.register(self.list_files)
+        self.register(self.search_files_by_name)
+        self.register(self.search_inside_files)
 
     def read_file_chunk(
         self, file_name: str, chunk_size: int = 100, offset: int = 0
@@ -439,6 +442,208 @@ class EnhancedFilesTools(StrictToolkit):
         """Generate ISO timestamp."""
         return datetime.now().isoformat()
 
+    def _validate_regex(self, regex_pattern: str):
+        """
+        Validate regex pattern for security.
+
+        Args:
+            regex_pattern (str): The regex pattern to validate
+
+        Raises:
+            FileSecurityError: If the pattern is invalid or potentially dangerous
+        """
+        if not regex_pattern or not isinstance(regex_pattern, str):
+            raise FileSecurityError("Invalid regex pattern")
+
+        if len(regex_pattern) > 1000:
+            raise FileSecurityError("Regex pattern too long")
+
+        # Check for potentially dangerous patterns
+        dangerous_patterns = [
+            r"(?:){2,}",  # Nested quantifiers that can cause catastrophic backtracking
+            r"(\w+)*\1",  # Backreferences with quantifiers that can cause exponential backtracking
+        ]
+
+        for dp in dangerous_patterns:
+            if dp in regex_pattern:
+                raise FileSecurityError(f"Potentially dangerous regex pattern detected")
+
+        # Validate regex compilation
+        try:
+            re.compile(regex_pattern)
+        except re.error as e:
+            raise FileSecurityError(f"Invalid regex pattern: {e}")
+
+    def search_files_by_name(
+        self, regex_pattern: str, recursive: bool = True, max_results: int = 1000
+    ) -> str:
+        """
+        Search for files with names matching a regex pattern with security validation.
+
+        Args:
+            regex_pattern (str): Regular expression pattern to match against file names
+            recursive (bool, optional): Whether to search recursively in subdirectories. Defaults to True.
+            max_results (int, optional): Maximum number of results to return. Defaults to 1000.
+
+        Returns:
+            str: JSON string containing the search results and metadata
+        """
+        try:
+            # Validate regex pattern
+            self._validate_regex(regex_pattern)
+
+            pattern = re.compile(regex_pattern)
+
+            files = []
+            search_path = self.base_dir
+
+            # Use walk for recursive search or listdir for non-recursive
+            if recursive:
+                for root, _, filenames in os.walk(search_path):
+                    for filename in filenames:
+                        file_path = Path(root) / filename
+                        if self._is_safe_file(file_path) and pattern.search(filename):
+                            rel_path = str(file_path.relative_to(self.base_dir))
+                            files.append(rel_path)
+                            if len(files) >= max_results:  # Limit results
+                                break
+                    if len(files) >= max_results:
+                        break
+            else:
+                for item in search_path.iterdir():
+                    if (
+                        item.is_file()
+                        and self._is_safe_file(item)
+                        and pattern.search(item.name)
+                    ):
+                        rel_path = str(item.relative_to(self.base_dir))
+                        files.append(rel_path)
+                        if len(files) >= max_results:  # Limit results
+                            break
+
+            result = {
+                "operation": "search_files_by_name",
+                "result": sorted(files),
+                "metadata": {
+                    "file_count": len(files),
+                    "pattern": regex_pattern,
+                    "recursive": recursive,
+                    "timestamp": self._timestamp(),
+                },
+            }
+            log_info(f"Found {len(files)} files matching pattern '{regex_pattern}'")
+            return self._safe_json(result)
+        except Exception as e:
+            return self._error_response("search_files_by_name", str(self.base_dir), e)
+
+    def search_inside_files(
+        self,
+        regex_pattern: str,
+        file_pattern: str = "**/*",
+        recursive: bool = False,
+        max_files: int = 100,
+        max_matches: int = 1000,
+        context_lines: int = 2,
+    ) -> str:
+        """
+        Search for content inside files matching a regex pattern with security validation.
+
+        Args:
+            regex_pattern (str): Regular expression pattern to match against file content
+            file_pattern (str, optional): Glob pattern to filter files. Defaults to "**/*".
+            recursive (bool, optional): Whether to search recursively in subdirectories. Defaults to False.
+            max_files (int, optional): Maximum number of files to search. Defaults to 100.
+            max_matches (int, optional): Maximum number of matches to return. Defaults to 1000.
+            context_lines (int, optional): Number of context lines to include before and after match. Defaults to 2.
+
+        Returns:
+            str: JSON string containing the search results and metadata
+        """
+        try:
+            # Validate regex pattern
+            self._validate_regex(regex_pattern)
+
+            pattern = re.compile(regex_pattern)
+
+            matches = []
+            files_searched = 0
+            total_matches = 0
+
+            # Get files matching the file pattern
+            if recursive:
+                file_paths = self.base_dir.glob(file_pattern)
+            else:
+                # For non-recursive search, ensure the pattern doesn't contain directory traversal
+                if "**" in file_pattern:
+                    # Replace ** with * for non-recursive search
+                    file_pattern = file_pattern.replace("**", "*")
+                file_paths = self.base_dir.glob(file_pattern)
+
+            for file_path in file_paths:
+                if not (file_path.is_file() and self._is_safe_file(file_path)):
+                    continue
+
+                files_searched += 1
+                if files_searched > max_files:
+                    break
+
+                rel_path = str(file_path.relative_to(self.base_dir))
+
+                # Search inside the file
+                try:
+                    with self._secure_file_lock(file_path, "r") as f:
+                        lines = f.readlines()
+
+                    file_matches = []
+                    for i, line in enumerate(lines):
+                        if pattern.search(line):
+                            # Get context lines
+                            start = max(0, i - context_lines)
+                            end = min(len(lines), i + context_lines + 1)
+
+                            context = {
+                                "line_number": i + 1,
+                                "content": line.rstrip("\n\r"),
+                                "context": [
+                                    lines[j].rstrip("\n\r") for j in range(start, end)
+                                ],
+                            }
+
+                            file_matches.append(context)
+                            total_matches += 1
+
+                            if total_matches >= max_matches:
+                                break
+
+                    if file_matches:
+                        matches.append({"file": rel_path, "matches": file_matches})
+
+                    if total_matches >= max_matches:
+                        break
+
+                except Exception as file_error:
+                    # Skip files with errors
+                    log_error(f"Error searching file {rel_path}: {file_error}")
+                    continue
+
+            result = {
+                "operation": "search_inside_files",
+                "result": matches,
+                "metadata": {
+                    "files_searched": files_searched,
+                    "total_matches": total_matches,
+                    "pattern": regex_pattern,
+                    "recursive": recursive,
+                    "timestamp": self._timestamp(),
+                },
+            }
+            log_info(
+                f"Found {total_matches} matches in {files_searched} files for pattern '{regex_pattern}'"
+            )
+            return self._safe_json(result)
+        except Exception as e:
+            return self._error_response("search_inside_files", str(self.base_dir), e)
+
     @staticmethod
     def get_llm_usage_instructions() -> str:
         """
@@ -490,6 +695,21 @@ This toolkit provides robust, secure file operations for LLMs. All operations ar
 - list_files: List files matching a pattern.
    Parameters:
       - pattern (str, optional): Glob pattern (default: "**/*"), e.g., "*.py"
+
+- search_files_by_name: Search for files with names matching a regex pattern.
+   Parameters:
+      - regex_pattern (str): Regular expression pattern
+      - recursive (bool, optional): Whether to search recursively (default: True)
+      - max_results (int, optional): Maximum number of results to return (default: 1000)
+
+- search_inside_files: Search for content inside files matching a regex pattern.
+   Parameters:
+      - regex_pattern (str): Regular expression pattern
+      - file_pattern (str, optional): Glob pattern to filter files (default: "**/*")
+      - recursive (bool, optional): Whether to search recursively (default: False)
+      - max_files (int, optional): Maximum number of files to search (default: 100)
+      - max_matches (int, optional): Maximum number of matches to return (default: 1000)
+      - context_lines (int, optional): Number of context lines to include (default: 2)
 
 **Security Notes:**
 - Allowed extensions: .txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml
