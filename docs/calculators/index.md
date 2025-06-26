@@ -166,9 +166,12 @@ business = BusinessAnalysisCalculatorTools()
 
 **Functions available to agents:**
 - `calculate_break_even_point()` - Break-even analysis
+
+<!-- The following functions are not currently implemented:
 - `calculate_profit_margin()` - Profitability metrics
 - `calculate_cost_volume_profit()` - CVP analysis
 - `calculate_financial_ratios()` - Key business ratios
+-->
 
 [Setup Guide →](business.md)
 
@@ -186,8 +189,11 @@ utility = UtilityCalculatorTools()
 **Functions available to agents:**
 - `convert_currency()` - Currency conversion with exchange rates
 - `adjust_for_inflation()` - Inflation-adjusted calculations
+
+<!-- The following functions are not currently implemented:
 - `calculate_tax()` - Tax calculations
 - `calculate_percentage()` - Percentage operations
+-->
 
 [Setup Guide →](utility.md)
 
