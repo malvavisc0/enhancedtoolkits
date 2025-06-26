@@ -1,0 +1,228 @@
+/* Custom styles for Enhanced Toolkits documentation */
+:root {
+  --md-primary-fg-color: #1976d2;
+  --md-primary-fg-color--light: #42a5f5;
+  --md-primary-fg-color--dark: #1565c0;
+  --md-accent-fg-color: #4caf50;
+}
+
+/* Logo styling */
+.md-header__button.md-logo img {
+  height: 32px;
+  width: auto;
+}
+
+/* Code block enhancements */
+.highlight .filename {
+  background: var(--md-code-bg-color);
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  color: var(--md-default-fg-color--light);
+  font-size: 0.85em;
+  padding: 0.5rem 1rem;
+  margin: 0;
+}
+
+/* Toolkit cards */
+.toolkit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.toolkit-card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+  background: var(--md-default-bg-color);
+}
+
+.toolkit-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.toolkit-card h3 {
+  margin-top: 0;
+  color: var(--md-primary-fg-color);
+}
+
+.toolkit-card a {
+  color: var(--md-primary-fg-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.toolkit-card a:hover {
+  text-decoration: underline;
+}
+
+/* Feature highlights */
+.feature-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--md-code-bg-color);
+}
+
+.feature-icon {
+  color: var(--md-accent-fg-color);
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Installation badges */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* API documentation styling */
+.api-method {
+  border-left: 4px solid var(--md-primary-fg-color);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  background: var(--md-code-bg-color);
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.api-method h4 {
+  margin-top: 0;
+  color: var(--md-primary-fg-color);
+}
+
+.parameter-table {
+  margin: 1rem 0;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parameter-table th {
+  background: var(--md-default-fg-color--lightest);
+  padding: 0.5rem;
+  text-align: left;
+  border: 1px solid var(--md-default-fg-color--lighter);
+}
+
+.parameter-table td {
+  padding: 0.5rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+}
+
+/* Code copy button enhancement */
+.md-clipboard {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.md-clipboard:hover {
+  opacity: 1;
+}
+
+/* Admonition styling enhancements */
+.md-typeset .admonition.success {
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition.success > .admonition-title {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* Navigation enhancements */
+.md-nav__item--active > .md-nav__link {
+  color: var(--md-primary-fg-color);
+  font-weight: 500;
+}
+
+/* Table of contents styling */
+.md-nav--secondary .md-nav__link--active {
+  color: var(--md-primary-fg-color);
+  font-weight: 500;
+}
+
+/* Search highlighting */
+.md-search-result__teaser mark {
+  background: var(--md-accent-fg-color);
+  color: white;
+}
+
+/* Footer styling */
+.md-footer {
+  background: var(--md-primary-fg-color--dark);
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] .toolkit-card {
+  border-color: var(--md-default-fg-color--lightest);
+  background: var(--md-default-bg-color);
+}
+
+[data-md-color-scheme="slate"] .feature-item {
+  background: var(--md-code-bg-color);
+}
+
+[data-md-color-scheme="slate"] .toolkit-card:hover {
+  box-shadow: 0 4px 8px rgba(255,255,255,0.1);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .toolkit-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .feature-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .feature-item {
+    padding: 0.75rem;
+  }
+  
+  .toolkit-card {
+    padding: 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .feature-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .feature-icon {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .toolkit-grid,
+  .feature-list {
+    display: block;
+  }
+  
+  .toolkit-card,
+  .feature-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+}

@@ -1,0 +1,185 @@
+# Site Information
+site_name: Enhanced Toolkits
+site_description: Production-ready AI agent tools for developers building intelligent chatbots and AI systems
+site_author: malvavisc0
+site_url: https://malvavisc0.github.io/enhancedtoolkits
+
+# Repository
+repo_name: malvavisc0/enhancedtoolkits
+repo_url: https://github.com/malvavisc0/enhancedtoolkits
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 malvavisc0
+
+# Configuration
+theme:
+  name: material
+  language: en
+  
+  # Color palette
+  palette:
+    - scheme: default
+      primary: blue
+      accent: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  # Fonts
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  # Features
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+    - content.action.edit
+    - content.action.view
+    - announce.dismiss
+
+# Plugins
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_object_full_path: false
+            show_category_heading: true
+            group_by_category: true
+            heading_level: 2
+            members_order: source
+            filters:
+              - "!^_"
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+
+# Markdown Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: malvavisc0
+      repo: enhancedtoolkits
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+  - Core Toolkits:
+    - toolkits/index.md
+    - Reasoning Tools: toolkits/reasoning.md
+    - Finance Tools: toolkits/finance.md
+  - Calculator Modules:
+    - calculators/index.md
+    - Arithmetic Calculator: calculators/arithmetic.md
+  - API Reference:
+    - api/index.md
+    - Manual Reference: api/manual-reference.md
+    - Auto-Generated APIs:
+      - Reasoning Tools: api/reasoning.md
+      - Search Tools: api/searxng.md
+      - Finance Tools: api/finance.md
+      - StrictToolkit Base: api/base.md
+      - Arithmetic Calculator: api/calculators/arithmetic.md
+      - Time Value Calculator: api/calculators/time-value.md
+  - Developer Guide:
+    - developer/index.md
+    - Deployment: developer/deployment.md
+
+# Extra CSS and JavaScript
+extra_css:
+  - assets/css/custom.css
+
+extra_javascript:
+  - assets/js/custom.js
+
+# Extra configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/malvavisc0/enhancedtoolkits
+      name: GitHub Repository
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/enhancedtoolkits/
+      name: PyPI Package
+
+# Validation
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+# Watch additional files
+watch:
+  - src/enhancedtoolkits
