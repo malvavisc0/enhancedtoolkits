@@ -155,6 +155,7 @@ nav:
       - Time Value Calculator: api/calculators/time-value.md
   - Developer Guide:
     - developer/index.md
+    - Deployment: developer/deployment.md
 
 # Extra CSS and JavaScript
 extra_css:
