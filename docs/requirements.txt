@@ -1,0 +1,17 @@
+# MkDocs and theme
+mkdocs
+mkdocs-material
+
+# Essential plugins
+mkdocs-minify-plugin
+
+# API documentation from docstrings
+mkdocstrings-python
+
+# Optional plugins (install as needed)
+mkdocs-mermaid2-plugin
+mkdocs-awesome-pages-plugin
+# mkdocs-git-revision-date-localized-plugin>=1.2.0
+# mkdocs-autolinks-plugin>=0.7.0
+# mkdocs-include-markdown-plugin>=6.0.0
+# mkdocs-macros-plugin>=1.0.0
