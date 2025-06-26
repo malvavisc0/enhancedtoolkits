@@ -180,7 +180,7 @@ class URLContentDownloader(StrictToolkit):
 
         Args:
             url: URL to download content from
-            format: Output format ("auto", "markdown", "text", "html", or "binary")
+            output: Output format ("auto", "markdown", "text", "html", or "binary")
 
         Returns:
             Parsed content in the specified format
