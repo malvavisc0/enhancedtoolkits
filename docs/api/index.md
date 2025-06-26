@@ -34,7 +34,6 @@ Foundation classes that power all toolkits:
 
 - **[StrictToolkit](base.md)** - Base class for all toolkits
 - **[Calculator Base](calculators/base.md)** - Base classes for calculator modules
-- **[Utilities](utils.md)** - Shared utility functions and schemas
 
 ## 🔍 How to Use This Reference
 
