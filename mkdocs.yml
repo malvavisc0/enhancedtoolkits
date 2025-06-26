@@ -136,6 +136,7 @@ nav:
     - getting-started/index.md
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
   - Core Toolkits:
     - toolkits/index.md
     - Reasoning Tools: toolkits/reasoning.md
@@ -149,6 +150,14 @@ nav:
   - Calculator Modules:
     - calculators/index.md
     - Arithmetic Calculator: calculators/arithmetic.md
+    - Time Value Calculator: calculators/time-value.md
+    - Investment Calculator: calculators/investment.md
+    - Loan Calculator: calculators/loan.md
+    - Bond Calculator: calculators/bond.md
+    - Risk Calculator: calculators/risk.md
+    - Depreciation Calculator: calculators/depreciation.md
+    - Business Calculator: calculators/business.md
+    - Utility Calculator: calculators/utility.md
   - API Reference:
     - api/index.md
     - Manual Reference: api/manual-reference.md
@@ -161,6 +170,7 @@ nav:
       - Time Value Calculator: api/calculators/time-value.md
   - Developer Guide:
     - developer/index.md
+    - Contributing: developer/contributing.md
     - Deployment: developer/deployment.md
 
 # Extra CSS and JavaScript

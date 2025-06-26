@@ -1,6 +1,6 @@
 # Enhanced Toolkits for AI Agents
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Agno Framework](https://img.shields.io/badge/framework-Agno-green.svg)](https://github.com/agno-ai/agno)
 
@@ -58,49 +58,49 @@ agent = Agent(
   <div class="toolkit-card">
     <h3>🧠 Reasoning Tools</h3>
     <p>Multi-modal reasoning with cognitive bias detection for complex decision making.</p>
-    <a href="toolkits/reasoning/">Setup Guide →</a>
+    <a href="toolkits/reasoning.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>🔍 Search Tools</h3>
     <p>Web search with content extraction using SearxNG integration.</p>
-    <a href="toolkits/searxng/">Setup Guide →</a>
+    <a href="toolkits/searxng.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>💭 Thinking Tools</h3>
     <p>Structured cognitive frameworks for systematic problem analysis.</p>
-    <a href="toolkits/thinking/">Setup Guide →</a>
+    <a href="toolkits/thinking.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>📁 Files Tools</h3>
     <p>Enterprise-grade file operations with comprehensive security controls.</p>
-    <a href="toolkits/files/">Setup Guide →</a>
+    <a href="toolkits/files.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>📈 Finance Tools</h3>
     <p>Real-time financial data and market information via Yahoo Finance.</p>
-    <a href="toolkits/finance/">Setup Guide →</a>
+    <a href="toolkits/finance.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>🎥 YouTube Tools</h3>
     <p>Video metadata and transcript extraction with multi-language support.</p>
-    <a href="toolkits/youtube/">Setup Guide →</a>
+    <a href="toolkits/youtube.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>☁️ Weather Tools</h3>
     <p>Weather data and forecasts with support for 30+ languages.</p>
-    <a href="toolkits/weather/">Setup Guide →</a>
+    <a href="toolkits/weather.md">Setup Guide →</a>
   </div>
   
   <div class="toolkit-card">
     <h3>📥 Downloader Tools</h3>
     <p>Universal file downloading with anti-bot bypass capabilities.</p>
-    <a href="toolkits/downloader/">Setup Guide →</a>
+    <a href="toolkits/downloader.md">Setup Guide →</a>
   </div>
 </div>
 
@@ -138,7 +138,7 @@ agent = Agent(
 )
 ```
 
-[View all calculator modules →](calculators/)
+[View all calculator modules →](calculators/index.md)
 
 ## 🏗️ AI Agent Integration
 
@@ -234,19 +234,19 @@ search = SearxngTools(
 
 ## 📚 Documentation Sections
 
-- **[Getting Started](getting-started/)** - Installation and setup for AI agents
-- **[Core Toolkits](toolkits/)** - Setup guides for all 8 core tools
-- **[Calculator Modules](calculators/)** - Setup guides for all 9 calculator tools
-- **[API Reference](api/)** - Complete function schemas and parameters
-- **[Developer Guide](developer/)** - Contributing and deployment
+- **[Getting Started](getting-started/index.md)** - Installation and setup for AI agents
+- **[Core Toolkits](toolkits/index.md)** - Setup guides for all 8 core tools
+- **[Calculator Modules](calculators/index.md)** - Setup guides for all 9 calculator tools
+- **[API Reference](api/index.md)** - Complete function schemas and parameters
+- **[Developer Guide](developer/index.md)** - Contributing and deployment
 
 ## 🎯 Next Steps
 
-1. **[Install Enhanced Toolkits](getting-started/installation/)**
-2. **[Choose your tools](toolkits/)** from the 8 core toolkits
-3. **[Add calculators](calculators/)** from the 9 available modules
-4. **[Register with your agent](getting-started/quick-start/)** using OpenAI or Agno
-5. **[Configure for production](getting-started/configuration/)** with caching and rate limiting
+1. **[Install Enhanced Toolkits](getting-started/installation.md)**
+2. **[Choose your tools](toolkits/index.md)** from the 8 core toolkits
+3. **[Add calculators](calculators/index.md)** from the 9 available modules
+4. **[Register with your agent](getting-started/quick-start.md)** using OpenAI or Agno
+5. **[Configure for production](getting-started/configuration.md)** with caching and rate limiting
 
 ---
 
