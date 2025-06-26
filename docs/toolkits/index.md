@@ -1,194 +1,291 @@
-# Core Toolkits
+# Core Toolkits for AI Agents
 
-Enhanced Toolkits provides 8 comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities.
+Enhanced Toolkits provides **8 core toolkits** designed specifically for AI agents. Each toolkit is optimized for OpenAI function calling and Agno framework integration.
 
-## Available Toolkits
+## 🤖 AI Agent Integration
 
-<div class="toolkit-grid">
-  <div class="toolkit-card">
-    <h3>🧠 Reasoning Tools</h3>
-    <p>Multi-modal reasoning with cognitive bias detection and session management.</p>
-    <ul>
-      <li>6 reasoning types (Deductive, Inductive, Abductive, etc.)</li>
-      <li>Bias detection and mitigation</li>
-      <li>Session tracking and history</li>
-      <li>Quality assessment metrics</li>
-    </ul>
-    <a href="reasoning/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>🔍 Search Tools (SearxNG)</h3>
-    <p>Comprehensive web search with content extraction and parsing.</p>
-    <ul>
-      <li>Multiple search categories</li>
-      <li>Content extraction with MarkItDown</li>
-      <li>Anti-bot bypass capabilities</li>
-      <li>Rate limiting and retry logic</li>
-    </ul>
-    <a href="searxng/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>💭 Thinking Tools</h3>
-    <p>Structured thinking frameworks with cognitive awareness.</p>
-    <ul>
-      <li>8 thinking types (Analysis, Synthesis, etc.)</li>
-      <li>Cognitive bias detection</li>
-      <li>Quality assessment</li>
-      <li>Thinking pattern evolution</li>
-    </ul>
-    <a href="thinking/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>📁 Files Tools</h3>
-    <p>Enterprise-grade file operations with comprehensive security.</p>
-    <ul>
-      <li>Path traversal protection</li>
-      <li>File type validation</li>
-      <li>Atomic operations</li>
-      <li>Memory optimization</li>
-    </ul>
-    <a href="files/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>📈 Finance Tools (YFinance)</h3>
-    <p>Comprehensive financial data retrieval with caching.</p>
-    <ul>
-      <li>Real-time stock prices</li>
-      <li>Company information</li>
-      <li>Financial statements</li>
-      <li>News and recommendations</li>
-    </ul>
-    <a href="finance/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>🎥 YouTube Tools</h3>
-    <p>Video metadata and transcript extraction.</p>
-    <ul>
-      <li>Comprehensive metadata</li>
-      <li>Multi-language transcripts</li>
-      <li>URL format flexibility</li>
-      <li>Error handling and retry logic</li>
-    </ul>
-    <a href="youtube/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>☁️ Weather Tools</h3>
-    <p>Weather data and forecasts with multi-language support.</p>
-    <ul>
-      <li>Current weather conditions</li>
-      <li>Multi-day forecasts</li>
-      <li>30+ supported languages</li>
-      <li>Flexible location input</li>
-    </ul>
-    <a href="weather/">Learn More →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>📥 Downloader Tools</h3>
-    <p>Universal file downloading with anti-bot bypass.</p>
-    <ul>
-      <li>Universal file support</li>
-      <li>Anti-bot bypass with BYPARR</li>
-      <li>Smart content processing</li>
-      <li>Multiple output formats</li>
-    </ul>
-    <a href="downloader/">Learn More →</a>
-  </div>
-</div>
-
-## Common Features
-
-All toolkits share these production-ready features:
-
-### 🛡️ Security & Validation
-- Input validation and sanitization
-- Error handling with detailed logging
-- Rate limiting and request throttling
-- Secure configuration management
-
-### ⚡ Performance
-- Built-in caching mechanisms
-- Memory optimization
-- Efficient data processing
-- Configurable timeouts
-
-### 🔧 Integration
-- OpenAI function calling compatibility
-- Agno framework integration
-- Consistent API patterns
-- Comprehensive documentation
-
-### 📊 Monitoring
-- Detailed logging and debugging
-- Performance metrics
-- Error tracking and reporting
-- Session state management
-
-## Getting Started
-
-### Basic Usage Pattern
-
-All toolkits follow a consistent pattern:
+All toolkits follow the same pattern for AI agent integration:
 
 ```python
+from agno.agent import Agent
 from enhancedtoolkits import ToolkitName
 
-# Initialize with optional configuration
-toolkit = ToolkitName(
-    # Configuration options
-    enable_caching=True,
-    timeout=30
+# Create agent with toolkit (Agno handles registration automatically)
+agent = Agent(
+    name="Your Agent",
+    model="gpt-4",
+    tools=[ToolkitName(configuration_options)]
 )
 
-# Use toolkit methods
-result = toolkit.method_name(
-    required_param="value",
-    optional_param="value"
-)
+# Agent automatically has access to all toolkit functions
 ```
 
-### Configuration Options
+## 🛠️ Available Toolkits
 
-Most toolkits support these common configuration options:
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enable_caching` | bool | `True` | Enable response caching |
-| `cache_ttl` | int | `300` | Cache time-to-live in seconds |
-| `timeout` | int | `30` | Request timeout in seconds |
-| `max_retries` | int | `3` | Maximum retry attempts |
-| `rate_limit_delay` | float | `0.1` | Delay between requests |
-
-### Error Handling
-
-All toolkits use consistent error handling:
+### 🧠 Reasoning Tools
+**Multi-modal reasoning with cognitive bias detection**
 
 ```python
-try:
-    result = toolkit.method_name(param="value")
-    print(result)
-except ToolkitSpecificError as e:
-    print(f"Toolkit error: {e}")
-except Exception as e:
-    print(f"General error: {e}")
+from enhancedtoolkits import ReasoningTools
+
+reasoning = ReasoningTools(
+    reasoning_depth=5,              # Max reasoning steps
+    enable_bias_detection=True,     # Detect cognitive biases
+    instructions="Custom instructions..."
+)
 ```
 
-## Next Steps
+**Functions available to agents:**
+- `reason()` - Apply specific reasoning type to problems
+- `multi_modal_reason()` - Combine multiple reasoning approaches
+- `analyze_reasoning()` - Evaluate reasoning quality
+- `detect_biases()` - Identify cognitive biases
+- `get_reasoning_history()` - Retrieve session history
 
-1. **Choose a toolkit** that fits your needs
-2. **Read the specific documentation** for detailed usage
-3. **Try the examples** provided in each toolkit guide
-4. **Explore advanced features** like caching and rate limiting
+[Setup Guide →](reasoning.md)
 
-## Need Help?
+---
 
-- 📖 Check individual toolkit documentation
-- 🧮 Explore [Calculator Modules](../calculators/)
-- 🔧 Learn about [Advanced Features](../advanced/)
-- 💬 Join our [community discussions](https://github.com/malvavisc0/enhancedtoolkits/discussions)
+### 🔍 Search Tools (SearxNG)
+**Web search with content extraction and parsing**
+
+```python
+from enhancedtoolkits import SearxngTools
+
+search = SearxngTools(
+    host="http://searxng:8080",     # SearxNG instance URL
+    max_results=10,                 # Results per search
+    timeout=30,                     # Request timeout
+    enable_content_fetching=True,   # Extract page content
+    byparr_enabled=False           # Anti-bot bypass
+)
+```
+
+**Functions available to agents:**
+- `search_web()` - General web search
+- `search_news()` - News article search
+- `search_images()` - Image search
+- `search_videos()` - Video search
+- `search_category()` - Category-specific search
+
+[Setup Guide →](searxng.md)
+
+---
+
+### 💭 Thinking Tools
+**Structured cognitive frameworks for systematic analysis**
+
+```python
+from enhancedtoolkits import ThinkingTools
+
+thinking = ThinkingTools(
+    enable_bias_detection=True,     # Detect thinking biases
+    enable_quality_assessment=True, # Assess thinking quality
+    thinking_depth=3               # Analysis depth
+)
+```
+
+**Functions available to agents:**
+- `think()` - Process thoughts with cognitive frameworks
+- `analyze_thinking_quality()` - Assess thinking depth and clarity
+- `detect_thinking_biases()` - Identify cognitive biases in thinking
+
+[Setup Guide →](thinking.md)
+
+---
+
+### 📁 Files Tools
+**Enterprise-grade file operations with security controls**
+
+```python
+from enhancedtoolkits import FilesTools
+
+files = FilesTools(
+    base_dir="/secure/workspace",   # Base directory for operations
+    max_file_size=100*1024*1024,   # 100MB max file size
+    allowed_extensions=[".txt", ".py", ".json", ".md", ".csv"]
+)
+```
+
+**Functions available to agents:**
+- `read_file_chunk()` - Read file chunks with security validation
+- `edit_file_chunk()` - Replace lines with atomic operations
+- `insert_file_chunk()` - Insert lines with security validation
+- `delete_file_chunk()` - Delete lines with atomic operations
+- `save_file()` - Save files with comprehensive security checks
+- `get_file_metadata()` - Get secure file metadata
+- `list_files()` - List files with safety filtering
+
+[Setup Guide →](files.md)
+
+---
+
+### 📈 Finance Tools (YFinance)
+**Real-time financial data and market information**
+
+```python
+from enhancedtoolkits import YFinanceTools
+
+finance = YFinanceTools(
+    enable_caching=True,           # Cache responses
+    cache_ttl=300,                 # Cache for 5 minutes
+    rate_limit_delay=0.1,          # Delay between requests
+    timeout=30                     # Request timeout
+)
+```
+
+**Functions available to agents:**
+- `get_current_price()` - Current stock price with change data
+- `get_company_information()` - Comprehensive company details
+- `get_news_for_ticker()` - Latest news articles
+- `get_earnings_history()` - Historical earnings data
+- `get_income_statement()` - Annual income statement
+- `get_balance_sheet()` - Balance sheet information
+- `get_cashflow()` - Cash flow statements
+- `get_recommendations()` - Analyst recommendations
+
+[Setup Guide →](finance.md)
+
+---
+
+### 🎥 YouTube Tools
+**Video metadata and transcript extraction**
+
+```python
+from enhancedtoolkits import YouTubeTools
+
+youtube = YouTubeTools(
+    rate_limit_delay=0.5,          # Delay between requests
+    timeout=30,                    # Request timeout
+    max_retries=3                  # Retry attempts
+)
+```
+
+**Functions available to agents:**
+- `get_video_metadata()` - Comprehensive video metadata
+- `get_video_transcript()` - Video transcript with language support
+- `get_available_transcripts()` - List available transcript languages
+- `get_video_info()` - Complete video information with optional transcript
+
+[Setup Guide →](youtube.md)
+
+---
+
+### ☁️ Weather Tools
+**Weather data and forecasts with multi-language support**
+
+```python
+from enhancedtoolkits import WeatherTools
+
+weather = WeatherTools(
+    timeout=30,                    # Request timeout
+    base_url="https://wttr.in"     # Weather API URL
+)
+```
+
+**Functions available to agents:**
+- `get_current_weather()` - Current weather conditions for a location
+- `get_weather_forecast()` - Multi-day weather forecast
+- `get_temperature()` - Detailed temperature data
+- `get_weather_description()` - Textual weather description
+
+**Supported languages:** 30+ languages including English, Spanish, French, German, Chinese, Japanese, etc.
+
+[Setup Guide →](weather.md)
+
+---
+
+### 📥 Downloader Tools
+**Universal file downloading with anti-bot bypass**
+
+```python
+from enhancedtoolkits import DownloaderTools
+
+downloader = DownloaderTools(
+    byparr_enabled=True,           # Enable anti-bot bypass
+    max_retries=3,                 # Retry attempts
+    timeout=30,                    # Request timeout
+    user_agent_rotation=True,      # Rotate user agents
+    enable_caching=True            # Cache downloads
+)
+```
+
+**Functions available to agents:**
+- `get_file_from_url()` - Download any file with smart content processing
+- `download_multiple_urls()` - Batch download content from multiple URLs
+- `get_url_metadata()` - Extract metadata without downloading full content
+- `check_url_accessibility()` - Test URL accessibility and response time
+
+**Supported formats:** HTML, PDF, Word, Excel, images, videos, archives, and any file type.
+
+[Setup Guide →](downloader.md)
+
+---
+
+## 🔧 Common Configuration Patterns
+
+### Production Configuration
+```python
+from agno.agent import Agent
+from enhancedtoolkits import *
+
+# Create production agent with configured tools
+agent = Agent(
+    name="Production Assistant",
+    model="gpt-4",
+    tools=[
+        ReasoningTools(reasoning_depth=5, enable_bias_detection=True),
+        SearxngTools(host="http://searxng:8080", enable_content_fetching=True),
+        YFinanceTools(enable_caching=True, cache_ttl=300),
+        WeatherTools(timeout=30),
+        YouTubeTools(rate_limit_delay=0.5),
+        DownloaderTools(byparr_enabled=True, max_retries=3),
+        FilesTools(base_dir="/secure/workspace"),
+        ThinkingTools(enable_bias_detection=True)
+    ]
+)
+```
+
+### Environment Variables
+```bash
+# SearxNG and Downloader Tools
+BYPARR_URL=http://byparr:8191/v1
+BYPARR_TIMEOUT=60
+BYPARR_ENABLED=false
+
+# Weather Tools
+WEATHER_API_URL=https://wttr.in
+
+# General
+LOG_LEVEL=INFO
+```
+
+## 🛡️ Security and Validation
+
+All toolkits include:
+- **Input validation** and sanitization
+- **Rate limiting** and request throttling
+- **Error handling** with detailed logging
+- **Security controls** for file operations
+- **Timeout management** for external APIs
+
+## 📊 Monitoring and Debugging
+
+Enable detailed logging for debugging:
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# All toolkit operations will be logged
+toolkit = ToolkitName(debug=True)
+```
+
+## 🚀 Next Steps
+
+1. **Choose the toolkits** your AI agent needs
+2. **Follow the setup guides** for each toolkit
+3. **Configure for your environment** (production vs development)
+4. **Register with your AI agent** using OpenAI or Agno
+5. **Test the integration** with sample agent queries
+
+Each toolkit setup guide provides detailed configuration options and AI agent integration examples.

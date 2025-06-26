@@ -139,7 +139,13 @@ nav:
   - Core Toolkits:
     - toolkits/index.md
     - Reasoning Tools: toolkits/reasoning.md
+    - Search Tools: toolkits/searxng.md
+    - Thinking Tools: toolkits/thinking.md
+    - Files Tools: toolkits/files.md
     - Finance Tools: toolkits/finance.md
+    - YouTube Tools: toolkits/youtube.md
+    - Weather Tools: toolkits/weather.md
+    - Downloader Tools: toolkits/downloader.md
   - Calculator Modules:
     - calculators/index.md
     - Arithmetic Calculator: calculators/arithmetic.md

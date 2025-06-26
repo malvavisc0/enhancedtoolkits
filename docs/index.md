@@ -1,97 +1,27 @@
-# Enhanced Toolkits
+# Enhanced Toolkits for AI Agents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Agno Framework](https://img.shields.io/badge/framework-Agno-green.svg)](https://github.com/agno-ai/agno)
 
-**Production-ready AI agent tools for developers building intelligent chatbots and AI systems.**
+**Production-ready AI agent tools with OpenAI function calling compatibility.**
 
-This collection provides nine comprehensive toolkits designed for AI agents that need reliable, robust, and feature-rich capabilities. Each tool includes advanced error handling, input validation, caching, rate limiting, and comprehensive logging.
+Enhanced Toolkits provides **8 core toolkits** and **9 calculator modules** designed specifically for AI agents that need reliable, robust capabilities with enterprise-grade error handling and validation.
 
-## 🚀 Key Features
+## 🤖 For AI Agent Developers
 
-<div class="feature-list">
-  <div class="feature-item">
-    <div class="feature-icon">🧠</div>
-    <div>
-      <strong>Advanced Reasoning</strong><br>
-      Multi-modal reasoning with cognitive bias detection
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">🔍</div>
-    <div>
-      <strong>Intelligent Search</strong><br>
-      Web search with content extraction and parsing
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">💭</div>
-    <div>
-      <strong>Structured Thinking</strong><br>
-      Cognitive frameworks with quality assessment
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">📁</div>
-    <div>
-      <strong>Secure File Operations</strong><br>
-      Enterprise-grade file handling with security controls
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">📈</div>
-    <div>
-      <strong>Financial Data</strong><br>
-      Comprehensive stock market and financial information
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">🧮</div>
-    <div>
-      <strong>Financial Calculator</strong><br>
-      Advanced financial calculations and arithmetic operations
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">🎥</div>
-    <div>
-      <strong>YouTube Integration</strong><br>
-      Video metadata and transcript extraction
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">☁️</div>
-    <div>
-      <strong>Weather Data</strong><br>
-      Current conditions and forecasts in multiple languages
-    </div>
-  </div>
-  <div class="feature-item">
-    <div class="feature-icon">📥</div>
-    <div>
-      <strong>Universal Downloader</strong><br>
-      Anti-bot bypass with smart content processing
-    </div>
-  </div>
-</div>
+These tools are designed to be **registered with AI agents** using the OpenAI function calling API or the Agno framework. Each tool provides:
 
-!!! success "OpenAI Compatible"
-    All toolkits are fully compatible with OpenAI's function calling API and the Agno framework.
+- ✅ **OpenAI Compatible** function schemas
+- ✅ **Strict parameter validation** for reliable agent execution
+- ✅ **Comprehensive error handling** with detailed responses
+- ✅ **Production-ready** caching and rate limiting
+- ✅ **Enterprise security** controls and validation
 
-## 📦 Quick Installation
-
-```bash
-# Install with core dependencies
-pip install git+https://github.com/malvavisc0/enhancedtoolkits.git
-
-# Install with all optional dependencies
-pip install "enhancedtoolkits[full] @ git+https://github.com/malvavisc0/enhancedtoolkits.git"
-```
-
-## 🚀 Quick Start
+## 🚀 Quick Start for AI Agents
 
 ```python
+from agno.agent import Agent
 from enhancedtoolkits import (
     ReasoningTools,
     SearxngTools,
@@ -99,123 +29,225 @@ from enhancedtoolkits import (
     FilesTools,
     YFinanceTools,
     YouTubeTools,
-    CalculatorTools,
     WeatherTools,
     DownloaderTools
 )
 
-# Initialize tools
-reasoning_tool = ReasoningTools()
-search_tool = SearxngTools(host="http://searxng:8080")
-thinking_tool = ThinkingTools()
-files_tool = FilesTools()
-finance_tool = YFinanceTools()
-youtube_tool = YouTubeTools()
-calculator_tool = CalculatorTools()
-weather_tool = WeatherTools()
-downloader_tool = DownloaderTools()
-
-# Use the tools
-result = reasoning_tool.reason(
-    agent_or_team=agent,
-    problem="Analyze market trends",
-    reasoning_type="analytical",
-    evidence=["Market data shows..."]
+# Create agent with tools (Agno automatically handles registration)
+agent = Agent(
+    name="AI Assistant",
+    model="gpt-4",
+    tools=[
+        ReasoningTools(),
+        SearxngTools(host="http://searxng:8080"),
+        ThinkingTools(),
+        FilesTools(),
+        YFinanceTools(),
+        YouTubeTools(),
+        WeatherTools(),
+        DownloaderTools()
+    ]
 )
 ```
 
-## 🏗️ Architecture Overview
+## 🛠️ Available Tools
 
-```mermaid
-graph TD
-    A[Enhanced Toolkits] --> B[Core Toolkits]
-    A --> C[Calculator Modules]
-    A --> D[Base Infrastructure]
-    
-    B --> B1[Reasoning Tools]
-    B --> B2[Search Tools]
-    B --> B3[Thinking Tools]
-    B --> B4[Files Tools]
-    B --> B5[Finance Tools]
-    B --> B6[YouTube Tools]
-    B --> B7[Weather Tools]
-    B --> B8[Downloader Tools]
-    
-    C --> C1[Arithmetic Calculator]
-    C --> C2[Financial Calculators]
-    C --> C3[Investment Analysis]
-    C --> C4[Risk Metrics]
-    
-    D --> D1[StrictToolkit Base]
-    D --> D2[Error Handling]
-    D --> D3[Validation & Security]
-    D --> D4[Caching & Rate Limiting]
+### Core Toolkits (8 Tools)
+
+<div class="toolkit-grid">
+  <div class="toolkit-card">
+    <h3>🧠 Reasoning Tools</h3>
+    <p>Multi-modal reasoning with cognitive bias detection for complex decision making.</p>
+    <a href="toolkits/reasoning/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>🔍 Search Tools</h3>
+    <p>Web search with content extraction using SearxNG integration.</p>
+    <a href="toolkits/searxng/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>💭 Thinking Tools</h3>
+    <p>Structured cognitive frameworks for systematic problem analysis.</p>
+    <a href="toolkits/thinking/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>📁 Files Tools</h3>
+    <p>Enterprise-grade file operations with comprehensive security controls.</p>
+    <a href="toolkits/files/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>📈 Finance Tools</h3>
+    <p>Real-time financial data and market information via Yahoo Finance.</p>
+    <a href="toolkits/finance/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>🎥 YouTube Tools</h3>
+    <p>Video metadata and transcript extraction with multi-language support.</p>
+    <a href="toolkits/youtube/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>☁️ Weather Tools</h3>
+    <p>Weather data and forecasts with support for 30+ languages.</p>
+    <a href="toolkits/weather/">Setup Guide →</a>
+  </div>
+  
+  <div class="toolkit-card">
+    <h3>📥 Downloader Tools</h3>
+    <p>Universal file downloading with anti-bot bypass capabilities.</p>
+    <a href="toolkits/downloader/">Setup Guide →</a>
+  </div>
+</div>
+
+### Calculator Modules (9 Calculators)
+
+```python
+from agno.agent import Agent
+from enhancedtoolkits.calculators import (
+    ArithmeticCalculatorTools,
+    TimeValueCalculatorTools,
+    InvestmentAnalysisCalculatorTools,
+    LoanCalculatorTools,
+    BondCalculatorTools,
+    RiskMetricsCalculatorTools,
+    DepreciationCalculatorTools,
+    BusinessAnalysisCalculatorTools,
+    UtilityCalculatorTools
+)
+
+# Create agent with calculator tools
+agent = Agent(
+    name="Financial Analyst",
+    model="gpt-4",
+    tools=[
+        ArithmeticCalculatorTools(),
+        TimeValueCalculatorTools(),
+        InvestmentAnalysisCalculatorTools(),
+        LoanCalculatorTools(),
+        BondCalculatorTools(),
+        RiskMetricsCalculatorTools(),
+        DepreciationCalculatorTools(),
+        BusinessAnalysisCalculatorTools(),
+        UtilityCalculatorTools()
+    ]
+)
+```
+
+[View all calculator modules →](calculators/)
+
+## 🏗️ AI Agent Integration
+
+### OpenAI Function Calling
+
+```python
+import openai
+from enhancedtoolkits import ReasoningTools, YFinanceTools
+
+# Initialize tools
+reasoning = ReasoningTools()
+finance = YFinanceTools()
+
+# Get OpenAI-compatible function schemas
+tools = [
+    reasoning.get_openai_schema(),
+    finance.get_openai_schema()
+]
+
+# Use with OpenAI
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Analyze AAPL stock"}],
+    tools=tools,
+    tool_choice="auto"
+)
+```
+
+### Agno Framework Integration
+
+```python
+from agno.agent import Agent
+from enhancedtoolkits import *
+
+# Create agent with tools (Agno handles everything automatically)
+agent = Agent(
+    name="Financial Analyst",
+    model="gpt-4",
+    tools=[
+        ReasoningTools(),
+        YFinanceTools(),
+        ArithmeticCalculatorTools(),
+        InvestmentAnalysisCalculatorTools()
+    ]
+)
+
+# Agent automatically has access to all tool functions
+response = agent.run("Analyze the investment potential of AAPL")
+```
+
+## 🛡️ Why StrictToolkit?
+
+All tools inherit from **StrictToolkit**, which ensures:
+
+- **All parameters are required** in function schemas (no optional parameters that confuse agents)
+- **Consistent error handling** across all tools
+- **OpenAI compatibility** out of the box
+- **Reliable agent execution** with predictable behavior
+
+## 📦 Installation
+
+```bash
+# Install with core dependencies
+pip install git+https://github.com/malvavisc0/enhancedtoolkits.git
+
+# Install with all optional dependencies (recommended)
+pip install "enhancedtoolkits[full] @ git+https://github.com/malvavisc0/enhancedtoolkits.git"
+```
+
+## 🔧 Configuration
+
+Most tools support configuration for production use:
+
+```python
+# Example: Configure tools for production
+reasoning = ReasoningTools(
+    reasoning_depth=5,
+    enable_bias_detection=True
+)
+
+finance = YFinanceTools(
+    enable_caching=True,
+    cache_ttl=300,
+    rate_limit_delay=0.1
+)
+
+search = SearxngTools(
+    host="http://your-searxng:8080",
+    max_results=10,
+    enable_content_fetching=True
+)
 ```
 
 ## 📚 Documentation Sections
 
-<div class="toolkit-grid">
-  <div class="toolkit-card">
-    <h3>🚀 Getting Started</h3>
-    <p>Installation, configuration, and your first steps with Enhanced Toolkits.</p>
-    <a href="getting-started/">Get Started →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>🔧 Core Toolkits</h3>
-    <p>Comprehensive documentation for all 8 core toolkit modules.</p>
-    <a href="toolkits/">Explore Toolkits →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>🧮 Calculator Modules</h3>
-    <p>Financial and mathematical calculation tools with detailed examples.</p>
-    <a href="calculators/">View Calculators →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>⚡ Advanced Features</h3>
-    <p>Security, performance, error handling, and session management.</p>
-    <a href="advanced/">Advanced Topics →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>📖 API Reference</h3>
-    <p>Complete API documentation with method signatures and examples.</p>
-    <a href="api/">API Docs →</a>
-  </div>
-  
-  <div class="toolkit-card">
-    <h3>👨‍💻 Developer Guide</h3>
-    <p>Contributing, testing, and deployment information for developers.</p>
-    <a href="developer/">Developer Info →</a>
-  </div>
-</div>
+- **[Getting Started](getting-started/)** - Installation and setup for AI agents
+- **[Core Toolkits](toolkits/)** - Setup guides for all 8 core tools
+- **[Calculator Modules](calculators/)** - Setup guides for all 9 calculator tools
+- **[API Reference](api/)** - Complete function schemas and parameters
+- **[Developer Guide](developer/)** - Contributing and deployment
 
-## 🛡️ Why StrictToolkit?
+## 🎯 Next Steps
 
-Enhanced Toolkits uses **StrictToolkit** as its base class to ensure robust and predictable behavior when interacting with AI agents. This approach:
-
-- **Enforces parameter completeness** for reliable tool execution
-- **Prevents runtime errors** from missing parameters
-- **Improves debugging** with clearer error messages
-- **Ensures AI agent compatibility** with consistent interfaces
-
-## 🔧 Requirements
-
-- **Python**: 3.8+
-- **Agno Framework**: Latest version
-- **Core Dependencies**: `httpx`, `yfinance`, `youtube-transcript-api`
-- **Optional Dependencies**: `markitdown`, `pywttr`, `pywttr-models`
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](developer/contributing.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/malvavisc0/enhancedtoolkits/blob/main/LICENSE) file for details.
+1. **[Install Enhanced Toolkits](getting-started/installation/)**
+2. **[Choose your tools](toolkits/)** from the 8 core toolkits
+3. **[Add calculators](calculators/)** from the 9 available modules
+4. **[Register with your agent](getting-started/quick-start/)** using OpenAI or Agno
+5. **[Configure for production](getting-started/configuration/)** with caching and rate limiting
 
 ---
 
-**Made with ❤️ for AI agent developers**
+**Built for AI agent developers who need reliable, production-ready tools.** 🤖
