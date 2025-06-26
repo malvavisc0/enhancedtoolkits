@@ -173,4 +173,4 @@ response = agent.run(
 - [Investment Calculator Guide](../../calculators/investment.md)
 - [Time Value Calculator API](time-value.md)
 - [Risk Metrics Calculator API](risk.md)
-- [Calculator Base Classes](base.md)
+- [Calculator Base Classes](../base.md)

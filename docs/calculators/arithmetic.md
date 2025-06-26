@@ -339,4 +339,4 @@ manual_loan_payment()
 
 ## API Reference
 
-For complete method signatures and parameters, see the [API Reference](../api/calculators.md#arithmetic-calculator).
+For complete method signatures and parameters, see the [API Reference](../api/calculators/arithmetic.md).

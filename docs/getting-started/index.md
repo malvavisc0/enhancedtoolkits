@@ -47,15 +47,15 @@ graph LR
 1. **[Install Enhanced Toolkits](installation.md)** - Get the library installed in your environment
 2. **[Quick Start Guide](quick-start.md)** - Your first Enhanced Toolkits program
 3. **[Configuration](configuration.md)** - Set up environment variables and options
-4. **[Environment Variables](environment.md)** - Configure external services
+<!-- 4. **[Environment Variables](environment.md)** - Configure external services -->
 
 ## Need Help?
 
-- 📖 Browse the [Core Toolkits documentation](../toolkits/)
-- 🧮 Explore [Calculator Modules](../calculators/)
-- 🔧 Learn about [Advanced Features](../advanced/)
-- 📚 Check the [API Reference](../api/)
-- 👨‍💻 Read the [Developer Guide](../developer/)
+- 📖 Browse the [Core Toolkits documentation](../toolkits/index.md)
+- 🧮 Explore [Calculator Modules](../calculators/index.md)
+<!-- - 🔧 Learn about [Advanced Features](../advanced/index.md) -->
+- 📚 Check the [API Reference](../api/index.md)
+- 👨‍💻 Read the [Developer Guide](../developer/index.md)
 
 ## Community & Support
 

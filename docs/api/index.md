@@ -33,7 +33,7 @@ API documentation for all 9 calculator modules:
 Foundation classes that power all toolkits:
 
 - **[StrictToolkit](base.md)** - Base class for all toolkits
-- **[Calculator Base](calculators/base.md)** - Base classes for calculator modules
+- **[Calculator Base](base.md)** - Base classes for calculator modules
 
 ## 🔍 How to Use This Reference
 
@@ -150,10 +150,10 @@ Related methods and classes are automatically linked, making it easy to explore 
 
 ## 🔗 Related Documentation
 
-- **[Getting Started](../getting-started/)** - Installation and quick start guide
-- **[Core Toolkits](../toolkits/)** - High-level toolkit documentation with examples
-- **[Calculator Modules](../calculators/)** - Calculator documentation with use cases
-- **[Developer Guide](../developer/)** - Contributing and development information
+- **[Getting Started](../getting-started/index.md)** - Installation and quick start guide
+- **[Core Toolkits](../toolkits/index.md)** - High-level toolkit documentation with examples
+- **[Calculator Modules](../calculators/index.md)** - Calculator documentation with use cases
+- **[Developer Guide](../developer/index.md)** - Contributing and development information
 
 ## 📝 Feedback
 
@@ -161,8 +161,8 @@ Found an issue with the API documentation? Please:
 
 - **Report bugs**: [GitHub Issues](https://github.com/malvavisc0/enhancedtoolkits/issues)
 - **Suggest improvements**: [GitHub Discussions](https://github.com/malvavisc0/enhancedtoolkits/discussions)
-- **Contribute**: See our [Developer Guide](../developer/)
+- **Contribute**: See our [Developer Guide](../developer/index.md)
 
 ---
 
-**Note**: This API reference is automatically generated from docstrings in the source code. For conceptual documentation and tutorials, see the [Core Toolkits](../toolkits/) and [Calculator Modules](../calculators/) sections.
+**Note**: This API reference is automatically generated from docstrings in the source code. For conceptual documentation and tutorials, see the [Core Toolkits](../toolkits/index.md) and [Calculator Modules](../calculators/index.md) sections.

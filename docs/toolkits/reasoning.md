@@ -257,7 +257,7 @@ except Exception as e:
 ## Related Tools
 
 - [Thinking Tools](thinking.md) - Structured cognitive frameworks
-- [Calculator Tools](../calculators/) - Mathematical reasoning support
+- [Calculator Tools](../calculators/index.md) - Mathematical reasoning support
 - [Finance Tools](finance.md) - Financial data for reasoning
 
 ## API Reference

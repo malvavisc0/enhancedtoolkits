@@ -342,7 +342,7 @@ price2 = finance.get_current_price("AAPL")
 
 ## Related Tools
 
-- [Calculator Tools](../calculators/) - Financial calculations and analysis
+- [Calculator Tools](../calculators/index.md) - Financial calculations and analysis
 - [Reasoning Tools](reasoning.md) - Investment decision reasoning
 - [Downloader Tools](downloader.md) - Additional financial data sources
 

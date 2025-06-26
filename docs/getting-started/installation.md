@@ -195,12 +195,12 @@ After installation:
 
 1. **[Quick Start Guide](quick-start.md)** - Build your first Enhanced Toolkits application
 2. **[Configuration](configuration.md)** - Set up environment variables and options
-3. **[Core Toolkits](../toolkits/)** - Explore available toolkits
+3. **[Core Toolkits](../toolkits/index.md)** - Explore available toolkits
 
 ## Getting Help
 
 If you encounter installation issues:
 
-- 📖 Check our [FAQ](../developer/faq.md)
+<!-- - 📖 Check our [FAQ](../developer/faq.md) -->
 - 🐛 [Report an issue](https://github.com/malvavisc0/enhancedtoolkits/issues)
 - 💬 [Join discussions](https://github.com/malvavisc0/enhancedtoolkits/discussions)

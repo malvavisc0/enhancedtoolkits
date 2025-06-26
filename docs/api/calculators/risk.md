@@ -76,4 +76,4 @@ response = agent.run(
 ## Related Documentation
 
 - [Risk Calculator Guide](../../calculators/risk.md)
-- [Calculator Base Classes](base.md)
+- [Calculator Base Classes](../base.md)

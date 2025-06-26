@@ -79,4 +79,4 @@ response = agent.run(
 ## Related Documentation
 
 - [Depreciation Calculator Guide](../../calculators/depreciation.md)
-- [Calculator Base Classes](base.md)
+- [Calculator Base Classes](../base.md)

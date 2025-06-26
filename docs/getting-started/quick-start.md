@@ -129,8 +129,8 @@ if __name__ == "__main__":
 
 Now that you have Enhanced Toolkits working:
 
-1. **Explore Core Toolkits**: Learn about all [available toolkits](../toolkits/)
-2. **Try Calculator Modules**: Experiment with [financial calculators](../calculators/)
+1. **Explore Core Toolkits**: Learn about all [available toolkits](../toolkits/index.md)
+2. **Try Calculator Modules**: Experiment with [financial calculators](../calculators/index.md)
 3. **Configure Environment**: Set up [environment variables](configuration.md)
 4. **Build Your Agent**: Integrate with your AI agent framework
 
@@ -179,7 +179,7 @@ pip list | grep enhancedtoolkits
 
 ## Getting Help
 
-- 📖 [Full Documentation](../toolkits/)
+- 📖 [Full Documentation](../toolkits/index.md)
 - 🐛 [Report Issues](https://github.com/malvavisc0/enhancedtoolkits/issues)
 - 💬 [Community Discussions](https://github.com/malvavisc0/enhancedtoolkits/discussions)
 

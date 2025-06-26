@@ -166,8 +166,20 @@ nav:
       - Search Tools: api/searxng.md
       - Finance Tools: api/finance.md
       - StrictToolkit Base: api/base.md
+      - Files Tools: api/files.md
+      - Downloader Tools: api/downloader.md
+      - Thinking Tools: api/thinking.md
+      - Weather Tools: api/weather.md
+      - YouTube Tools: api/youtube.md
       - Arithmetic Calculator: api/calculators/arithmetic.md
+      - Bond Calculator: api/calculators/bond.md
+      - Business Calculator: api/calculators/business.md
+      - Depreciation Calculator: api/calculators/depreciation.md
+      - Investment Calculator: api/calculators/investment.md
+      - Loan Calculator: api/calculators/loan.md
+      - Risk Calculator: api/calculators/risk.md
       - Time Value Calculator: api/calculators/time-value.md
+      - Utility Calculator: api/calculators/utility.md
   - Developer Guide:
     - developer/index.md
     - Contributing: developer/contributing.md

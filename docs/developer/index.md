@@ -321,9 +321,9 @@ class MyToolkit(StrictToolkit):
 ## 📚 Resources
 
 ### Documentation
-- [Core Toolkits](../toolkits/) - Detailed toolkit documentation
-- [Calculator Modules](../calculators/) - Calculator documentation
-- [API Reference](../api/) - Complete API documentation
+- [Core Toolkits](../toolkits/index.md) - Detailed toolkit documentation
+- [Calculator Modules](../calculators/index.md) - Calculator documentation
+- [API Reference](../api/index.md) - Complete API documentation
 
 ### External Resources
 - [Agno Framework](https://github.com/agno-ai/agno) - AI agent framework
