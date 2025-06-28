@@ -123,27 +123,27 @@ class EnhancedYFinanceTools(StrictToolkit):
         self._response_cache: Dict[str, Dict[str, Any]] = {}
 
         # Register all methods
-        self.register(self.get_current_price)
-        self.register(self.get_company_information)
-        self.register(self.get_news_for_ticker)
-        self.register(self.get_earnings_history)
-        self.register(self.get_income_statement)
-        self.register(self.get_quarterly_financials)
-        self.register(self.get_balance_sheet)
-        self.register(self.get_quarterly_balance_sheet)
-        self.register(self.get_cashflow)
-        self.register(self.get_quarterly_cashflow)
-        self.register(self.get_major_holders)
-        self.register(self.get_institutional_holders)
-        self.register(self.get_recommendations)
-        self.register(self.get_sustainability_scores)
-        self.register(self.get_price_history)
+        self.register(self.fetch_current_stock_price)
+        self.register(self.fetch_company_information)
+        self.register(self.fetch_ticker_news)
+        self.register(self.fetch_earnings_history)
+        self.register(self.fetch_income_statement)
+        self.register(self.fetch_quarterly_financials)
+        self.register(self.fetch_balance_sheet)
+        self.register(self.fetch_quarterly_balance_sheet)
+        self.register(self.fetch_cashflow_statement)
+        self.register(self.fetch_quarterly_cashflow_statement)
+        self.register(self.fetch_major_shareholders)
+        self.register(self.fetch_institutional_shareholders)
+        self.register(self.fetch_analyst_recommendations)
+        self.register(self.fetch_sustainability_scores)
+        self.register(self.fetch_price_history)
 
         log_info(
             f"Enhanced YFinance Tools initialized - Caching: {enable_caching}, Rate Limit: {rate_limit_delay}s"
         )
 
-    def get_current_price(self, ticker: str) -> str:
+    def fetch_current_stock_price(self, ticker: str) -> str:
         """
         Retrieves the current price of a stock given its ticker symbol.
 
@@ -209,7 +209,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting current price for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get current price for {ticker}: {e}")
 
-    def get_company_information(self, ticker: str) -> str:
+    def fetch_company_information(self, ticker: str) -> str:
         """
         Retrieve comprehensive information about a company.
 
@@ -302,7 +302,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get company information for {ticker}: {e}"
             )
 
-    def get_news_for_ticker(self, ticker: str, max_articles: int = 10) -> str:
+    def fetch_ticker_news(self, ticker: str, max_articles: int = 10) -> str:
         """
         Retrieve the latest news articles for a given stock ticker.
 
@@ -390,7 +390,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting news for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get news for {ticker}: {e}")
 
-    def get_earnings_history(self, ticker: str) -> str:
+    def fetch_earnings_history(self, ticker: str) -> str:
         """
         Retrieves the earnings history for a specified stock ticker.
 
@@ -424,7 +424,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting earnings history for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get earnings history for {ticker}: {e}")
 
-    def get_income_statement(self, ticker: str) -> str:
+    def fetch_income_statement(self, ticker: str) -> str:
         """
         Retrieves the income statement for a given stock ticker.
 
@@ -458,7 +458,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting income statement for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get income statement for {ticker}: {e}")
 
-    def get_quarterly_financials(self, ticker: str) -> str:
+    def fetch_quarterly_financials(self, ticker: str) -> str:
         """
         Retrieve the quarterly financials for a given stock ticker.
 
@@ -494,7 +494,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get quarterly financials for {ticker}: {e}"
             )
 
-    def get_balance_sheet(self, ticker: str) -> str:
+    def fetch_balance_sheet(self, ticker: str) -> str:
         """
         Retrieve the balance sheet for a given stock ticker.
 
@@ -528,7 +528,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting balance sheet for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get balance sheet for {ticker}: {e}")
 
-    def get_quarterly_balance_sheet(self, ticker: str) -> str:
+    def fetch_quarterly_balance_sheet(self, ticker: str) -> str:
         """
         Retrieve the quarterly balance sheet for a given stock ticker.
 
@@ -566,7 +566,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get quarterly balance sheet for {ticker}: {e}"
             )
 
-    def get_cashflow(self, ticker: str) -> str:
+    def fetch_cashflow_statement(self, ticker: str) -> str:
         """
         Retrieve the annual cash flow statement for a given stock ticker.
 
@@ -598,7 +598,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting cash flow for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get cash flow for {ticker}: {e}")
 
-    def get_quarterly_cashflow(self, ticker: str) -> str:
+    def fetch_quarterly_cashflow_statement(self, ticker: str) -> str:
         """
         Retrieve the quarterly cash flow statement for a given stock ticker.
 
@@ -634,7 +634,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get quarterly cash flow for {ticker}: {e}"
             )
 
-    def get_major_holders(self, ticker: str) -> str:
+    def fetch_major_shareholders(self, ticker: str) -> str:
         """
         Retrieve the list of major shareholders for a given stock ticker.
 
@@ -668,7 +668,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting major holders for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get major holders for {ticker}: {e}")
 
-    def get_institutional_holders(self, ticker: str) -> str:
+    def fetch_institutional_shareholders(self, ticker: str) -> str:
         """
         Retrieve the list of institutional shareholders for a given stock ticker.
 
@@ -704,7 +704,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get institutional holders for {ticker}: {e}"
             )
 
-    def get_recommendations(self, ticker: str) -> str:
+    def fetch_analyst_recommendations(self, ticker: str) -> str:
         """
         Retrieve stock recommendations for a given ticker.
 
@@ -738,7 +738,7 @@ class EnhancedYFinanceTools(StrictToolkit):
             log_error(f"Unexpected error getting recommendations for {ticker}: {e}")
             raise YFinanceDataError(f"Failed to get recommendations for {ticker}: {e}")
 
-    def get_sustainability_scores(self, ticker: str) -> str:
+    def fetch_sustainability_scores(self, ticker: str) -> str:
         """
         Retrieve sustainability scores for a given stock ticker.
 
@@ -813,7 +813,7 @@ class EnhancedYFinanceTools(StrictToolkit):
                 f"Failed to get sustainability scores for {ticker}: {e}"
             )
 
-    def get_price_history(
+    def fetch_price_history(
         self, ticker: str, period: str = "1y", interval: str = "1d"
     ) -> str:
         """
@@ -1065,27 +1065,27 @@ Use these tools to retrieve financial data for stocks. Each tool returns JSON da
 ### When to Use Each Tool
 
 **For current stock prices and basic info:**
-- get_current_price: When user asks for current/latest price, today's performance, or market status
-- get_company_information: When user asks about company details, business description, financial metrics, or company profile
+- fetch_current_stock_price: When user asks for current/latest price, today's performance, or market status
+- fetch_company_information: When user asks about company details, business description, financial metrics, or company profile
 
 **For financial analysis:**
-- get_income_statement: When analyzing profitability, revenue, expenses, or annual financial performance
-- get_quarterly_financials: When user wants recent quarterly results or quarterly trends
-- get_balance_sheet: When analyzing company assets, liabilities, debt, or financial position
-- get_quarterly_balance_sheet: When user wants recent quarterly balance sheet data
-- get_cashflow: When analyzing cash generation, operating cash flow, or annual cash trends
-- get_quarterly_cashflow: When user wants recent quarterly cash flow data
+- fetch_income_statement: When analyzing profitability, revenue, expenses, or annual financial performance
+- fetch_quarterly_financials: When user wants recent quarterly results or quarterly trends
+- fetch_balance_sheet: When analyzing company assets, liabilities, debt, or financial position
+- fetch_quarterly_balance_sheet: When user wants recent quarterly balance sheet data
+- fetch_cashflow_statement: When analyzing cash generation, operating cash flow, or annual cash trends
+- fetch_quarterly_cashflow_statement: When user wants recent quarterly cash flow data
 
 **For market intelligence:**
-- get_news_for_ticker: When user asks about recent news, events, or what's happening with a stock
-- get_earnings_history: When analyzing earnings trends, EPS history, or earnings surprises
-- get_recommendations: When user asks about analyst opinions, price targets, or buy/sell ratings
-- get_sustainability_scores: When user asks about ESG ratings, environmental impact, or sustainability
+- fetch_ticker_news: When user asks about recent news, events, or what's happening with a stock
+- fetch_earnings_history: When analyzing earnings trends, EPS history, or earnings surprises
+- fetch_analyst_recommendations: When user asks about analyst opinions, price targets, or buy/sell ratings
+- fetch_sustainability_scores: When user asks about ESG ratings, environmental impact, or sustainability
 
 **For ownership and trading data:**
-- get_major_holders: When user asks about major shareholders, insider ownership, or who owns the stock
-- get_institutional_holders: When analyzing institutional ownership or fund holdings
-- get_price_history: When user wants charts, historical prices, or technical analysis data
+- fetch_major_shareholders: When user asks about major shareholders, insider ownership, or who owns the stock
+- fetch_institutional_shareholders: When analyzing institutional ownership or fund holdings
+- fetch_price_history: When user wants charts, historical prices, or technical analysis data
 
 ### Tool Parameters
 
@@ -1093,30 +1093,30 @@ Use these tools to retrieve financial data for stocks. Each tool returns JSON da
 - ticker (str): Stock symbol like "AAPL", "GOOGL", "TSLA" (automatically converted to uppercase)
 
 **Special parameters:**
-- get_news_for_ticker: max_articles (int, 1-50, default 10) - how many news articles to return
-- get_price_history:
+- fetch_ticker_news: max_articles (int, 1-50, default 10) - how many news articles to return
+- fetch_price_history:
   - period (str): "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"
   - interval (str): "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"
 
 ### Common Usage Patterns
 
 **User asks "How is AAPL doing?"**
-→ Use get_current_price for price, then get_news_for_ticker for recent developments
+→ Use fetch_current_stock_price for price, then fetch_ticker_news for recent developments
 
 **User asks "Tell me about Microsoft"**
-→ Use get_company_information for comprehensive company profile
+→ Use fetch_company_information for comprehensive company profile
 
 **User asks "Show me TSLA's financials"**
-→ Use get_income_statement, get_balance_sheet, and get_cashflow for complete picture
+→ Use fetch_income_statement, fetch_balance_sheet, and fetch_cashflow_statement for complete picture
 
 **User asks "What do analysts think about NVDA?"**
-→ Use get_recommendations for analyst ratings and price targets
+→ Use fetch_analyst_recommendations for analyst ratings and price targets
 
 **User asks "AMZN news today"**
-→ Use get_news_for_ticker with max_articles=5 for recent news
+→ Use fetch_ticker_news with max_articles=5 for recent news
 
 **User asks "GOOGL stock chart"**
-→ Use get_price_history with appropriate period (default "1y" and "1d")
+→ Use fetch_price_history with appropriate period (default "1y" and "1d")
 
 ### Data Interpretation
 

@@ -828,17 +828,17 @@ Use this tool to download and parse content from any URL with advanced anti-bot 
 1. **access_website_content**: Fetch content from a single URL.
      - Parameters:
        - `url` (str): The URL to download, e.g., "https://example.com/article"
-       - `format` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+       - `output` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
 
 2. **get_file_from_url**: Fetch any file from a URL with smart content processing.
      - Parameters:
        - `url` (str): The URL to download, e.g., "https://example.com/document.pdf"
-       - `format` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+       - `output` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
 
 3. **download_multiple_urls**: Fetch content from multiple URLs in batch.
      - Parameters:
        - `urls` (list): List of URLs to download, e.g., ["https://site1.com", "https://site2.com"]
-       - `format` (str, optional): Output format for all URLs - "auto" (default), "markdown", "text", "html", or "binary"
+       - `output` (str, optional): Output format for all URLs - "auto" (default), "markdown", "text", "html", or "binary"
 
 4. **get_url_metadata**: Extract metadata without downloading full content.
      - Parameters:
@@ -858,7 +858,7 @@ Use this tool to download and parse content from any URL with advanced anti-bot 
 - Multiple output format support with automatic detection based on content type.
 - Comprehensive error handling mechanisms.
 
-### Format Options
+### Output Options
 
 - `auto`: Automatically detects the best format (markdown for HTML, binary info for files).
 - `markdown`: Converts HTML to markdown using MarkItDown.

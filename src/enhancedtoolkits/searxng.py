@@ -160,11 +160,11 @@ class EnhancedSearxngTools(StrictToolkit):
             self.file_client = None
 
         # Register search methods
-        self.register(self.search_web)
-        self.register(self.search_news)
-        self.register(self.search_images)
-        self.register(self.search_videos)
-        self.register(self.search_category)
+        self.register(self.perform_web_search)
+        self.register(self.perform_news_search)
+        self.register(self.perform_image_search)
+        self.register(self.perform_video_search)
+        self.register(self.perform_category_search)
 
         log_info(
             f"Enhanced SearxNG Tools initialized - Host: {self.host}, Max Results: {self.max_results}, "
@@ -172,9 +172,9 @@ class EnhancedSearxngTools(StrictToolkit):
             f"Supported Files: {self.supported_file_types}, Byparr: {self.byparr_enabled}"
         )
 
-    def search_web(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_web_search(self, query: str, max_results: Optional[int] = None) -> str:
         """
-        Search the web using SearxNG.
+        Perform a web search using SearxNG.
 
         Args:
             query: Search query string
@@ -188,9 +188,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="general", max_results=max_results)
 
-    def search_news(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_news_search(self, query: str, max_results: Optional[int] = None) -> str:
         """
-        Search for news articles using SearxNG.
+        Perform a news search using SearxNG.
 
         Args:
             query: Search query string
@@ -204,9 +204,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="news", max_results=max_results)
 
-    def search_images(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_image_search(self, query: str, max_results: Optional[int] = None) -> str:
         """
-        Search for images using SearxNG.
+        Perform an image search using SearxNG.
 
         Args:
             query: Search query string
@@ -220,9 +220,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="images", max_results=max_results)
 
-    def search_videos(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_video_search(self, query: str, max_results: Optional[int] = None) -> str:
         """
-        Search for videos using SearxNG.
+        Perform a video search using SearxNG.
 
         Args:
             query: Search query string
@@ -236,11 +236,11 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="videos", max_results=max_results)
 
-    def search_category(
+    def perform_category_search(
         self, query: str, category: str, max_results: Optional[int] = None
     ) -> str:
         """
-        Search in a specific category using SearxNG.
+        Perform a search in a specific category using SearxNG.
 
         Args:
             query: Search query string
@@ -1016,33 +1016,36 @@ These tools enable you to perform various web searches and manage the results. T
 
 ### Functions Tools
 
-1. **search_web**: Perform a web search.
+1. **perform_web_search**: Perform a web search.
    - Parameters:
      - `query` (str): Search term or phrase, e.g., "climate change impacts".
      - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `search_web("python best practices", max_results=7)`
+   - *Example:* `perform_web_search("python best practices", max_results=7)`
 
-2. **search_news**: Search for news articles.
+2. **perform_news_search**: Perform a news search.
    - Parameters:
      - `query` (str): Search term or phrase, e.g., "AI in healthcare".
      - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `search_news("space exploration", max_results=5)`
+   - *Example:* `perform_news_search("space exploration", max_results=5)`
 
-3. **search_media**: Search for images and videos with a single method.
+3. **perform_image_search**: Perform an image search.
    - Parameters:
      - `query` (str): Search term or phrase, e.g., "coffee shop interior".
-     - `media_type` (str): Either "images" or "videos".
      - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Examples:*
-     - Images: `search_media("dog breeds", media_type="images")`
-     - Videos: `search_media("language learning", media_type="videos", max_results=8)`
+   - *Example:* `perform_image_search("dog breeds")`
 
-4. **search_category**: Search within a specific category.
+4. **perform_video_search**: Perform a video search.
+   - Parameters:
+     - `query` (str): Search term or phrase, e.g., "language learning".
+     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
+   - *Example:* `perform_video_search("language learning", max_results=8)`
+
+5. **perform_category_search**: Search within a specific category.
    - Parameters:
      - `query` (str): Search term or phrase, e.g., "quantum computing advancements".
      - `category` (str): One of: general, news, images, videos, music, files, science, social, or it.
      - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `search_category("cybersecurity trends", category="it")`
+   - *Example:* `perform_category_search("cybersecurity trends", category="it")`
 
 **File Processing Features:**
 - Automatically detects PDF, TXT, and Markdown files in search results.
@@ -1056,7 +1059,7 @@ These tools enable you to perform various web searches and manage the results. T
 - Enable/disable URL content fetching and file downloads
 
 **Additional Notes:**
-- Ensure the category parameter in `search_category` matches one of the accepted values.
+- Ensure the category parameter in `perform_category_search` matches one of the accepted values.
 - File processing is automatically applied when supported file types are detected in URLs.
 
 **Error Handling:**

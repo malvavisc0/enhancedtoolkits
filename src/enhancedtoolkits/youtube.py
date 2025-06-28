@@ -127,24 +127,24 @@ class EnhancedYouTubeTools(StrictToolkit):
         self.last_request_time = 0.0
 
         # Register methods
-        self.register(self.get_video_metadata)
-        self.register(self.get_video_transcript)
-        self.register(self.extract_video_id)
-        self.register(self.get_video_info)
+        self.register(self.fetch_youtube_video_metadata)
+        self.register(self.fetch_youtube_video_transcript)
+        self.register(self.extract_youtube_video_id)
+        self.register(self.fetch_comprehensive_youtube_video_info)
 
         # Register backward compatibility methods
-        self.register(self.retrieve_youtube_video_metadata)
-        self.register(self.retrieve_youtube_video_transcript)
+        self.register(self.legacy_fetch_youtube_video_metadata)
+        self.register(self.legacy_fetch_youtube_video_transcript)
 
         if TRANSCRIPT_API_AVAILABLE:
-            self.register(self.get_available_transcripts)
-            self.register(self.get_transcript_languages)
+            self.register(self.fetch_available_youtube_transcripts)
+            self.register(self.fetch_youtube_transcript_languages)
 
         log_info(
             f"Enhanced YouTube Tools initialized - Rate Limit: {rate_limit_delay}s, Timeout: {timeout}s, Transcript API: {TRANSCRIPT_API_AVAILABLE}"
         )
 
-    def get_video_metadata(self, video_url: str) -> str:
+    def fetch_youtube_video_metadata(self, video_url: str) -> str:
         """
         Retrieve comprehensive metadata for a YouTube video.
 
@@ -179,7 +179,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             log_error(f"Unexpected error getting metadata for {video_url}: {e}")
             raise YouTubeDataError(f"Failed to get video metadata: {e}")
 
-    def get_video_transcript(
+    def fetch_youtube_video_transcript(
         self, video_url: str, language: str = "en", auto_generated: bool = True
     ) -> str:
         """
@@ -222,7 +222,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             log_error(f"Unexpected error getting transcript for {video_url}: {e}")
             raise YouTubeDataError(f"Failed to get video transcript: {e}")
 
-    def get_available_transcripts(self, video_url: str) -> str:
+    def fetch_available_youtube_transcripts(self, video_url: str) -> str:
         """
         Get list of available transcript languages for a video.
 
@@ -303,7 +303,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             )
             raise YouTubeDataError(f"Failed to get available transcripts: {e}")
 
-    def get_transcript_languages(self, video_url: str) -> str:
+    def fetch_youtube_transcript_languages(self, video_url: str) -> str:
         """
         Get simplified list of available transcript language codes.
 
@@ -318,7 +318,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             YouTubeDataError: If language info cannot be retrieved
         """
         try:
-            transcripts_data = self.get_available_transcripts(video_url)
+            transcripts_data = self.fetch_available_youtube_transcripts(video_url)
             transcripts = json.loads(transcripts_data)
 
             language_codes = set()
@@ -347,7 +347,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             )
             raise YouTubeDataError(f"Failed to get transcript languages: {e}")
 
-    def extract_video_id(self, video_url: str) -> str:
+    def extract_youtube_video_id(self, video_url: str) -> str:
         """
         Extract video ID from YouTube URL (public method).
 
@@ -362,7 +362,7 @@ class EnhancedYouTubeTools(StrictToolkit):
         """
         return self._extract_video_id(video_url)
 
-    def get_video_info(self, video_url: str, include_transcript: bool = False) -> str:
+    def fetch_comprehensive_youtube_video_info(self, video_url: str, include_transcript: bool = False) -> str:
         """
         Get comprehensive video information including metadata and optionally transcript.
 
@@ -382,7 +382,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             log_debug(f"Getting comprehensive info for video: {video_id}")
 
             # Get metadata
-            metadata_str = self.get_video_metadata(video_url)
+            metadata_str = self.fetch_youtube_video_metadata(video_url)
             metadata = json.loads(metadata_str)
 
             comprehensive_info = {
@@ -396,7 +396,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             if include_transcript and TRANSCRIPT_API_AVAILABLE:
                 try:
                     # Get available languages first
-                    languages_str = self.get_transcript_languages(video_url)
+                    languages_str = self.fetch_youtube_transcript_languages(video_url)
                     languages_data = json.loads(languages_str)
 
                     comprehensive_info["transcript_info"] = {
@@ -411,7 +411,7 @@ class EnhancedYouTubeTools(StrictToolkit):
                     # Try to get English transcript if available
                     if "en" in languages_data.get("available_languages", []):
                         try:
-                            transcript_str = self.get_video_transcript(video_url, "en")
+                            transcript_str = self.fetch_youtube_video_transcript(video_url, "en")
                             transcript_data = json.loads(transcript_str)
                             comprehensive_info["transcript"] = transcript_data
                         except Exception as e:
@@ -432,20 +432,20 @@ class EnhancedYouTubeTools(StrictToolkit):
 
     # Backward compatibility methods
 
-    def retrieve_youtube_video_metadata(self, video_url: str) -> str:
+    def legacy_fetch_youtube_video_metadata(self, video_url: str) -> str:
         """
         Legacy method for backward compatibility.
-        Use get_video_metadata() instead.
+        Use fetch_youtube_video_metadata() instead.
         """
-        return self.get_video_metadata(video_url)
+        return self.fetch_youtube_video_metadata(video_url)
 
-    def retrieve_youtube_video_transcript(self, video_url: str) -> str:
+    def legacy_fetch_youtube_video_transcript(self, video_url: str) -> str:
         """
         Legacy method for backward compatibility.
-        Use get_video_transcript() instead.
+        Use fetch_youtube_video_transcript() instead.
         """
         try:
-            transcript_data_str = self.get_video_transcript(video_url)
+            transcript_data_str = self.fetch_youtube_video_transcript(video_url)
             transcript_data = json.loads(transcript_data_str)
 
             # Return just the text for backward compatibility
@@ -461,10 +461,10 @@ class EnhancedYouTubeTools(StrictToolkit):
         except Exception as e:
             raise Exception(f"Error getting video transcript: {e}")
 
-    def extract_youtube_video_id(self, youtube_url: str) -> str:
+    def legacy_extract_youtube_video_id(self, youtube_url: str) -> str:
         """
         Legacy method for backward compatibility.
-        Use extract_video_id() instead.
+        Use extract_youtube_video_id() instead.
         """
         return self._extract_video_id(youtube_url)
 
@@ -712,43 +712,43 @@ class EnhancedYouTubeTools(StrictToolkit):
 
 By leveraging the following set of tools, you can retrieve comprehensive metadata, transcripts, and video information from YouTube. These tools empower you to deliver accurate, real-time video intelligence and content extraction with ease. Here are the detailed instructions for using the set of tools:
 
-- Use get_video_metadata to retrieve metadata for a YouTube video.
+- Use fetch_youtube_video_metadata to retrieve metadata for a YouTube video.
    Parameters:
       - video_url (str): The URL of the YouTube video, e.g., "https://www.youtube.com/watch?v=dQw4w9WgXcQ".
 
-- Use get_video_transcript to retrieve the transcript for a YouTube video (requires youtube-transcript-api).
+- Use fetch_youtube_video_transcript to retrieve the transcript for a YouTube video (requires youtube-transcript-api).
    Parameters:
       - video_url (str): The URL of the YouTube video, e.g., "https://youtu.be/dQw4w9WgXcQ".
       - language (str, optional): Preferred language code, e.g., "en", "es", "fr" (default: "en").
       - auto_generated (bool, optional): Whether to include auto-generated transcripts (default: True).
 
-- Use get_available_transcripts to list available transcript languages for a video (requires youtube-transcript-api).
+- Use fetch_available_youtube_transcripts to list available transcript languages for a video (requires youtube-transcript-api).
    Parameters:
       - video_url (str): The URL of the YouTube video.
 
-- Use get_transcript_languages to get a simplified list of available transcript language codes (requires youtube-transcript-api).
+- Use fetch_youtube_transcript_languages to get a simplified list of available transcript language codes (requires youtube-transcript-api).
    Parameters:
       - video_url (str): The URL of the YouTube video.
 
-- Use extract_video_id to extract the video ID from a YouTube URL.
+- Use extract_youtube_video_id to extract the video ID from a YouTube URL.
    Parameters:
       - video_url (str): The URL of the YouTube video.
 
-- Use get_video_info to get comprehensive video information, including metadata and optionally transcript.
+- Use fetch_comprehensive_youtube_video_info to get comprehensive video information, including metadata and optionally transcript.
    Parameters:
       - video_url (str): The URL of the YouTube video.
       - include_transcript (bool, optional): Whether to include transcript data (default: False).
 
-- Use retrieve_youtube_video_metadata for backward compatibility (same as get_video_metadata).
+- Use legacy_fetch_youtube_video_metadata for backward compatibility (same as fetch_youtube_video_metadata).
    Parameters:
       - video_url (str): The URL of the YouTube video.
 
-- Use retrieve_youtube_video_transcript for backward compatibility (same as get_video_transcript).
+- Use legacy_fetch_youtube_video_transcript for backward compatibility (same as fetch_youtube_video_transcript).
    Parameters:
       - video_url (str): The URL of the YouTube video.
 
 Notes:
-- Transcript-related tools (get_video_transcript, get_available_transcripts, get_transcript_languages) require the youtube-transcript-api package to be installed.
+- Transcript-related tools (fetch_youtube_video_transcript, fetch_available_youtube_transcripts, fetch_youtube_transcript_languages) require the youtube-transcript-api package to be installed.
 - The language parameter for transcripts should be a valid language code, e.g., "en" for English, "es" for Spanish.
 - The auto_generated parameter controls whether to include auto-generated transcripts.
 </youtube_tools_instructions>

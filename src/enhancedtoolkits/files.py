@@ -65,17 +65,17 @@ class EnhancedFilesTools(StrictToolkit):
         self.instructions = EnhancedFilesTools.get_llm_usage_instructions()
 
         super().__init__(name="secure_files_toolkit", **kwargs)
-        self.register(self.read_file_chunk)
-        self.register(self.edit_file_chunk)
-        self.register(self.insert_file_chunk)
-        self.register(self.delete_file_chunk)
-        self.register(self.save_file)
-        self.register(self.get_file_metadata)
-        self.register(self.list_files)
-        self.register(self.search_files_by_name)
-        self.register(self.search_inside_files)
+        self.register(self.read_file_lines_chunk)
+        self.register(self.replace_file_lines_chunk)
+        self.register(self.insert_lines_into_file_chunk)
+        self.register(self.delete_lines_from_file_chunk)
+        self.register(self.save_file_with_validation)
+        self.register(self.retrieve_file_metadata)
+        self.register(self.list_files_with_pattern)
+        self.register(self.search_files_by_name_regex)
+        self.register(self.search_file_contents_by_regex)
 
-    def read_file_chunk(
+    def read_file_lines_chunk(
         self, file_name: str, chunk_size: int = 100, offset: int = 0
     ) -> str:
         """Read a chunk of lines from a file with security validation."""
@@ -103,7 +103,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("read_file_chunk", file_name, e)
 
-    def edit_file_chunk(
+    def replace_file_lines_chunk(
         self, file_name: str, new_lines: List[str], offset: int, length: int
     ) -> str:
         """Replace lines with security validation and atomic operations."""
@@ -132,7 +132,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("edit_file_chunk", file_name, e)
 
-    def insert_file_chunk(self, file_name: str, new_lines: List[str], offset: int) -> str:
+    def insert_lines_into_file_chunk(self, file_name: str, new_lines: List[str], offset: int) -> str:
         """Insert lines with security validation."""
         try:
             self._validate_inputs(file_name, new_lines=new_lines, offset=offset)
@@ -156,7 +156,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("insert_file_chunk", file_name, e)
 
-    def delete_file_chunk(self, file_name: str, offset: int, length: int) -> str:
+    def delete_lines_from_file_chunk(self, file_name: str, offset: int, length: int) -> str:
         """Delete lines with security validation."""
         try:
             self._validate_inputs(file_name, offset=offset, length=length)
@@ -180,7 +180,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("delete_file_chunk", file_name, e)
 
-    def save_file(self, contents: str, file_name: str, overwrite: bool = True) -> str:
+    def save_file_with_validation(self, contents: str, file_name: str, overwrite: bool = True) -> str:
         """Save file with security validation."""
         try:
             self._validate_inputs(file_name, contents=contents)
@@ -213,7 +213,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("save_file", file_name, e)
 
-    def get_file_metadata(self, file_name: str) -> str:
+    def retrieve_file_metadata(self, file_name: str) -> str:
         """Get file metadata with security validation."""
         try:
             self._validate_inputs(file_name)
@@ -236,7 +236,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("get_file_metadata", file_name, e)
 
-    def list_files(self, pattern: str = "**/*") -> str:
+    def list_files_with_pattern(self, pattern: str = "**/*") -> str:
         """List files with security validation."""
         try:
             files = []
@@ -474,7 +474,7 @@ class EnhancedFilesTools(StrictToolkit):
         except re.error as e:
             raise FileSecurityError(f"Invalid regex pattern: {e}")
 
-    def search_files_by_name(
+    def search_files_by_name_regex(
         self, regex_pattern: str, recursive: bool = True, max_results: int = 1000
     ) -> str:
         """
@@ -536,7 +536,7 @@ class EnhancedFilesTools(StrictToolkit):
         except Exception as e:
             return self._error_response("search_files_by_name", str(self.base_dir), e)
 
-    def search_inside_files(
+    def search_file_contents_by_regex(
         self,
         regex_pattern: str,
         file_pattern: str = "**/*",
@@ -656,53 +656,53 @@ class EnhancedFilesTools(StrictToolkit):
 
 This toolkit provides robust, secure file operations for LLMs. All operations are subject to strict security validation, resource limits, and atomicity guarantees. Use the following tools:
 
-- read_file_chunk: Read a chunk of lines from a file.
+- read_file_lines_chunk: Read a chunk of lines from a file.
    Parameters:
       - file_name (str): File path, e.g., "data/example.txt"
       - chunk_size (int, optional): Number of lines to read (default: 100, max: 10000)
       - offset (int, optional): Line offset to start reading from (default: 0)
    Notes: Only certain file types are allowed (.txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml), max file size 100MB.
 
-- edit_file_chunk: Replace lines in a file atomically.
+- replace_file_lines_chunk: Replace lines in a file atomically.
    Parameters:
       - file_name (str): File path, e.g., "notes.md"
       - new_lines (List[str]): List of new lines to write, e.g., ["line1", "line2"]
       - offset (int): Line offset to start replacing, e.g., 10
       - length (int): Number of lines to replace, e.g., 2
 
-- insert_file_chunk: Insert lines at a specific offset.
+- insert_lines_into_file_chunk: Insert lines at a specific offset.
    Parameters:
       - file_name (str): File path, e.g., "script.py"
       - new_lines (List[str]): Lines to insert, e.g., ["import os"]
       - offset (int): Line offset to insert at, e.g., 5
 
-- delete_file_chunk: Delete lines from a file.
+- delete_lines_from_file_chunk: Delete lines from a file.
    Parameters:
       - file_name (str): File path, e.g., "data.csv"
       - offset (int): Line offset to start deleting, e.g., 20
       - length (int): Number of lines to delete, e.g., 3
 
-- save_file: Save contents to a file.
+- save_file_with_validation: Save contents to a file with validation.
    Parameters:
       - contents (str): File contents, e.g., "# Title\nContent"
       - file_name (str): File path, e.g., "output.txt"
       - overwrite (bool, optional): Overwrite if file exists (default: True)
 
-- get_file_metadata: Get metadata for a file.
+- retrieve_file_metadata: Get metadata for a file.
    Parameters:
       - file_name (str): File path, e.g., "report.json"
 
-- list_files: List files matching a pattern.
+- list_files_with_pattern: List files matching a pattern.
    Parameters:
       - pattern (str, optional): Glob pattern (default: "**/*"), e.g., "*.py"
 
-- search_files_by_name: Search for files with names matching a regex pattern.
+- search_files_by_name_regex: Search for files with names matching a regex pattern.
    Parameters:
       - regex_pattern (str): Regular expression pattern
       - recursive (bool, optional): Whether to search recursively (default: True)
       - max_results (int, optional): Maximum number of results to return (default: 1000)
 
-- search_inside_files: Search for content inside files matching a regex pattern.
+- search_file_contents_by_regex: Search for content inside files matching a regex pattern.
    Parameters:
       - regex_pattern (str): Regular expression pattern
       - file_pattern (str, optional): Glob pattern to filter files (default: "**/*")

@@ -135,16 +135,16 @@ class EnhancedWeatherTools(StrictToolkit):
         super().__init__(name="enhanced_weather_tools", **kwargs)
 
         # Register weather methods
-        self.register(self.get_current_weather)
-        self.register(self.get_weather_forecast)
-        self.register(self.get_temperature)
-        self.register(self.get_weather_description)
+        self.register(self.fetch_current_weather_conditions)
+        self.register(self.fetch_weather_forecast)
+        self.register(self.fetch_temperature_data)
+        self.register(self.fetch_weather_text_description)
 
         log_info(
             f"Enhanced Weather Tools initialized - Timeout: {self.timeout}, Base URL: {self.base_url or 'default'}"
         )
 
-    def get_current_weather(self, location: str, language: str = "en") -> str:
+    def fetch_current_weather_conditions(self, location: str, language: str = "en") -> str:
         """
         Get current weather conditions for a location.
 
@@ -219,7 +219,7 @@ class EnhancedWeatherTools(StrictToolkit):
             log_error(f"Error getting current weather: {e}")
             raise WeatherError(f"Failed to get current weather: {e}")
 
-    def get_weather_forecast(
+    def fetch_weather_forecast(
         self, location: str, days: int = 3, language: str = "en"
     ) -> str:
         """
@@ -308,7 +308,7 @@ class EnhancedWeatherTools(StrictToolkit):
             log_error(f"Error getting weather forecast: {e}")
             raise WeatherError(f"Failed to get weather forecast: {e}")
 
-    def get_temperature(self, location: str, language: str = "en") -> str:
+    def fetch_temperature_data(self, location: str, language: str = "en") -> str:
         """
         Get temperature data for a location.
 
@@ -380,7 +380,7 @@ class EnhancedWeatherTools(StrictToolkit):
             log_error(f"Error getting temperature data: {e}")
             raise WeatherError(f"Failed to get temperature data: {e}")
 
-    def get_weather_description(self, location: str, language: str = "en") -> str:
+    def fetch_weather_text_description(self, location: str, language: str = "en") -> str:
         """
         Get weather description for a location.
 
@@ -578,23 +578,23 @@ class EnhancedWeatherTools(StrictToolkit):
 
 By leveraging the following set of tools, you can retrieve current weather conditions, forecasts, temperature data, and weather descriptions for locations worldwide. These tools provide accurate, real-time weather information in multiple languages. Here are the detailed instructions for using each tool:
 
-- Use get_current_weather to retrieve current weather conditions for a location.
+- Use fetch_current_weather_conditions to retrieve current weather conditions for a location.
    Parameters:
       - location (str): Location name or coordinates, e.g., "New York", "London", "48.8566,2.3522"
       - language (str, optional): Language code (default: "en"), e.g., "fr", "es", "de"
 
-- Use get_weather_forecast to retrieve a multi-day weather forecast for a location.
+- Use fetch_weather_forecast to retrieve a multi-day weather forecast for a location.
    Parameters:
       - location (str): Location name or coordinates, e.g., "Tokyo", "Sydney", "35.6762,139.6503"
       - days (int, optional): Number of days for forecast (default: 3, range: 1-7)
       - language (str, optional): Language code (default: "en"), e.g., "it", "ru", "zh_cn"
 
-- Use get_temperature to retrieve temperature data for a location.
+- Use fetch_temperature_data to retrieve temperature data for a location.
    Parameters:
       - location (str): Location name or coordinates, e.g., "Berlin", "Cairo", "52.5200,13.4050"
       - language (str, optional): Language code (default: "en"), e.g., "de", "ar", "fr"
 
-- Use get_weather_description to retrieve a textual description of the weather for a location.
+- Use fetch_weather_text_description to retrieve a textual description of the weather for a location.
    Parameters:
       - location (str): Location name or coordinates, e.g., "Rio de Janeiro", "Mumbai", "-22.9068,-43.1729"
       - language (str, optional): Language code (default: "en"), e.g., "pt_br", "hi", "es"
