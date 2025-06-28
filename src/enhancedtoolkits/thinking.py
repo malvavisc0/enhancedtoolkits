@@ -236,6 +236,8 @@ class EnhancedThinkingTools(StrictToolkit):
         Returns:
             str: Result of the reasoning step.
         """
+        if not thinking_type:
+            thinking_type = "analysis"
         try:
             session_state = self._get_session_state(agent)
 
