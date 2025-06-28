@@ -129,34 +129,34 @@ class EnhancedThinkingTools(StrictToolkit):
 
         self.instructions = """
 <thinking_instructions>
-## Advanced LLM Thinking & General Tool Planning
+*** Thinking Tools & General Tool Planning Instructions ***
 
 ### Core Thinking Tools
-**chain_think** - Build step-by-step reasoning chains
+**build_step_by_step_reasoning_chain** - Build step-by-step reasoning chains
 - Types: analysis, synthesis, evaluation, planning, creative, reflection, tool_planning
-- Example: `chain_think(agent, "What factors affect air quality?", "analysis")`
+- Example: `build_step_by_step_reasoning_chain(agent, "What factors affect air quality?", "analysis")`
 
-**reflect** - Add meta-cognitive reflections
-- Example: `reflect(agent, "Am I missing behavioral factors?")`
+**add_meta_cognitive_reflection** - Add meta-cognitive reflections
+- Example: `add_meta_cognitive_reflection(agent, "Am I missing behavioral factors?")`
 
-**scratchpad** - Working memory for data, assumptions, insights
+**manage_working_memory_scratchpad** - Working memory for data, assumptions, insights
 - Operations: set, get, list, clear
 
-**synthesize** - Combine reasoning into conclusions
+**synthesize_reasoning_chain_into_output** - Combine reasoning into conclusions or insights
 - Types: conclusion, summary, insights, next_steps
-- Example: `synthesize(agent, "conclusion")`
+- Example: `synthesize_reasoning_chain_into_output(agent, "conclusion")`
 
-**quality_check** - Evaluate reasoning quality and suggest improvements
+**assess_reasoning_chain_quality_and_suggest_improvements** - Evaluate reasoning quality and suggest improvements
 
 ### General Tool Planning & Orchestration
-**plan_tools** - Create flexible tool sequences for any task
+**create_general_tool_execution_plan** - Create flexible tool sequences for any task
 - Analyzes available tools and creates general workflow patterns
 - Provides context hints without making rigid assumptions
-- Example: `plan_tools(agent, "Create web dashboard", ["read_file", "write_file", "browser_action"], "responsive design")`
+- Example: `create_general_tool_execution_plan(agent, "Create web dashboard", ["read_file", "write_file", "browser_action"], "responsive design")`
 
-**orchestrate** - Execute planned tool sequences with monitoring
+**execute_and_monitor_tool_plan** - Execute planned tool sequences with monitoring
 - Actions: execute, status, complete_step
-- Example: `orchestrate(agent, "execute")`
+- Example: `execute_and_monitor_tool_plan(agent, "execute")`
 
 ### General Planning Features
 - **Flexible Tool Selection**: Chooses tools based on availability, not assumptions
@@ -165,18 +165,18 @@ class EnhancedThinkingTools(StrictToolkit):
 - **LLM Customization**: Uses "to_be_specified_by_llm" for maximum flexibility
 
 ### Workflow Patterns
-**General Analysis:** chain_think(analysis) → scratchpad(context) → plan_tools → orchestrate
+**General Analysis:** build_step_by_step_reasoning_chain(analysis) → manage_working_memory_scratchpad(context) → create_general_tool_execution_plan → execute_and_monitor_tool_plan
 
-**Flexible Development:** plan_tools(task, available_tools, context) → orchestrate → reflect → synthesize
+**Flexible Development:** create_general_tool_execution_plan(task, available_tools, context) → execute_and_monitor_tool_plan → add_meta_cognitive_reflection → synthesize_reasoning_chain_into_output
 
 ### Tool Planning Example: General Approach
 ```
-1. chain_think(agent, "Create interactive dashboard", "planning")
-2. scratchpad(agent, "requirements", "Charts, responsive design, real-time data")
-3. plan_tools(agent, "Create web dashboard", tools, "responsive design with charts")
-4. orchestrate(agent, "execute")  # LLM customizes each step
-5. reflect(agent, "Does the plan address all requirements?")
-6. synthesize(agent, "project_completion")
+1. build_step_by_step_reasoning_chain(agent, "Create interactive dashboard", "planning")
+2. manage_working_memory_scratchpad(agent, "requirements", "Charts, responsive design, real-time data")
+3. create_general_tool_execution_plan(agent, "Create web dashboard", tools, "responsive design with charts")
+4. execute_and_monitor_tool_plan(agent, "execute")  # LLM customizes each step
+5. add_meta_cognitive_reflection(agent, "Does the plan address all requirements?")
+6. synthesize_reasoning_chain_into_output(agent, "project_completion")
 ```
 </thinking_instructions>
 """
@@ -203,15 +203,15 @@ class EnhancedThinkingTools(StrictToolkit):
         }
 
         # Register tools
-        self.register(self.chain_think)
-        self.register(self.reflect)
-        self.register(self.scratchpad)
-        self.register(self.synthesize)
-        self.register(self.quality_check)
-        self.register(self.plan_tools)
-        self.register(self.orchestrate)
+        self.register(self.build_step_by_step_reasoning_chain)
+        self.register(self.add_meta_cognitive_reflection)
+        self.register(self.manage_working_memory_scratchpad)
+        self.register(self.synthesize_reasoning_chain_into_output)
+        self.register(self.assess_reasoning_chain_quality_and_suggest_improvements)
+        self.register(self.create_general_tool_execution_plan)
+        self.register(self.execute_and_monitor_tool_plan)
 
-    def chain_think(
+    def build_step_by_step_reasoning_chain(
         self,
         agent: Any,
         problem: str,
@@ -265,12 +265,16 @@ class EnhancedThinkingTools(StrictToolkit):
             log_error(f"Error in chain_think: {e}")
             return f"Error in reasoning chain: {e}"
 
-    def reflect(self, agent: Any, reflection: str, step_id: Optional[int] = None) -> str:
+    def add_meta_cognitive_reflection(self, agent: Any, reflection: str, step_id: Optional[int] = None) -> str:
         """Add meta-cognitive reflection to current thinking chain."""
         try:
             session_state = self._get_session_state(agent)
             if "current_chain" not in session_state:
-                return "No active thinking chain. Start with chain_think first."
+                return "No active thinking chain. Start with build_step_by_step_reasoning_chain first."
+            if "current_chain" not in session_state:
+                return "No active thinking chain. Start with build_step_by_step_reasoning_chain first."
+            if "current_chain" not in session_state:
+                return "No active thinking chain. Start with build_step_by_step_reasoning_chain first."
 
             chain = session_state["current_chain"]
             chain.add_reflection(reflection, step_id)
@@ -293,7 +297,7 @@ class EnhancedThinkingTools(StrictToolkit):
             log_error(f"Error in reflect: {e}")
             return f"Error in reflection: {e}"
 
-    def scratchpad(
+    def manage_working_memory_scratchpad(
         self, agent: Any, key: str, value: Optional[str] = None, operation: str = "set"
     ) -> str:
         """Working memory scratchpad for intermediate thoughts and calculations."""
@@ -338,7 +342,7 @@ class EnhancedThinkingTools(StrictToolkit):
             log_error(f"Error in scratchpad: {e}")
             return f"Error in scratchpad: {e}"
 
-    def synthesize(self, agent: Any, synthesis_type: str = "conclusion") -> str:
+    def synthesize_reasoning_chain_into_output(self, agent: Any, synthesis_type: str = "conclusion") -> str:
         """Synthesize current thinking chain into insights or conclusions."""
         try:
             session_state = self._get_session_state(agent)
@@ -376,7 +380,7 @@ class EnhancedThinkingTools(StrictToolkit):
             log_error(f"Error in synthesize: {e}")
             return f"Error in synthesis: {e}"
 
-    def quality_check(self, agent: Any) -> str:
+    def assess_reasoning_chain_quality_and_suggest_improvements(self, agent: Any) -> str:
         """Evaluate the quality of current thinking chain and suggest improvements."""
         try:
             session_state = self._get_session_state(agent)
@@ -401,7 +405,7 @@ class EnhancedThinkingTools(StrictToolkit):
             log_error(f"Error in quality_check: {e}")
             return f"Error in quality assessment: {e}"
 
-    def plan_tools(
+    def create_general_tool_execution_plan(
         self,
         agent: Any,
         task: str,
@@ -412,7 +416,7 @@ class EnhancedThinkingTools(StrictToolkit):
         try:
             session_state = self._get_session_state(agent)
             if "current_chain" not in session_state:
-                return "Start with chain_think first to establish reasoning context."
+                return "Start with build_step_by_step_reasoning_chain first to establish reasoning context."
 
             chain = session_state["current_chain"]
 
@@ -447,14 +451,14 @@ class EnhancedThinkingTools(StrictToolkit):
                 )
                 result += f"\n{i}. **{step['tool']}** - {step['purpose']}{deps}"
 
-            result += "\n\n**Next:** Use orchestrate(agent, 'execute') to run the plan"
+            result += "\n\n**Next:** Use execute_and_monitor_tool_plan(agent, 'execute') to run the plan"
             return result
 
         except Exception as e:
             log_error(f"Error in plan_tools: {e}")
             return f"Error in tool planning: {e}"
 
-    def orchestrate(self, agent: Any, action: str = "execute") -> str:
+    def execute_and_monitor_tool_plan(self, agent: Any, action: str = "execute") -> str:
         """Execute and monitor tool plans."""
         try:
             session_state = self._get_session_state(agent)
@@ -463,7 +467,7 @@ class EnhancedThinkingTools(StrictToolkit):
 
             chain = session_state["current_chain"]
             if not chain.tool_plan:
-                return "No tool plan found. Use plan_tools first."
+                return "No tool plan found. Use create_general_tool_execution_plan first."
 
             if action == "execute":
                 ready_steps = [
