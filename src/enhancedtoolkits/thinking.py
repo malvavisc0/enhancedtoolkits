@@ -1,886 +1,722 @@
 """
-Enhanced Thinking Tools
+Advanced LLM Thinking Tool with Tool Planning
 
-An advanced thinking tool that builds on Agno's ThinkingTools pattern while adding:
-- Structured thinking types and frameworks
-- Cognitive bias detection and mitigation
-- Context-aware thought organization
-- Natural language output with reasoning depth
-- Quality assessment and improvement suggestions
+A thinking tool designed for LLMs that includes tool orchestration capabilities:
+- Structured reasoning chains with intermediate steps
+- Self-reflection and meta-cognitive prompts
+- General tool planning and orchestration for complex tasks
+- Scratchpad for working memory simulation
+- Chain-of-thought enhancement with quality gates
 
 Author: malvavisc0
 License: MIT
-Version: 1.0.0
+Version: 1.1.0
 """
 
 import hashlib
-import random
 from datetime import datetime
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from agno.utils.log import log_debug, logger
+from agno.utils.log import log_error
 
 from .base import StrictToolkit
 
 
-class ThinkingType(Enum):
-    """Types of structured thinking approaches."""
+class ThinkingChain:
+    """Represents a chain of reasoning steps with metadata and tool planning."""
 
-    ANALYSIS = "analysis"
-    SYNTHESIS = "synthesis"
-    EVALUATION = "evaluation"
-    REFLECTION = "reflection"
-    PLANNING = "planning"
-    PROBLEM_SOLVING = "problem_solving"
-    CREATIVE = "creative"
-    CRITICAL = "critical"
+    def __init__(self, problem: str, context: Optional[str] = None):
+        self.id = self._generate_id()
+        self.problem = problem
+        self.context = context
+        self.steps = []
+        self.scratchpad = {}
+        self.reflections = []
+        self.tool_plan = []
+        self.created_at = datetime.now().isoformat()
+        self.confidence_trajectory = []
 
+    def add_step(
+        self,
+        step_type: str,
+        content: str,
+        confidence: float = 0.5,
+        evidence: Optional[List[str]] = None,
+        reasoning: Optional[str] = None,
+    ):
+        """Add a reasoning step to the chain."""
+        step = {
+            "id": len(self.steps) + 1,
+            "type": step_type,
+            "content": content,
+            "confidence": confidence,
+            "evidence": evidence or [],
+            "reasoning": reasoning,
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.steps.append(step)
+        self.confidence_trajectory.append(confidence)
+        return step
 
-class CognitiveBias(Enum):
-    """Common cognitive biases to detect in thinking."""
+    def add_reflection(self, reflection: str, step_id: Optional[int] = None):
+        """Add a meta-cognitive reflection."""
+        self.reflections.append(
+            {
+                "content": reflection,
+                "step_id": step_id,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
-    CONFIRMATION_BIAS = "confirmation_bias"
-    ANCHORING_BIAS = "anchoring_bias"
-    AVAILABILITY_HEURISTIC = "availability_heuristic"
-    OVERCONFIDENCE_BIAS = "overconfidence_bias"
-    HINDSIGHT_BIAS = "hindsight_bias"
-    FRAMING_EFFECT = "framing_effect"
+    def update_scratchpad(self, key: str, value: Any):
+        """Update working memory scratchpad."""
+        self.scratchpad[key] = {"value": value, "updated_at": datetime.now().isoformat()}
 
+    def add_tool_step(
+        self,
+        tool_name: str,
+        purpose: str,
+        inputs: Dict[str, Any],
+        dependencies: Optional[List[str]] = None,
+    ):
+        """Add a tool execution step to the plan."""
+        step = {
+            "id": len(self.tool_plan) + 1,
+            "tool": tool_name,
+            "purpose": purpose,
+            "inputs": inputs,
+            "dependencies": dependencies or [],
+            "status": "planned",
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.tool_plan.append(step)
+        return step
 
-# Major biases that require iterative correction
-MAJOR_THINKING_BIASES = {
-    "confirmation_bias",
-    "anchoring_bias",
-    "overconfidence_bias",
-    "availability_heuristic",
-    "hindsight_bias",
-    "framing_effect",
-}
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a summary of the thinking chain."""
+        return {
+            "id": self.id,
+            "problem": self.problem,
+            "steps_count": len(self.steps),
+            "reflections_count": len(self.reflections),
+            "tool_steps": len(self.tool_plan),
+            "avg_confidence": (
+                sum(self.confidence_trajectory) / len(self.confidence_trajectory)
+                if self.confidence_trajectory
+                else 0
+            ),
+            "scratchpad_items": len(self.scratchpad),
+            "duration": self.created_at,
+        }
+
+    def _generate_id(self) -> str:
+        """Generate unique chain ID."""
+        return hashlib.md5(
+            f"{datetime.now().isoformat()}_{hash(self)}".encode()
+        ).hexdigest()[:8]
 
 
 class EnhancedThinkingTools(StrictToolkit):
-    """
-    Enhanced Thinking Tools
-
-    Builds on Agno's ThinkingTools pattern while adding sophisticated cognitive capabilities:
-    - Structured thinking types for different cognitive approaches
-    - Cognitive bias detection and awareness
-    - Context integration with problems and evidence
-    - Quality assessment and improvement suggestions
-    - Natural language output without technical metrics
-    """
+    """Advanced LLM Thinking Tool with General Tool Planning and Orchestration"""
 
     def __init__(
         self,
-        enable_bias_detection: bool = True,
-        enable_quality_assessment: bool = True,
-        thinking_depth: int = 3,
+        max_chain_length: int = 10,
+        confidence_threshold: float = 0.7,
         add_instructions: bool = True,
         **kwargs,
     ):
-        # Enhanced instructions that build on Agno pattern
-        self.add_instructions = add_instructions
+
         self.instructions = """
 <thinking_instructions>
-## Using the Thinking Tools
+## Advanced LLM Thinking & General Tool Planning
 
-The Thinking Tools provide two complementary approaches for developing, organizing, and improving your thought process with cognitive awareness and quality assessment. Both tools produce natural language output with reasoning depth, cognitive insights, and actionable suggestions.
+### Core Thinking Tools
+**chain_think** - Build step-by-step reasoning chains
+- Types: analysis, synthesis, evaluation, planning, creative, reflection, tool_planning
+- Example: `chain_think(agent, "What factors affect air quality?", "analysis")`
 
-### Available Tools
+**reflect** - Add meta-cognitive reflections
+- Example: `reflect(agent, "Am I missing behavioral factors?")`
 
-**think**: Single-pass thinking with bias detection and quality assessment
-- Use for: Initial analysis, quick insights, structured reasoning on straightforward problems
-- Features: Cognitive bias detection, quality scoring, session tracking, thinking suggestions
-- Best for: When you need immediate structured analysis without iterative refinement
+**scratchpad** - Working memory for data, assumptions, insights
+- Operations: set, get, list, clear
 
-**iterative_think**: Multi-iteration thinking with bias correction and quality improvement
-- Use for: Complex problems requiring refinement, bias mitigation, thought evolution
-- Features: Automatic bias correction, quality improvement cycles, convergence detection
-- Best for: When initial thinking may contain biases or when deeper analysis is needed
+**synthesize** - Combine reasoning into conclusions
+- Types: conclusion, summary, insights, next_steps
+- Example: `synthesize(agent, "conclusion")`
 
-### Tool Parameters
+**quality_check** - Evaluate reasoning quality and suggest improvements
 
-**thinking_type** (choose the most appropriate):
-- analysis: Break down and examine components, factors, relationships
-- synthesis: Combine and integrate information from multiple sources
-- evaluation: Assess, judge, compare options or approaches
-- reflection: Think about thinking, consider approaches and meta-cognition
-- planning: Develop strategies, next steps, action plans
-- problem_solving: Focus on solutions, resolution approaches
-- creative: Generate innovative, alternative, or novel approaches
-- critical: Question assumptions, challenge ideas, verify claims
+### General Tool Planning & Orchestration
+**plan_tools** - Create flexible tool sequences for any task
+- Analyzes available tools and creates general workflow patterns
+- Provides context hints without making rigid assumptions
+- Example: `plan_tools(agent, "Create web dashboard", ["read_file", "write_file", "browser_action"], "responsive design")`
 
-**context**: Problem context, situation details, or background information
-**evidence**: Supporting data points, information sources, or factual basis
-**confidence**: Natural language confidence expression (e.g., "quite confident", "uncertain", "moderately sure")
-**max_iterations**: Maximum refinement cycles for iterative_think (default: 3)
+**orchestrate** - Execute planned tool sequences with monitoring
+- Actions: execute, status, complete_step
+- Example: `orchestrate(agent, "execute")`
 
-### Cognitive Bias Detection
+### General Planning Features
+- **Flexible Tool Selection**: Chooses tools based on availability, not assumptions
+- **Generic Dependencies**: Creates logical workflow patterns (info → create → test)
+- **Context Hints**: Provides guidance without forcing specific implementations
+- **LLM Customization**: Uses "to_be_specified_by_llm" for maximum flexibility
 
-Automatically detects and reports 6 major cognitive biases:
-- **Confirmation bias**: Favoring information that supports existing beliefs
-- **Anchoring bias**: Over-relying on initial information or first impressions
-- **Availability heuristic**: Overweighting recent or easily recalled examples
-- **Overconfidence bias**: Expressing more certainty than evidence warrants
-- **Hindsight bias**: Believing outcomes were more predictable than they were
-- **Framing effect**: Being influenced by how information is presented
+### Workflow Patterns
+**General Analysis:** chain_think(analysis) → scratchpad(context) → plan_tools → orchestrate
 
-### Quality Assessment
+**Flexible Development:** plan_tools(task, available_tools, context) → orchestrate → reflect → synthesize
 
-Evaluates thinking across 5 key dimensions:
-- **Depth**: Thoroughness and analytical rigor of reasoning
-- **Clarity**: Structure and coherence of thought expression
-- **Evidence integration**: How well supporting evidence is incorporated
-- **Context relevance**: Alignment with the specific problem context
-- **Type appropriateness**: How well the thinking type matches the content
-
-### Session Management
-
-- Maintains thinking history and patterns across your session
-- Tracks thinking type usage and bias detection trends
-- Provides evolution insights showing your reasoning development
-- Suggests complementary thinking approaches based on your patterns
-
-### Best Practices
-
-- **Tool Selection**: Use `think` for initial analysis, `iterative_think` for complex or biased reasoning
-- **Thinking Types**: Select the most appropriate type for your cognitive task
-- **Context Integration**: Explicitly connect thoughts to specific problems and supporting evidence
-- **Confidence Expression**: Use natural language confidence levels, avoid numeric scores
-- **Bias Awareness**: Remain vigilant for cognitive biases; the tools will highlight detected biases
-- **Iterative Development**: Use tools multiple times to develop, refine, and deepen insights
-- **Tool Integration**: Incorporate results from other tools (search, data, APIs) into your thinking
-- **Meta-Reflection**: Regularly reflect on your thinking process and seek improvement opportunities
-
-### Example Usage Scenarios
-
-- **Complex Problem Analysis**: Use `iterative_think` with analysis type to break down multi-faceted issues
-- **Information Synthesis**: Use `think` with synthesis type to combine insights from multiple sources
-- **Decision Evaluation**: Use `think` with evaluation type to assess different options
-- **Strategy Planning**: Use `think` with planning type to develop action plans
-- **Bias Mitigation**: Use `iterative_think` when you suspect your reasoning may contain biases
-- **Quality Improvement**: Use `iterative_think` to refine and enhance initial thoughts
-
+### Tool Planning Example: General Approach
+```
+1. chain_think(agent, "Create interactive dashboard", "planning")
+2. scratchpad(agent, "requirements", "Charts, responsive design, real-time data")
+3. plan_tools(agent, "Create web dashboard", tools, "responsive design with charts")
+4. orchestrate(agent, "execute")  # LLM customizes each step
+5. reflect(agent, "Does the plan address all requirements?")
+6. synthesize(agent, "project_completion")
+```
 </thinking_instructions>
-                """
-
-        # Configuration
-        self.enable_bias_detection = enable_bias_detection
-        self.enable_quality_assessment = enable_quality_assessment
-        self.thinking_depth = max(1, min(10, thinking_depth))
-
-        # Bias detection patterns
-        self.bias_patterns = self._initialize_bias_patterns()
+"""
 
         super().__init__(
-            name="enhanced_thinking_tools",
-            instructions=self.instructions,
+            name="advanced_llm_thinking",
+            instructions=self.instructions if add_instructions else "",
             add_instructions=add_instructions,
             **kwargs,
         )
 
-        # Register tools
-        self.register(self.think)
-        self.register(self.iterative_think)
+        self.max_chain_length = max_chain_length
+        self.confidence_threshold = confidence_threshold
 
-    def iterative_think(
+        # Cognitive scaffolding templates
+        self.scaffolding_prompts = {
+            "analysis": "Break this down: What are the key components? How do they relate?",
+            "synthesis": "Combine insights: What patterns emerge? How do pieces fit together?",
+            "evaluation": "Assess critically: What are strengths/weaknesses? What's missing?",
+            "planning": "Think ahead: What steps are needed? What could go wrong?",
+            "creative": "Think differently: What alternatives exist? What if we changed X?",
+            "reflection": "Think about thinking: How did I approach this? What assumptions did I make?",
+            "tool_planning": "Tool sequence: What tools are needed? In what order? What dependencies?",
+        }
+
+        # Register tools
+        self.register(self.chain_think)
+        self.register(self.reflect)
+        self.register(self.scratchpad)
+        self.register(self.synthesize)
+        self.register(self.quality_check)
+        self.register(self.plan_tools)
+        self.register(self.orchestrate)
+
+    def chain_think(
         self,
         agent: Any,
-        thought: str,
+        problem: str,
         thinking_type: str = "analysis",
         context: Optional[str] = None,
         evidence: Optional[List[str]] = None,
-        confidence: Optional[str] = None,
-        max_iterations: int = 3,
+        confidence: float = 0.5,
     ) -> str:
-        """
-        Iteratively applies thinking, bias detection, and quality assessment, refining the thought until no major bias or low quality is detected or the iteration limit is reached.
+        """Start or continue a structured reasoning chain."""
+        try:
+            session_state = self._get_session_state(agent)
 
-        Args:
-            agent: The agent or team doing the thinking
-            thought: The initial thought content to process
-            thinking_type: Type of thinking approach being used. Valid values: "analysis", "synthesis", "evaluation", "reflection", "planning", "problem_solving", "creative", "critical"
-            context: Additional context for the thought
-            evidence: Supporting evidence or data points
-            confidence: Natural language confidence expression
-            max_iterations: Maximum number of iterations
-
-        Returns:
-            Natural language summary of the iterative thinking process and final thought
-        """
-        min_quality = 0.6  # Minimum acceptable overall quality score
-        history = []
-        current_thought = thought
-
-        # Convert string to enum if needed for internal processing
-        thinking_type_enum = ThinkingType.ANALYSIS  # default
-        if isinstance(thinking_type, str):
-            try:
-                thinking_type_enum = ThinkingType(thinking_type)
-            except ValueError:
-                thinking_type_enum = ThinkingType.ANALYSIS
-        else:
-            thinking_type_enum = thinking_type
-
-        current_context = context
-        current_evidence = evidence
-        current_confidence = confidence
-        iteration = 0
-        last_biases = []
-        last_quality = 1.0
-        previous_bias_sets = []  # Track bias history to detect improvement
-
-        while iteration < max_iterations:
-            # Step 1: Generate enhanced thought
-            output = self.think(
-                agent,
-                current_thought,
-                thinking_type_enum.value,
-                current_context,
-                current_evidence,
-                current_confidence,
-            )
-
-            # Safely retrieve last enhanced thought from session state
-            try:
-                session_state = self._get_session_state(agent)
-                if (
-                    "enhanced_thoughts" not in session_state
-                    or not session_state["enhanced_thoughts"]
-                ):
-                    # Fallback if session state is not properly initialized
-                    enhanced_thought = {
-                        "detected_biases": [],
-                        "quality_assessment": {"overall_score": 0.8},
-                    }
-                else:
-                    enhanced_thought = session_state["enhanced_thoughts"][-1]
-            except Exception:
-                # Fallback if session state cannot be accessed
-                enhanced_thought = {
-                    "detected_biases": [],
-                    "quality_assessment": {"overall_score": 0.8},
-                }
-            detected_biases = enhanced_thought.get("detected_biases", [])
-            quality_assessment = enhanced_thought.get("quality_assessment", {})
-            overall_quality = quality_assessment.get("overall_score", 1.0)
-            history.append(
-                {
-                    "iteration": iteration + 1,
-                    "output": output,
-                    "biases": detected_biases,
-                    "quality": overall_quality,
-                }
-            )
-            # Step 2: Check for major bias or low quality
-            major_found = [b for b in detected_biases if b in MAJOR_THINKING_BIASES]
-
-            # Check if we're making progress (fewer biases or different biases)
-            if iteration > 0:
-                bias_set = set(major_found)
-                if bias_set in previous_bias_sets:
-                    # Same biases detected again, stop to avoid infinite loop
-                    break
-                previous_bias_sets.append(bias_set)
-
-            if not major_found and overall_quality >= min_quality:
-                break
-            # Step 3: Reframe thought to address bias/quality
-            bias_names = [b.replace("_", " ").title() for b in major_found]
-            bias_text = ", ".join(bias_names) if bias_names else ""
-            quality_text = ""
-            if overall_quality < min_quality:
-                quality_text = (
-                    f"Previous thought had low quality score ({overall_quality:.2f})."
+            if "current_chain" not in session_state:
+                chain = ThinkingChain(problem, context)
+                session_state["current_chain"] = chain
+                session_state["all_chains"] = session_state.get("all_chains", [])
+                scaffolding = self.scaffolding_prompts.get(
+                    thinking_type, "Think step by step:"
                 )
-            prompt = (
-                f"Previous thought:\n{current_thought}\n\n"
-                f"{'Bias detected: ' + bias_text + '.' if bias_text else ''} "
-                f"{quality_text} "
-                f"Revise your thought by explicitly addressing these issues. "
-                f"Add counterarguments, alternative perspectives, clarify reasoning, or express more uncertainty as needed. "
-                f"Narrate what you changed and why."
-            )
-            current_thought = prompt
-            last_biases = major_found
-            last_quality = overall_quality
-            iteration += 1
 
-        # Compose output
-        output_parts = []
-        for step in history:
-            output_parts.append(
-                f"**Iteration {step['iteration']} Thinking:**\n{step['output']}"
-            )
-            if step["biases"]:
-                bias_names = [b.replace("_", " ").title() for b in step["biases"]]
-                output_parts.append(f"\nBiases detected: {', '.join(bias_names)}")
+                return (
+                    f"**Starting {thinking_type.title()} Chain**\n**Problem:** {problem}\n"
+                    + (f"**Context:** {context}\n" if context else "")
+                    + f"**Cognitive Scaffolding:** {scaffolding}\n**Chain ID:** {chain.id}\n\n"
+                    + "**Next Steps:**\n1. Use chain_think to add reasoning steps\n2. Use reflect for meta-cognitive insights\n3. Use scratchpad for working memory"
+                )
             else:
-                output_parts.append("\nNo major bias detected.")
-            if step["quality"] < min_quality:
-                output_parts.append(f"\nQuality below threshold: {step['quality']:.2f}")
+                chain = session_state["current_chain"]
+                step = chain.add_step(
+                    thinking_type,
+                    problem,
+                    confidence,
+                    evidence,
+                    f"Applied {thinking_type} thinking",
+                )
+
+                result = f"**Step {step['id']}: {thinking_type.title()}**\n**Reasoning:** {problem}\n**Confidence:** {confidence:.1f}/1.0"
+                if evidence:
+                    result += f"\n**Evidence:** {len(evidence)} items"
+                if len(chain.steps) < self.max_chain_length:
+                    next_suggestion = self._suggest_next_steps(thinking_type)
+                    if next_suggestion:
+                        result += f"\n**Suggested Next:** {next_suggestion}"
+                if confidence < self.confidence_threshold:
+                    result += (
+                        f"\n**Low Confidence** - Consider using reflect or quality_check"
+                    )
+                return result
+
+        except Exception as e:
+            log_error(f"Error in chain_think: {e}")
+            return f"Error in reasoning chain: {e}"
+
+    def reflect(self, agent: Any, reflection: str, step_id: Optional[int] = None) -> str:
+        """Add meta-cognitive reflection to current thinking chain."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "No active thinking chain. Start with chain_think first."
+
+            chain = session_state["current_chain"]
+            chain.add_reflection(reflection, step_id)
+
+            insight = "Valuable meta-cognitive insight"
+            if "assumption" in reflection.lower():
+                insight = "Good - questioning assumptions strengthens reasoning"
+            elif "bias" in reflection.lower():
+                insight = "Excellent - bias awareness improves objectivity"
+            elif "alternative" in reflection.lower():
+                insight = "Strong - considering alternatives enhances robustness"
+
+            return (
+                f"**Meta-Cognitive Reflection**\n**Reflection:** {reflection}\n"
+                + (f"**Reflecting on Step:** {step_id}\n" if step_id else "")
+                + f"**Insights:** {insight}\n**Total Reflections:** {len(chain.reflections)}"
+            )
+
+        except Exception as e:
+            log_error(f"Error in reflect: {e}")
+            return f"Error in reflection: {e}"
+
+    def scratchpad(
+        self, agent: Any, key: str, value: Optional[str] = None, operation: str = "set"
+    ) -> str:
+        """Working memory scratchpad for intermediate thoughts and calculations."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "No active thinking chain. Start with chain_think first."
+
+            chain = session_state["current_chain"]
+
+            if operation == "set":
+                if value is None:
+                    return "Value required for set operation"
+                chain.update_scratchpad(key, value)
+                return f"**Scratchpad Updated**\n**{key}:** {value}"
+            elif operation == "get":
+                if key in chain.scratchpad:
+                    entry = chain.scratchpad[key]
+                    return f"**Scratchpad Entry**\n**{key}:** {entry['value']}\n**Updated:** {entry['updated_at']}"
+                else:
+                    return f"Key '{key}' not found in scratchpad"
+            elif operation == "list":
+                if not chain.scratchpad:
+                    return "**Scratchpad Empty**"
+                entries = [
+                    f"• **{k}:** {v['value']}" for k, v in chain.scratchpad.items()
+                ]
+                return f"**Scratchpad Contents**\n" + "\n".join(entries)
+            elif operation == "clear":
+                if key == "all":
+                    chain.scratchpad.clear()
+                    return "**Scratchpad Cleared**"
+                elif key in chain.scratchpad:
+                    del chain.scratchpad[key]
+                    return f"**Removed:** {key}"
+                else:
+                    return f"Key '{key}' not found"
             else:
-                output_parts.append(f"\nQuality: {step['quality']:.2f}")
+                return f"Unknown operation: {operation}. Use: set, get, list, clear"
 
-        if (last_biases or last_quality < min_quality) and iteration == max_iterations:
-            output_parts.append(
-                "\nMaximum iterations reached. Some bias or quality issues may remain, and further review is recommended."
-            )
-        elif last_biases and len(previous_bias_sets) > 1:
-            output_parts.append(
-                "\nThinking refinement reached a stable state. Further manual review may be needed."
-            )
-        else:
-            output_parts.append(
-                "\nFinal thought is considered balanced and high-quality."
+        except Exception as e:
+            log_error(f"Error in scratchpad: {e}")
+            return f"Error in scratchpad: {e}"
+
+    def synthesize(self, agent: Any, synthesis_type: str = "conclusion") -> str:
+        """Synthesize current thinking chain into insights or conclusions."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "No active thinking chain to synthesize."
+
+            chain = session_state["current_chain"]
+            if not chain.steps:
+                return "No reasoning steps to synthesize."
+
+            # Generate synthesis based on type
+            if synthesis_type == "summary":
+                synthesis = f"Analyzed '{chain.problem}' through {len(chain.steps)} steps with {len(chain.reflections)} reflections."
+            elif synthesis_type == "insights":
+                avg_conf = sum(chain.confidence_trajectory) / len(
+                    chain.confidence_trajectory
+                )
+                synthesis = f"Key insight: Reasoning progressed with confidence {avg_conf:.1f}. Scratchpad has {len(chain.scratchpad)} items."
+            elif synthesis_type == "next_steps":
+                synthesis = "Consider: 1) Gathering evidence, 2) Testing assumptions, 3) Exploring alternatives"
+            else:
+                synthesis = f"Conclusion: Completed analysis of '{chain.problem}' with systematic reasoning and reflection."
+
+            # Store completed chain
+            session_state["all_chains"].append(chain.get_summary())
+            del session_state["current_chain"]
+
+            return (
+                f"**{synthesis_type.title()} Synthesis**\n**Chain ID:** {chain.id}\n"
+                + f"**Steps Processed:** {len(chain.steps)}\n**Reflections:** {len(chain.reflections)}\n\n"
+                + f"**{synthesis_type.title()}:**\n{synthesis}"
             )
 
-        return "\n\n".join(output_parts)
+        except Exception as e:
+            log_error(f"Error in synthesize: {e}")
+            return f"Error in synthesis: {e}"
 
-    def _initialize_bias_patterns(self) -> Dict[str, Dict[str, List[str]]]:
-        """Initialize cognitive bias detection patterns."""
-        return {
-            "confirmation_bias": {
-                "keywords": [
-                    "confirms",
-                    "supports",
-                    "validates",
-                    "proves",
-                    "obviously",
-                    "clearly",
-                ],
-                "phrases": [
-                    "as expected",
-                    "just as I thought",
-                    "this proves",
-                    "confirms my belief",
-                ],
+    def quality_check(self, agent: Any) -> str:
+        """Evaluate the quality of current thinking chain and suggest improvements."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "No active thinking chain to evaluate."
+
+            chain = session_state["current_chain"]
+            assessment = self._assess_chain_quality(chain)
+
+            result = f"**Quality Assessment**\n**Chain ID:** {chain.id}\n**Overall Score:** {assessment['overall_score']:.1f}/5.0\n\n**Dimensions:**"
+            for dimension, score in assessment["dimensions"].items():
+                result += f"\n• **{dimension.title()}:** {score:.1f}/5.0"
+
+            if assessment["suggestions"]:
+                result += "\n\n**Improvement Suggestions:**"
+                for suggestion in assessment["suggestions"]:
+                    result += f"\n• {suggestion}"
+
+            return result
+
+        except Exception as e:
+            log_error(f"Error in quality_check: {e}")
+            return f"Error in quality assessment: {e}"
+
+    def plan_tools(
+        self,
+        agent: Any,
+        task: str,
+        available_tools: List[str],
+        context: Optional[str] = None,
+    ) -> str:
+        """Plan tool sequence for complex tasks using general approach."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "Start with chain_think first to establish reasoning context."
+
+            chain = session_state["current_chain"]
+
+            # Add tool planning step to reasoning chain
+            chain.add_step(
+                "tool_planning",
+                f"Planning tool sequence for: {task}",
+                0.8,
+                available_tools,
+                "Creating general tool workflow with context guidance",
+            )
+
+            # Generate general tool plan
+            tool_sequence = self._generate_tool_plan(task, available_tools, context)
+
+            # Store tool plan
+            for step in tool_sequence:
+                chain.add_tool_step(
+                    tool_name=step["tool"],
+                    purpose=step["purpose"],
+                    inputs=step["inputs"],
+                    dependencies=step["dependencies"],
+                )
+
+            result = f"🛠️ **General Tool Planning Complete**\n**Task:** {task}\n**Context:** {context or 'None'}\n**Available Tools:** {len(available_tools)}\n**Planned Steps:** {len(tool_sequence)}\n\n**Tool Sequence:**"
+
+            for i, step in enumerate(tool_sequence, 1):
+                deps = (
+                    f" (depends on: {', '.join(step['dependencies'])})"
+                    if step["dependencies"]
+                    else ""
+                )
+                result += f"\n{i}. **{step['tool']}** - {step['purpose']}{deps}"
+
+            result += "\n\n**Next:** Use orchestrate(agent, 'execute') to run the plan"
+            return result
+
+        except Exception as e:
+            log_error(f"Error in plan_tools: {e}")
+            return f"Error in tool planning: {e}"
+
+    def orchestrate(self, agent: Any, action: str = "execute") -> str:
+        """Execute and monitor tool plans."""
+        try:
+            session_state = self._get_session_state(agent)
+            if "current_chain" not in session_state:
+                return "No active thinking chain with tool plan."
+
+            chain = session_state["current_chain"]
+            if not chain.tool_plan:
+                return "No tool plan found. Use plan_tools first."
+
+            if action == "execute":
+                ready_steps = [
+                    s
+                    for s in chain.tool_plan
+                    if s["status"] == "planned"
+                    and self._dependencies_met(s, chain.tool_plan)
+                ]
+
+                if not ready_steps:
+                    completed = len(
+                        [s for s in chain.tool_plan if s["status"] == "completed"]
+                    )
+                    return f"**Tool Plan Complete** - {completed}/{len(chain.tool_plan)} steps finished"
+
+                next_step = ready_steps[0]
+                next_step["status"] = "ready"
+
+                return f"**Ready to Execute**\n**Tool:** {next_step['tool']}\n**Purpose:** {next_step['purpose']}\n**Inputs:** {next_step['inputs']}\n\n**Action Required:** Execute this tool, then call orchestrate again"
+
+            elif action == "status":
+                status_counts = {}
+                for step in chain.tool_plan:
+                    status_counts[step["status"]] = (
+                        status_counts.get(step["status"], 0) + 1
+                    )
+                return f"**Plan Status:** {dict(status_counts)}"
+
+            elif action == "complete_step":
+                ready_steps = [s for s in chain.tool_plan if s["status"] == "ready"]
+                if ready_steps:
+                    ready_steps[0]["status"] = "completed"
+                    return (
+                        "**Step Completed** - Call orchestrate('execute') for next step"
+                    )
+                return "No ready steps to complete"
+
+            else:
+                return f"Unknown action: {action}. Use: execute, status, complete_step"
+
+        except Exception as e:
+            log_error(f"Error in orchestrate: {e}")
+            return f"Error in orchestration: {e}"
+
+    def _generate_tool_plan(
+        self, task: str, available_tools: List[str], context: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Generate general tool execution plan based on available tools and context hints."""
+        plan = []
+
+        # Step 1: Information gathering (if applicable tools available)
+        info_tools = [
+            tool
+            for tool in available_tools
+            if tool
+            in ["read_file", "list_files", "search_files", "list_code_definition_names"]
+        ]
+        if info_tools:
+            plan.append(
+                {
+                    "tool": info_tools[0],
+                    "purpose": f"Gather information for: {task}",
+                    "inputs": self._get_generic_inputs(info_tools[0], context),
+                    "dependencies": [],
+                }
+            )
+
+        # Step 2: Processing/Creation (if applicable tools available)
+        creation_tools = [
+            tool
+            for tool in available_tools
+            if tool
+            in ["write_to_file", "apply_diff", "insert_content", "search_and_replace"]
+        ]
+        if creation_tools:
+            deps = [plan[0]["tool"]] if plan else []
+            plan.append(
+                {
+                    "tool": creation_tools[0],
+                    "purpose": f"Create/modify content for: {task}",
+                    "inputs": self._get_generic_inputs(creation_tools[0], context),
+                    "dependencies": deps,
+                }
+            )
+
+        # Step 3: Execution/Testing (if applicable tools available)
+        execution_tools = [
+            tool
+            for tool in available_tools
+            if tool in ["execute_command", "browser_action", "use_mcp_tool"]
+        ]
+        if execution_tools:
+            deps = [step["tool"] for step in plan if step["tool"] in creation_tools]
+            plan.append(
+                {
+                    "tool": execution_tools[0],
+                    "purpose": f"Execute/test for: {task}",
+                    "inputs": self._get_generic_inputs(execution_tools[0], context),
+                    "dependencies": deps,
+                }
+            )
+
+        # If no specific tools match common patterns, create a flexible manual step
+        if not plan:
+            plan.append(
+                {
+                    "tool": "manual_planning_required",
+                    "purpose": f"Custom tool sequence needed for: {task}",
+                    "inputs": {
+                        "task": task,
+                        "context": context or "No context provided",
+                        "available_tools": available_tools,
+                        "suggestion": "LLM should manually plan tool sequence based on specific requirements",
+                    },
+                    "dependencies": [],
+                }
+            )
+
+        return plan
+
+    def _get_generic_inputs(
+        self, tool_name: str, context: Optional[str]
+    ) -> Dict[str, Any]:
+        """Generate generic input templates for tools based on context hints."""
+        context_hint = (
+            f"Consider context: {context}"
+            if context
+            else "Specify parameters based on task requirements"
+        )
+
+        # Simplified input templates
+        templates = {
+            "read_file": {"path": "to_be_specified_by_llm", "context_hint": context_hint},
+            "list_files": {"path": ".", "recursive": True, "context_hint": context_hint},
+            "search_files": {
+                "path": ".",
+                "regex": "to_be_specified_by_llm",
+                "context_hint": context_hint,
             },
-            "anchoring_bias": {
-                "keywords": ["first", "initial", "starting", "baseline", "reference"],
-                "phrases": ["based on the first", "starting from", "initially thought"],
+            "list_code_definition_names": {"path": ".", "context_hint": context_hint},
+            "write_to_file": {
+                "path": "to_be_specified_by_llm",
+                "content": "to_be_generated_by_llm",
+                "context_hint": context_hint,
             },
-            "availability_heuristic": {
-                "keywords": ["recent", "memorable", "vivid", "comes to mind", "recall"],
-                "phrases": ["I remember", "recently saw", "just heard", "easy to recall"],
+            "apply_diff": {
+                "path": "to_be_specified_by_llm",
+                "diff": "to_be_generated_by_llm",
+                "context_hint": context_hint,
             },
-            "overconfidence_bias": {
-                "keywords": [
-                    "definitely",
-                    "certainly",
-                    "absolutely",
-                    "guaranteed",
-                    "impossible",
-                ],
-                "phrases": [
-                    "I'm 100% sure",
-                    "there's no doubt",
-                    "absolutely certain",
-                    "definitely will",
-                ],
+            "insert_content": {
+                "path": "to_be_specified_by_llm",
+                "line": 0,
+                "content": "to_be_generated_by_llm",
+                "context_hint": context_hint,
             },
-            "hindsight_bias": {
-                "keywords": [
-                    "obvious",
-                    "predictable",
-                    "should have known",
-                    "saw it coming",
-                ],
-                "phrases": ["it was obvious", "should have seen", "predictable outcome"],
+            "search_and_replace": {
+                "path": "to_be_specified_by_llm",
+                "search": "to_be_specified_by_llm",
+                "replace": "to_be_specified_by_llm",
+                "context_hint": context_hint,
             },
-            "framing_effect": {
-                "keywords": ["depends on", "way you look", "perspective", "frame"],
-                "phrases": ["depends how you frame", "way of looking", "from this angle"],
+            "execute_command": {
+                "command": "to_be_specified_by_llm",
+                "context_hint": context_hint,
+            },
+            "browser_action": {
+                "action": "launch",
+                "url": "to_be_specified_by_llm",
+                "context_hint": context_hint,
+            },
+            "use_mcp_tool": {
+                "server_name": "to_be_specified_by_llm",
+                "tool_name": "to_be_specified_by_llm",
+                "arguments": {},
+                "context_hint": context_hint,
             },
         }
 
-    def think(
-        self,
-        agent: Any,
-        thought: str,
-        thinking_type: str = "analysis",
-        context: Optional[str] = None,
-        evidence: Optional[List[str]] = None,
-        confidence: Optional[str] = None,
-    ) -> str:
-        """
-        Enhanced thinking tool with structured reasoning and cognitive awareness.
+        return templates.get(
+            tool_name,
+            {"parameters": "to_be_specified_by_llm", "context_hint": context_hint},
+        )
 
-        Args:
-            agent: The agent or team doing the thinking
-            thought: The thought content to process and store
-            thinking_type: Type of thinking approach being used. Valid values: "analysis", "synthesis", "evaluation", "reflection", "planning", "problem_solving", "creative", "critical"
-            context: Additional context for the thought (problem, situation, etc.)
-            evidence: Supporting evidence or data points
-            confidence: Natural language confidence expression (e.g., "quite confident", "uncertain")
+    def _dependencies_met(
+        self, step: Dict[str, Any], all_steps: List[Dict[str, Any]]
+    ) -> bool:
+        """Check if step dependencies are met."""
+        if not step["dependencies"]:
+            return True
+        completed_tools = {s["tool"] for s in all_steps if s["status"] == "completed"}
+        return all(dep in completed_tools for dep in step["dependencies"])
 
-        Returns:
-            Natural language summary of thinking progress with cognitive insights
-        """
-        try:
-            # Convert string to enum if needed
-            thinking_type_enum = ThinkingType.ANALYSIS  # default
-            if isinstance(thinking_type, str):
-                try:
-                    thinking_type_enum = ThinkingType(thinking_type)
-                except ValueError:
-                    thinking_type_enum = ThinkingType.ANALYSIS
-            else:
-                thinking_type_enum = thinking_type
+    def _suggest_next_steps(self, current_type: str) -> str:
+        """Suggest next reasoning steps."""
+        suggestions = {
+            "analysis": "Try synthesis or plan_tools for implementation",
+            "synthesis": "Use evaluation to assess insights",
+            "evaluation": "Consider planning or tool planning",
+            "planning": "Use plan_tools for tool orchestration",
+            "tool_planning": "Use orchestrate to execute plan",
+            "creative": "Use reflection to assess new ideas",
+            "reflection": "Return to analysis with new perspective",
+        }
+        return suggestions.get(current_type, "Continue with deeper analysis")
 
-            log_debug(f"Enhanced Thought ({thinking_type_enum.value}): {thought}")
+    def _assess_chain_quality(self, chain: ThinkingChain) -> Dict[str, Any]:
+        """Assess chain quality."""
+        step_diversity = len(set(step["type"] for step in chain.steps))
+        avg_confidence = (
+            sum(chain.confidence_trajectory) / len(chain.confidence_trajectory)
+            if chain.confidence_trajectory
+            else 0
+        )
+        reflection_ratio = len(chain.reflections) / max(1, len(chain.steps))
 
-            # Initialize session state if needed
-            session_state = self._get_session_state(agent)
-            if "enhanced_thoughts" not in session_state:
-                session_state["enhanced_thoughts"] = []
-            if "thinking_patterns" not in session_state:
-                session_state["thinking_patterns"] = {
-                    "type_counts": {},
-                    "bias_detections": [],
-                    "quality_scores": [],
-                    "contexts": [],
-                }
-
-            # Generate unique thought ID
-            thought_id = self._generate_thought_id()
-
-            # Analyze thought for cognitive biases
-            detected_biases = []
-            if self.enable_bias_detection:
-                detected_biases = self._detect_biases_in_thought(thought)
-
-            # Assess thought quality
-            quality_assessment = {}
-            if self.enable_quality_assessment:
-                quality_assessment = self._assess_thought_quality(
-                    thought, thinking_type_enum, context, evidence
-                )
-
-            # Create enhanced thought record
-            enhanced_thought = {
-                "id": thought_id,
-                "content": thought,
-                "type": thinking_type_enum.value,
-                "timestamp": datetime.now().isoformat(),
-                "context": context,
-                "evidence": evidence or [],
-                "confidence": confidence,
-                "detected_biases": [bias.value for bias in detected_biases],
-                "quality_assessment": quality_assessment,
-                "connections": [],  # For future use in reasoning chains
-            }
-
-            # Store the enhanced thought
-            session_state["enhanced_thoughts"].append(enhanced_thought)
-
-            # Update thinking patterns
-            self._update_thinking_patterns(agent, enhanced_thought)
-
-            # Generate natural language output
-            output = self._format_thinking_output(
-                enhanced_thought,
-                session_state["enhanced_thoughts"],
-                detected_biases,
-                quality_assessment,
-            )
-
-            return output
-
-        except Exception as e:
-            logger.error(f"Error in enhanced thinking: {e}")
-            return f"I encountered an issue while processing this thought: {e}. Let me try a different approach."
-
-    def _generate_thought_id(self) -> str:
-        """Generate unique thought ID."""
-        timestamp = datetime.now().isoformat()
-        return hashlib.md5(
-            f"{timestamp}_{random.randint(1000, 9999)}".encode()
-        ).hexdigest()[:8]
-
-    def _detect_biases_in_thought(self, thought: str) -> List[CognitiveBias]:
-        """Detect cognitive biases in thought content."""
-        detected_biases = []
-        thought_lower = thought.lower()
-
-        for bias_name, patterns in self.bias_patterns.items():
-            # Check keywords
-            if any(keyword in thought_lower for keyword in patterns.get("keywords", [])):
-                try:
-                    detected_biases.append(CognitiveBias(bias_name))
-                except ValueError:
-                    continue
-
-            # Check phrases
-            if any(phrase in thought_lower for phrase in patterns.get("phrases", [])):
-                try:
-                    detected_biases.append(CognitiveBias(bias_name))
-                except ValueError:
-                    continue
-
-        return list(set(detected_biases))  # Remove duplicates
-
-    def _assess_thought_quality(
-        self,
-        thought: str,
-        thinking_type: ThinkingType,
-        context: Optional[str],
-        evidence: Optional[List[str]],
-    ) -> Dict[str, Any]:
-        """Assess the quality of a thought."""
-        assessment = {
-            "depth": self._assess_thinking_depth(thought),
-            "clarity": self._assess_thinking_clarity(thought),
-            "evidence_integration": self._assess_evidence_integration(thought, evidence),
-            "context_relevance": self._assess_context_relevance(thought, context),
-            "type_appropriateness": self._assess_type_appropriateness(
-                thought, thinking_type
+        dimensions = {
+            "depth": min(5.0, len(chain.steps) / 2),
+            "diversity": min(5.0, step_diversity),
+            "confidence": avg_confidence * 5,
+            "reflection": min(5.0, reflection_ratio * 10),
+            "evidence": min(
+                5.0, sum(len(step.get("evidence", [])) for step in chain.steps) / 2
             ),
         }
 
-        # Calculate overall quality (for internal use, not shown to user)
-        overall_score = sum(assessment.values()) / len(assessment)
-        assessment["overall_score"] = overall_score
+        suggestions = []
+        if dimensions["depth"] < 3:
+            suggestions.append("Add more reasoning steps for deeper analysis")
+        if dimensions["diversity"] < 2:
+            suggestions.append("Try different thinking types for broader perspective")
+        if dimensions["reflection"] < 2:
+            suggestions.append("Add more meta-cognitive reflections")
 
-        return assessment
-
-    def _assess_thinking_depth(self, thought: str) -> float:
-        """Assess the depth of thinking."""
-        # Simple heuristics for thinking depth
-        word_count = len(thought.split())
-        question_count = thought.count("?")
-        reasoning_words = sum(
-            1
-            for word in ["because", "therefore", "however", "although", "since"]
-            if word in thought.lower()
-        )
-
-        depth_score = min(
-            1.0, (word_count / 50) + (question_count * 0.1) + (reasoning_words * 0.1)
-        )
-        return depth_score
-
-    def _assess_thinking_clarity(self, thought: str) -> float:
-        """Assess the clarity of thinking."""
-        # Simple clarity assessment
-        sentence_count = max(
-            1, thought.count(".") + thought.count("!") + thought.count("?")
-        )
-        avg_sentence_length = len(thought.split()) / sentence_count
-
-        # Optimal sentence length is around 15-20 words
-        clarity_score = max(0.0, 1.0 - abs(avg_sentence_length - 17.5) / 17.5)
-        return min(1.0, clarity_score)
-
-    def _assess_evidence_integration(
-        self, thought: str, evidence: Optional[List[str]]
-    ) -> float:
-        """Assess how well the thought integrates evidence."""
-        if not evidence:
-            return 0.5  # Neutral score when no evidence provided
-
-        evidence_mentions = 0
-        thought_lower = thought.lower()
-
-        for evidence_item in evidence:
-            # Check if evidence concepts are mentioned in thought
-            evidence_words = evidence_item.lower().split()[:3]  # First 3 words
-            if any(word in thought_lower for word in evidence_words):
-                evidence_mentions += 1
-
-        integration_score = min(1.0, evidence_mentions / len(evidence))
-        return integration_score
-
-    def _assess_context_relevance(self, thought: str, context: Optional[str]) -> float:
-        """Assess how relevant the thought is to the context."""
-        if not context:
-            return 0.5  # Neutral score when no context provided
-
-        thought_words = set(thought.lower().split())
-        context_words = set(context.lower().split())
-
-        # Calculate word overlap
-        overlap = len(thought_words.intersection(context_words))
-        relevance_score = min(1.0, overlap / max(1, len(context_words)))
-
-        return relevance_score
-
-    def _assess_type_appropriateness(
-        self, thought: str, thinking_type: ThinkingType
-    ) -> float:
-        """Assess how appropriate the thinking type is for the thought content."""
-        thought_lower = thought.lower()
-
-        type_indicators = {
-            ThinkingType.ANALYSIS: [
-                "analyze",
-                "break down",
-                "examine",
-                "components",
-                "factors",
-            ],
-            ThinkingType.SYNTHESIS: [
-                "combine",
-                "integrate",
-                "connect",
-                "overall",
-                "together",
-            ],
-            ThinkingType.EVALUATION: [
-                "assess",
-                "judge",
-                "compare",
-                "better",
-                "worse",
-                "evaluate",
-            ],
-            ThinkingType.REFLECTION: [
-                "think about",
-                "consider",
-                "reflect",
-                "meta",
-                "approach",
-            ],
-            ThinkingType.PLANNING: [
-                "plan",
-                "strategy",
-                "steps",
-                "next",
-                "approach",
-                "how to",
-            ],
-            ThinkingType.PROBLEM_SOLVING: [
-                "solve",
-                "solution",
-                "problem",
-                "issue",
-                "resolve",
-            ],
-            ThinkingType.CREATIVE: [
-                "creative",
-                "innovative",
-                "new",
-                "different",
-                "alternative",
-            ],
-            ThinkingType.CRITICAL: [
-                "critical",
-                "question",
-                "challenge",
-                "assume",
-                "verify",
-            ],
+        return {
+            "overall_score": sum(dimensions.values()) / len(dimensions),
+            "dimensions": dimensions,
+            "suggestions": suggestions,
         }
 
-        indicators = type_indicators.get(thinking_type, [])
-        matches = sum(1 for indicator in indicators if indicator in thought_lower)
-
-        appropriateness_score = min(1.0, matches / max(1, len(indicators)))
-        return appropriateness_score
-
-    def _update_thinking_patterns(
-        self, agent: Any, enhanced_thought: Dict[str, Any]
-    ) -> None:
-        """Update thinking patterns tracking."""
-        session_state = self._get_session_state(agent)
-        patterns = session_state["thinking_patterns"]
-
-        # Update type counts
-        thinking_type = enhanced_thought["type"]
-        patterns["type_counts"][thinking_type] = (
-            patterns["type_counts"].get(thinking_type, 0) + 1
-        )
-
-        # Update bias detections
-        if enhanced_thought["detected_biases"]:
-            patterns["bias_detections"].extend(enhanced_thought["detected_biases"])
-
-        # Update quality scores
-        quality_score = enhanced_thought["quality_assessment"].get("overall_score", 0.5)
-        patterns["quality_scores"].append(quality_score)
-
-        # Update contexts
-        if enhanced_thought["context"]:
-            patterns["contexts"].append(enhanced_thought["context"])
-
-    def _format_thinking_output(
-        self,
-        current_thought: Dict[str, Any],
-        all_thoughts: List[Dict[str, Any]],
-        detected_biases: List[CognitiveBias],
-        quality_assessment: Dict[str, Any],
-    ) -> str:
-        """Format thinking output in natural, human-like language."""
-        output_parts = []
-
-        # Header with thinking type
-        thinking_type = current_thought["type"].replace("_", " ").title()
-        output_parts.append(f"💭 **{thinking_type} Thinking**")
-
-        # Current thought with context
-        if current_thought["context"]:
-            output_parts.append(f"\n**Context:** {current_thought['context']}")
-
-        output_parts.append("\n**Current Thought:**")
-        output_parts.append(f'"{current_thought["content"]}"')
-
-        # Evidence integration
-        if current_thought["evidence"]:
-            evidence_count = len(current_thought["evidence"])
-            output_parts.append(f"\n**Evidence Considered:** {evidence_count} sources")
-
-        # Confidence expression
-        if current_thought["confidence"]:
-            output_parts.append(f"\n**Confidence:** {current_thought['confidence']}")
-
-        # Cognitive awareness
-        if detected_biases:
-            bias_names = [
-                bias.value.replace("_", " ").title() for bias in detected_biases
-            ]
-            if len(bias_names) == 1:
-                bias_text = bias_names[0]
-            else:
-                bias_text = ", ".join(bias_names[:-1]) + f" and {bias_names[-1]}"
-
-            output_parts.append(
-                f"\n**Cognitive Awareness:** Detected potential {bias_text} - consider alternative perspectives"
-            )
-        else:
-            output_parts.append(
-                "\n**Cognitive Awareness:** Thinking appears balanced and unbiased"
-            )
-
-        # Quality insights (natural language)
-        quality_insights = self._generate_quality_insights(quality_assessment)
-        if quality_insights:
-            output_parts.append(f"\n**Thinking Quality:** {quality_insights}")
-
-        # Thinking progress
-        total_thoughts = len(all_thoughts)
-        if total_thoughts > 1:
-            output_parts.append(
-                f"\n**Thinking Progress:** {total_thoughts} thoughts developed"
-            )
-
-            # Show thinking evolution
-            recent_types = [
-                t["type"].replace("_", " ").title() for t in all_thoughts[-3:]
-            ]
-            if len(recent_types) > 1:
-                evolution = " → ".join(recent_types)
-                output_parts.append(f"**Thinking Evolution:** {evolution}")
-
-        # Next thinking suggestions
-        suggestions = self._generate_thinking_suggestions(
-            current_thought, all_thoughts, detected_biases
-        )
-        if suggestions:
-            output_parts.append("\n**Next Thinking Suggestions:**")
-            for suggestion in suggestions:
-                output_parts.append(f"• {suggestion}")
-
-        return "\n".join(output_parts)
-
-    def _generate_quality_insights(self, quality_assessment: Dict[str, Any]) -> str:
-        """Generate natural language quality insights."""
-        insights = []
-
-        depth = quality_assessment.get("depth", 0.5)
-        clarity = quality_assessment.get("clarity", 0.5)
-        evidence_integration = quality_assessment.get("evidence_integration", 0.5)
-
-        if depth > 0.7:
-            insights.append("Good analytical depth")
-        elif depth < 0.3:
-            insights.append("Could benefit from deeper analysis")
-
-        if clarity > 0.7:
-            insights.append("Clear and well-structured")
-        elif clarity < 0.3:
-            insights.append("Could be clearer and more focused")
-
-        if evidence_integration > 0.7:
-            insights.append("Strong evidence integration")
-        elif (
-            evidence_integration < 0.3
-            and quality_assessment.get("evidence_integration") != 0.5
-        ):
-            insights.append("Could better integrate available evidence")
-
-        return "; ".join(insights) if insights else "Solid thinking approach"
-
-    def _generate_thinking_suggestions(
-        self,
-        current_thought: Dict[str, Any],
-        all_thoughts: List[Dict[str, Any]],
-        detected_biases: List[CognitiveBias],
-    ) -> List[str]:
-        """Generate suggestions for next thinking steps."""
-        suggestions = []
-
-        current_type = current_thought["type"]
-        recent_types = [t["type"] for t in all_thoughts[-3:]]
-
-        # Suggest complementary thinking types
-        if current_type == "analysis" and "synthesis" not in recent_types:
-            suggestions.append("Try synthesis thinking to combine insights")
-        elif current_type == "evaluation" and "creative" not in recent_types:
-            suggestions.append("Consider creative thinking for alternative approaches")
-        elif current_type == "problem_solving" and "critical" not in recent_types:
-            suggestions.append("Apply critical thinking to challenge assumptions")
-
-        # Bias-specific suggestions
-        if CognitiveBias.CONFIRMATION_BIAS in detected_biases:
-            suggestions.append("Actively seek contradictory evidence or viewpoints")
-        if CognitiveBias.ANCHORING_BIAS in detected_biases:
-            suggestions.append("Consider starting from different initial assumptions")
-        if CognitiveBias.OVERCONFIDENCE_BIAS in detected_biases:
-            suggestions.append("Explore uncertainties and potential risks")
-
-        # General suggestions based on thinking patterns
-        if len(all_thoughts) > 5 and current_type != "reflection":
-            suggestions.append("Consider reflection thinking to assess overall progress")
-
-        if not current_thought["evidence"] and current_type != "creative":
-            suggestions.append("Gather additional evidence to support reasoning")
-
-        return suggestions[:3]  # Limit to top 3 suggestions
-
     def _get_session_state(self, agent: Any) -> dict:
-        """Safely get session state from agent object."""
-        # Try different access patterns based on object type
+        """Get session state."""
         if isinstance(agent, dict):
             return agent.setdefault("session_state", {})
         elif hasattr(agent, "session_state"):
             if agent.session_state is None:
-                if hasattr(agent, "__dict__"):
-                    agent.__dict__["session_state"] = {}
-                else:
-                    try:
-                        setattr(agent, "session_state", {})
-                    except (AttributeError, TypeError):
-                        # Fallback: store in a class attribute if possible
-                        if not hasattr(agent.__class__, "_session_states"):
-                            agent.__class__._session_states = {}
-                        obj_id = id(agent)
-                        agent.__class__._session_states[obj_id] = {}
-                        return agent.__class__._session_states[obj_id]
+                agent.session_state = {}
             return agent.session_state
         else:
-            # Object doesn't have session_state, try to add it
-            if hasattr(agent, "__dict__"):
-                agent.__dict__["session_state"] = {}
+            try:
+                if not hasattr(agent, "__dict__"):
+                    agent.__dict__ = {}
+                agent.__dict__["session_state"] = agent.__dict__.get("session_state", {})
                 return agent.__dict__["session_state"]
-            else:
-                try:
-                    setattr(agent, "session_state", {})
-                    return agent.session_state
-                except (AttributeError, TypeError):
-                    # Fallback: store in a class attribute
-                    if not hasattr(agent.__class__, "_session_states"):
-                        agent.__class__._session_states = {}
-                    obj_id = id(agent)
-                    agent.__class__._session_states[obj_id] = {}
-                    return agent.__class__._session_states[obj_id]
+            except (AttributeError, TypeError):
+                return {}
