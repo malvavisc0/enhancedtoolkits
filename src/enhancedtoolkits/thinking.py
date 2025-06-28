@@ -134,7 +134,9 @@ class EnhancedThinkingTools(StrictToolkit):
 ### Core Thinking Tools
 **build_step_by_step_reasoning_chain** - Build step-by-step reasoning chains
 - Types: analysis, synthesis, evaluation, planning, creative, reflection, tool_planning
-- Example: `build_step_by_step_reasoning_chain(agent, "What factors affect air quality?", "analysis")`
+- `thinking_type` is optional and defaults to "analysis".
+- Example: `build_step_by_step_reasoning_chain(agent, "What factors affect air quality?")`
+- Example (explicit): `build_step_by_step_reasoning_chain(agent, "What factors affect air quality?", "analysis")`
 
 **add_meta_cognitive_reflection** - Add meta-cognitive reflections
 - Example: `add_meta_cognitive_reflection(agent, "Am I missing behavioral factors?")`
@@ -215,12 +217,25 @@ class EnhancedThinkingTools(StrictToolkit):
         self,
         agent: Any,
         problem: str,
-        thinking_type: str = "analysis",
+        thinking_type: Optional[str] = "analysis",
         context: Optional[str] = None,
         evidence: Optional[List[str]] = None,
         confidence: float = 0.5,
     ) -> str:
-        """Start or continue a structured reasoning chain."""
+        """
+        Start or continue a structured reasoning chain.
+
+        Args:
+            agent: The agent or team context.
+            problem: The problem or question to reason about.
+            thinking_type: (optional) The type of reasoning to use (e.g., "analysis", "planning", etc.). Defaults to "analysis".
+            context: (optional) Additional context for the reasoning step.
+            evidence: (optional) List of evidence strings.
+            confidence: (optional) Confidence score for the step.
+
+        Returns:
+            str: Result of the reasoning step.
+        """
         try:
             session_state = self._get_session_state(agent)
 
