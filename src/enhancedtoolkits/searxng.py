@@ -1008,6 +1008,12 @@ class EnhancedSearxngTools(StrictToolkit):
 
 These tools enable you to perform various web searches and manage the results. They provide accurate, real-time information with improved file handling capabilities.
 
+**Content Fetching Capabilities:**
+- The tools can automatically fetch and process content from URLs in search results when content fetching is enabled
+- Supported file types (PDF, TXT, MD) are detected and their contents extracted
+- HTML content can be fetched and converted to markdown
+- File processing includes anti-bot measures for reliable access
+
 **General Instructions:**
 - All methods return a dictionary with 'results' (list) and 'status' (str) keys.
 - Each result is a dictionary containing relevant data based on the search type.
@@ -1048,10 +1054,7 @@ These tools enable you to perform various web searches and manage the results. T
    - *Example:* `perform_category_search("cybersecurity trends", category="it")`
 
 **File Processing Features:**
-- Automatically detects PDF, TXT, and Markdown files in search results.
-- Extracts readable content from PDFs using MarkItDown.
-- Preserves formatting when downloading Markdown files.
-- Handles TXT file downloads with proper encoding detection.
+- Automatically detects PDF, TXT, and Markdown files in search results, including from URLs in the search results.
 
 **Configuration Options:**
 - Max file download size (default: 50MB)

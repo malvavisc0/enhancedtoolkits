@@ -821,7 +821,7 @@ class URLContentDownloader(StrictToolkit):
 <content_downloader_tools_instructions>
 *** URL Content Downloader Tool Instructions ***
 
-Use this tool to download and parse content from any URL with advanced anti-bot bypass capabilities.
+Use this tool to download and parse content from any URL with advanced anti-bot bypass capabilities. By using these tools you can automatically fetch and process web content via URLs without manual intervention.
 
 ### Functions Tools
 
