@@ -16,42 +16,45 @@ Version: 1.0.0
 
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from agno.utils.log import log_debug, log_error, log_info, log_warning
 
 from .base import StrictToolkit
 
+PywttrLanguage = Any
+
+try:
+    import pydantic
+except ImportError:  # pragma: no cover
+    pydantic = None  # type: ignore[assignment]
+
 # Note: This module requires the pywttr package to be installed
 # Install with: pip install -U pywttr pywttr-models
 try:
-    import pywttr
-    from pywttr import Language
+    from pywttr import Language, Wttr
 
     PYWTTR_AVAILABLE = True
-except ImportError:
+except ImportError:  # pragma: no cover
     PYWTTR_AVAILABLE = False
+    Language = None  # type: ignore[assignment]
+    Wttr = None  # type: ignore[assignment]
     log_warning(
-        "pywttr package not available. Install with: pip install -U pywttr pywttr-models"
+        "pywttr package not available. Install with: "
+        "pip install -U pywttr pywttr-models"
     )
 
 
 class WeatherError(Exception):
     """Base exception for weather-related errors."""
 
-    pass
-
 
 class WeatherRequestError(WeatherError):
     """Exception for weather request errors."""
 
-    pass
-
 
 class WeatherValidationError(WeatherError):
     """Exception for input validation errors."""
-
-    pass
 
 
 class EnhancedWeatherTools(StrictToolkit):
@@ -127,12 +130,18 @@ class EnhancedWeatherTools(StrictToolkit):
             )
 
         # Configuration
-        self.timeout = max(5, min(120, timeout))  # Limit between 5-120 seconds
+        self.timeout = max(5, min(120, timeout))
         self.base_url = base_url
-        self.add_instructions = add_instructions
-        self.instructions = EnhancedWeatherTools.get_llm_usage_instructions()
+        self.instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
 
-        super().__init__(name="enhanced_weather_tools", **kwargs)
+        super().__init__(
+            name="enhanced_weather_tools",
+            instructions=self.instructions,
+            add_instructions=add_instructions,
+            **kwargs,
+        )
 
         # Register weather methods
         self.register(self.fetch_current_weather_conditions)
@@ -141,10 +150,13 @@ class EnhancedWeatherTools(StrictToolkit):
         self.register(self.fetch_weather_text_description)
 
         log_info(
-            f"Enhanced Weather Tools initialized - Timeout: {self.timeout}, Base URL: {self.base_url or 'default'}"
+            f"Enhanced Weather Tools initialized - Timeout: {self.timeout}, "
+            f"Base URL: {self.base_url or 'default'}"
         )
 
-    def fetch_current_weather_conditions(self, location: str, language: str = "en") -> str:
+    def fetch_current_weather_conditions(
+        self, location: str, language: str = "en"
+    ) -> str:
         """
         Get current weather conditions for a location.
 
@@ -165,15 +177,11 @@ class EnhancedWeatherTools(StrictToolkit):
 
             log_debug(f"Getting current weather for {location} in {language}")
 
-            # Create Wttr instance with optional custom base URL
-            wttr_kwargs = {}
-            if self.base_url:
-                import pydantic
-
-                wttr_kwargs["base_url"] = pydantic.AnyHttpUrl(self.base_url)
+            wttr_kwargs = self._build_wttr_kwargs()
 
             # Get weather data
-            with pywttr.Wttr(**wttr_kwargs) as wttr:
+            assert Wttr is not None
+            with Wttr(**wttr_kwargs) as wttr:
                 weather_data = wttr.weather(location, language=lang)
 
             # Extract current weather
@@ -182,7 +190,9 @@ class EnhancedWeatherTools(StrictToolkit):
                 or not hasattr(weather_data, "weather")
                 or not weather_data.weather
             ):
-                raise WeatherError("No weather data available for this location")
+                raise WeatherError(
+                    "No weather data available for this location"
+                )
 
             current = weather_data.weather[0]
 
@@ -200,8 +210,12 @@ class EnhancedWeatherTools(StrictToolkit):
                     "weather_desc": self._get_weather_desc(current),
                     "wind_speed_kmph": getattr(current, "maxwind_kph", None),
                     "wind_speed_mph": getattr(current, "maxwind_mph", None),
-                    "precipitation_mm": getattr(current, "totalprecip_mm", None),
-                    "precipitation_in": getattr(current, "totalprecip_in", None),
+                    "precipitation_mm": getattr(
+                        current, "totalprecip_mm", None
+                    ),
+                    "precipitation_in": getattr(
+                        current, "totalprecip_in", None
+                    ),
                     "uv_index": getattr(current, "uv", None),
                 },
                 "metadata": {
@@ -217,7 +231,7 @@ class EnhancedWeatherTools(StrictToolkit):
             raise
         except Exception as e:
             log_error(f"Error getting current weather: {e}")
-            raise WeatherError(f"Failed to get current weather: {e}")
+            raise WeatherError(f"Failed to get current weather: {e}") from e
 
     def fetch_weather_forecast(
         self, location: str, days: int = 3, language: str = "en"
@@ -242,17 +256,15 @@ class EnhancedWeatherTools(StrictToolkit):
             lang = self._validate_language(language)
             days = max(1, min(7, days))  # Limit between 1-7 days
 
-            log_debug(f"Getting {days}-day forecast for {location} in {language}")
+            log_debug(
+                f"Getting {days}-day forecast for {location} in {language}"
+            )
 
-            # Create Wttr instance with optional custom base URL
-            wttr_kwargs = {}
-            if self.base_url:
-                import pydantic
-
-                wttr_kwargs["base_url"] = pydantic.AnyHttpUrl(self.base_url)
+            wttr_kwargs = self._build_wttr_kwargs()
 
             # Get weather data
-            with pywttr.Wttr(**wttr_kwargs) as wttr:
+            assert Wttr is not None
+            with Wttr(**wttr_kwargs) as wttr:
                 weather_data = wttr.weather(location, language=lang)
 
             # Extract forecast
@@ -261,7 +273,9 @@ class EnhancedWeatherTools(StrictToolkit):
                 or not hasattr(weather_data, "weather")
                 or not weather_data.weather
             ):
-                raise WeatherError("No weather data available for this location")
+                raise WeatherError(
+                    "No weather data available for this location"
+                )
 
             forecast_days = weather_data.weather[:days]
 
@@ -280,9 +294,15 @@ class EnhancedWeatherTools(StrictToolkit):
                         "weather_desc": self._get_weather_desc(day),
                         "max_wind_kph": getattr(day, "maxwind_kph", None),
                         "max_wind_mph": getattr(day, "maxwind_mph", None),
-                        "total_precip_mm": getattr(day, "totalprecip_mm", None),
-                        "total_precip_in": getattr(day, "totalprecip_in", None),
-                        "chance_of_rain": getattr(day, "daily_chance_of_rain", None),
+                        "total_precip_mm": getattr(
+                            day, "totalprecip_mm", None
+                        ),
+                        "total_precip_in": getattr(
+                            day, "totalprecip_in", None
+                        ),
+                        "chance_of_rain": getattr(
+                            day, "daily_chance_of_rain", None
+                        ),
                         "uv_index": getattr(day, "uv", None),
                     }
                 )
@@ -306,9 +326,11 @@ class EnhancedWeatherTools(StrictToolkit):
             raise
         except Exception as e:
             log_error(f"Error getting weather forecast: {e}")
-            raise WeatherError(f"Failed to get weather forecast: {e}")
+            raise WeatherError(f"Failed to get weather forecast: {e}") from e
 
-    def fetch_temperature_data(self, location: str, language: str = "en") -> str:
+    def fetch_temperature_data(
+        self, location: str, language: str = "en"
+    ) -> str:
         """
         Get temperature data for a location.
 
@@ -329,15 +351,11 @@ class EnhancedWeatherTools(StrictToolkit):
 
             log_debug(f"Getting temperature for {location} in {language}")
 
-            # Create Wttr instance with optional custom base URL
-            wttr_kwargs = {}
-            if self.base_url:
-                import pydantic
-
-                wttr_kwargs["base_url"] = pydantic.AnyHttpUrl(self.base_url)
+            wttr_kwargs = self._build_wttr_kwargs()
 
             # Get weather data
-            with pywttr.Wttr(**wttr_kwargs) as wttr:
+            assert Wttr is not None
+            with Wttr(**wttr_kwargs) as wttr:
                 weather_data = wttr.weather(location, language=lang)
 
             # Extract temperature data
@@ -346,7 +364,9 @@ class EnhancedWeatherTools(StrictToolkit):
                 or not hasattr(weather_data, "weather")
                 or not weather_data.weather
             ):
-                raise WeatherError("No weather data available for this location")
+                raise WeatherError(
+                    "No weather data available for this location"
+                )
 
             current = weather_data.weather[0]
 
@@ -378,9 +398,11 @@ class EnhancedWeatherTools(StrictToolkit):
             raise
         except Exception as e:
             log_error(f"Error getting temperature data: {e}")
-            raise WeatherError(f"Failed to get temperature data: {e}")
+            raise WeatherError(f"Failed to get temperature data: {e}") from e
 
-    def fetch_weather_text_description(self, location: str, language: str = "en") -> str:
+    def fetch_weather_text_description(
+        self, location: str, language: str = "en"
+    ) -> str:
         """
         Get weather description for a location.
 
@@ -399,17 +421,15 @@ class EnhancedWeatherTools(StrictToolkit):
             self._validate_location(location)
             lang = self._validate_language(language)
 
-            log_debug(f"Getting weather description for {location} in {language}")
+            log_debug(
+                f"Getting weather description for {location} in {language}"
+            )
 
-            # Create Wttr instance with optional custom base URL
-            wttr_kwargs = {}
-            if self.base_url:
-                import pydantic
-
-                wttr_kwargs["base_url"] = pydantic.AnyHttpUrl(self.base_url)
+            wttr_kwargs = self._build_wttr_kwargs()
 
             # Get weather data
-            with pywttr.Wttr(**wttr_kwargs) as wttr:
+            assert Wttr is not None
+            with Wttr(**wttr_kwargs) as wttr:
                 weather_data = wttr.weather(location, language=lang)
 
             # Extract weather description
@@ -418,7 +438,9 @@ class EnhancedWeatherTools(StrictToolkit):
                 or not hasattr(weather_data, "weather")
                 or not weather_data.weather
             ):
-                raise WeatherError("No weather data available for this location")
+                raise WeatherError(
+                    "No weather data available for this location"
+                )
 
             current = weather_data.weather[0]
             weather_desc = self._get_weather_desc(current)
@@ -442,169 +464,91 @@ class EnhancedWeatherTools(StrictToolkit):
             raise
         except Exception as e:
             log_error(f"Error getting weather description: {e}")
-            raise WeatherError(f"Failed to get weather description: {e}")
+            raise WeatherError(
+                f"Failed to get weather description: {e}"
+            ) from e
+
+    def _build_wttr_kwargs(self) -> dict:
+        """Build kwargs for `pywttr.Wttr`.
+
+        - Always uses `self.timeout`.
+        - Uses `self.base_url` if provided.
+        """
+        wttr_kwargs: dict = {"timeout": self.timeout}
+
+        if self.base_url:
+            if pydantic is not None:
+                wttr_kwargs["base_url"] = pydantic.AnyHttpUrl(self.base_url)
+            else:
+                # pywttr typically accepts this as-is; keep it best-effort.
+                wttr_kwargs["base_url"] = self.base_url
+
+        return wttr_kwargs
 
     def _validate_location(self, location: str) -> None:
-        """
-        Validate location input.
-        """
+        """Validate location input."""
         if not location or not location.strip():
             raise WeatherValidationError("Location cannot be empty")
 
         if len(location) > 100:
             raise WeatherValidationError("Location name is too long")
 
-    def _validate_language(self, language: str) -> str:
-        """
-        Validate and convert language code to pywttr Language.
-        """
-        language = language.lower()
+    def _validate_language(self, language: str) -> "PywttrLanguage":
+        """Validate and convert language code to a pywttr Language enum."""
+        normalized = (language or "en").strip().lower().replace("-", "_")
+        if normalized in ("pt", "pt_br"):
+            normalized = "pt_br"
 
-        # Handle special cases
-        if language == "pt-br" or language == "pt_br":
-            language = "pt_br"
-        elif language == "zh-cn" or language == "zh_cn":
-            language = "zh_cn"
-        elif language == "zh-tw" or language == "zh_tw":
-            language = "zh_tw"
+        if normalized not in self.SUPPORTED_LANGUAGES:
+            log_warning(
+                f"Unsupported language: {normalized}, falling back to English"
+            )
+            normalized = "en"
 
-        if language not in self.SUPPORTED_LANGUAGES:
-            log_warning(f"Unsupported language: {language}, falling back to English")
-            language = "en"
-
-        # Convert language code to pywttr Language
+        assert Language is not None
         try:
-            if language == "en":
-                return pywttr.Language.EN
-            elif language == "af":
-                return pywttr.Language.AF
-            elif language == "am":
-                return pywttr.Language.AM
-            elif language == "ar":
-                return pywttr.Language.AR
-            elif language == "be":
-                return pywttr.Language.BE
-            elif language == "bn":
-                return pywttr.Language.BN
-            elif language == "ca":
-                return pywttr.Language.CA
-            elif language == "da":
-                return pywttr.Language.DA
-            elif language == "de":
-                return pywttr.Language.DE
-            elif language == "el":
-                return pywttr.Language.EL
-            elif language == "es":
-                return pywttr.Language.ES
-            elif language == "et":
-                return pywttr.Language.ET
-            elif language == "fa":
-                return pywttr.Language.FA
-            elif language == "fr":
-                return pywttr.Language.FR
-            elif language == "gl":
-                return pywttr.Language.GL
-            elif language == "hi":
-                return pywttr.Language.HI
-            elif language == "hu":
-                return pywttr.Language.HU
-            elif language == "ia":
-                return pywttr.Language.IA
-            elif language == "id":
-                return pywttr.Language.ID
-            elif language == "it":
-                return pywttr.Language.IT
-            elif language == "lt":
-                return pywttr.Language.LT
-            elif language == "mg":
-                return pywttr.Language.MG
-            elif language == "nb":
-                return pywttr.Language.NB
-            elif language == "nl":
-                return pywttr.Language.NL
-            elif language == "oc":
-                return pywttr.Language.OC
-            elif language == "pl":
-                return pywttr.Language.PL
-            elif language == "pt_br":
-                return pywttr.Language.PT_BR
-            elif language == "ro":
-                return pywttr.Language.RO
-            elif language == "ru":
-                return pywttr.Language.RU
-            elif language == "ta":
-                return pywttr.Language.TA
-            elif language == "th":
-                return pywttr.Language.TH
-            elif language == "tr":
-                return pywttr.Language.TR
-            elif language == "uk":
-                return pywttr.Language.UK
-            elif language == "vi":
-                return pywttr.Language.VI
-            elif language == "zh_cn":
-                return pywttr.Language.ZH_CN
-            elif language == "zh_tw":
-                return pywttr.Language.ZH_TW
-            else:
-                return pywttr.Language.EN
-        except Exception as e:
-            log_warning(f"Error converting language code: {e}, falling back to English")
-            return pywttr.Language.EN
+            return getattr(Language, normalized.upper())
+        except AttributeError:
+            log_warning(
+                f"Language enum not found for: {normalized}, falling back to English"
+            )
+            return Language.EN
 
     def _get_weather_desc(self, weather_obj) -> str:
-        """
-        Extract weather description from weather object.
-        """
+        """Extract weather description from a pywttr weather object."""
         try:
             if hasattr(weather_obj, "condition") and weather_obj.condition:
                 return weather_obj.condition.text
-            elif hasattr(weather_obj, "weather_desc") and weather_obj.weather_desc:
+
+            if (
+                hasattr(weather_obj, "weather_desc")
+                and weather_obj.weather_desc
+            ):
                 return weather_obj.weather_desc[0].value
-            else:
-                return "No description available"
-        except Exception:
+
+            return "No description available"
+        except (AttributeError, IndexError, TypeError):
             return "No description available"
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use each tool in EnhancedWeatherTools.
-        Each instruction includes the method name, description, parameters, types, and example values.
-        """
-        instructions = """
-<weather_tools_instructions>
-*** Weather Tools Instructions ***
+        """Return short, text-first usage instructions for the weather tools."""
+        return """
+<weather_tools>
+Weather lookup via wttr.in (pywttr). Tools return JSON strings.
 
-By leveraging the following set of tools, you can retrieve current weather conditions, forecasts, temperature data, and weather descriptions for locations worldwide. These tools provide accurate, real-time weather information in multiple languages. Here are the detailed instructions for using each tool:
+Tools:
+- fetch_current_weather_conditions(location, language='en')
+- fetch_weather_forecast(location, days=3, language='en')
+- fetch_temperature_data(location, language='en')
+- fetch_weather_text_description(location, language='en')
 
-- Use fetch_current_weather_conditions to retrieve current weather conditions for a location.
-   Parameters:
-      - location (str): Location name or coordinates, e.g., "New York", "London", "48.8566,2.3522"
-      - language (str, optional): Language code (default: "en"), e.g., "fr", "es", "de"
-
-- Use fetch_weather_forecast to retrieve a multi-day weather forecast for a location.
-   Parameters:
-      - location (str): Location name or coordinates, e.g., "Tokyo", "Sydney", "35.6762,139.6503"
-      - days (int, optional): Number of days for forecast (default: 3, range: 1-7)
-      - language (str, optional): Language code (default: "en"), e.g., "it", "ru", "zh_cn"
-
-- Use fetch_temperature_data to retrieve temperature data for a location.
-   Parameters:
-      - location (str): Location name or coordinates, e.g., "Berlin", "Cairo", "52.5200,13.4050"
-      - language (str, optional): Language code (default: "en"), e.g., "de", "ar", "fr"
-
-- Use fetch_weather_text_description to retrieve a textual description of the weather for a location.
-   Parameters:
-      - location (str): Location name or coordinates, e.g., "Rio de Janeiro", "Mumbai", "-22.9068,-43.1729"
-      - language (str, optional): Language code (default: "en"), e.g., "pt_br", "hi", "es"
+Example:
+1) fetch_current_weather_conditions('Berlin', 'de')
+2) fetch_weather_forecast('Berlin', 3, 'de')
 
 Notes:
-- The language parameter is always optional and defaults to English ("en").
-- Supported language codes include: en, af, am, ar, be, bn, ca, da, de, el, es, et, fa, fr, gl, hi, hu, ia, id, it, lt, mg, nb, nl, oc, pl, pt_br, ro, ru, ta, th, tr, uk, vi, zh_cn, zh_tw.
-- Location can be specified as a city name, address, or latitude,longitude coordinates.
-- Temperature values are provided in both Celsius and Fahrenheit where available.
-- Weather data is sourced from wttr.in, which aggregates data from various weather services.
-</weather_tools_instructions>
+- `location` can be a city name or "lat,lon".
+- `language` defaults to 'en' and falls back to English if unsupported.
+</weather_tools>
 """
-        return instructions
