@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
@@ -58,7 +58,7 @@ class EnhancedYouTubeTools(StrictToolkit):
     """
 
     # Common transcript languages (used only for convenience filtering)
-    COMMON_LANGUAGES: List[str] = [
+    COMMON_LANGUAGES: list[str] = [
         "en",
         "es",
         "fr",
@@ -174,7 +174,7 @@ class EnhancedYouTubeTools(StrictToolkit):
 
             ytt = YouTubeTranscriptApi()
 
-            result: Dict[str, Any] = {
+            result: dict[str, Any] = {
                 "video_id": video_id,
                 "manual_transcripts": [],
                 "auto_generated_transcripts": [],
@@ -243,7 +243,7 @@ class EnhancedYouTubeTools(StrictToolkit):
                     if code:
                         language_codes.add(code)
 
-            result: Dict[str, Any] = {
+            result: dict[str, Any] = {
                 "video_id": transcripts.get("video_id"),
                 "available_languages": sorted(language_codes),
                 "common_languages_available": [
@@ -271,7 +271,21 @@ class EnhancedYouTubeTools(StrictToolkit):
 
     def extract_youtube_video_id(self, video_url: str) -> str:
         """Extract a YouTube video id from a URL (or accept a raw id)."""
-        return self._extract_video_id(video_url)
+        try:
+            video_id = self._extract_video_id(video_url)
+            return self._format_json_response(
+                {
+                    "video_id": video_id,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+        except (YouTubeValidationError, YouTubeDataError):
+            raise
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error extracting video id for {video_url}: {e}"
+            )
+            raise YouTubeDataError(f"Failed to extract video id: {e}") from e
 
     def fetch_comprehensive_youtube_video_info(
         self, video_url: str, include_transcript: bool = False
@@ -282,7 +296,7 @@ class EnhancedYouTubeTools(StrictToolkit):
 
             metadata = json.loads(self.fetch_youtube_video_metadata(video_url))
 
-            result: Dict[str, Any] = {
+            result: dict[str, Any] = {
                 "video_id": video_id,
                 "video_url": video_url,
                 "metadata": metadata,
@@ -412,7 +426,7 @@ class EnhancedYouTubeTools(StrictToolkit):
             return False
         return all(c.isalnum() or c in "_-" for c in value)
 
-    def _fetch_oembed_data(self, video_id: str) -> Dict[str, Any]:
+    def _fetch_oembed_data(self, video_id: str) -> dict[str, Any]:
         """Fetch metadata from YouTube oEmbed."""
         params = {
             "format": "json",
@@ -446,8 +460,8 @@ class EnhancedYouTubeTools(StrictToolkit):
 
     @staticmethod
     def _enhance_oembed_metadata(
-        oembed: Dict[str, Any], video_id: str, video_url: str
-    ) -> Dict[str, Any]:
+        oembed: dict[str, Any], video_id: str, video_url: str
+    ) -> dict[str, Any]:
         """Normalize oEmbed response into stable output."""
         return {
             "video_id": video_id,
@@ -470,7 +484,7 @@ class EnhancedYouTubeTools(StrictToolkit):
 
     def _fetch_transcript_with_retry(
         self, video_id: str, language: str, auto_generated: bool
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Fetch transcript with retries.
 
         Current `youtube-transcript-api` uses an instance-based API:
@@ -571,7 +585,7 @@ class EnhancedYouTubeTools(StrictToolkit):
         except NoTranscriptFound:
             pass
 
-        allowed: List[Any] = []
+        allowed: list[Any] = []
         for t in transcript_list:
             if allow_generated or not getattr(t, "is_generated", False):
                 allowed.append(t)
@@ -587,7 +601,7 @@ class EnhancedYouTubeTools(StrictToolkit):
         return fallback
 
     @staticmethod
-    def _normalize_transcript_segments(segments: Any) -> List[Dict[str, Any]]:
+    def _normalize_transcript_segments(segments: Any) -> list[dict[str, Any]]:
         """Return transcript segments as a `list[dict]`.
 
         `youtube-transcript-api` v1+ returns a `FetchedTranscript` object; older
@@ -608,16 +622,16 @@ class EnhancedYouTubeTools(StrictToolkit):
         return [item for item in segments if isinstance(item, dict)]
 
     @staticmethod
-    def _segments_to_text(segments: List[Dict[str, Any]]) -> str:
+    def _segments_to_text(segments: list[dict[str, Any]]) -> str:
         """Join segment `text` fields into one string."""
         return " ".join(
             [(seg.get("text") or "").strip() for seg in segments]
         ).strip()
 
     @staticmethod
-    def _segments_duration_seconds(segments: List[Dict[str, Any]]) -> float:
+    def _segments_duration_seconds(segments: list[dict[str, Any]]) -> float:
         """Compute max(start + duration) over segments."""
-        end_times: List[float] = []
+        end_times: list[float] = []
         for seg in segments:
             try:
                 start = float(seg.get("start") or 0.0)
@@ -645,18 +659,21 @@ class EnhancedYouTubeTools(StrictToolkit):
 YouTube metadata (oEmbed) + transcripts.
 All tools return JSON strings.
 
-Tools:
+Core tools:
 - fetch_youtube_video_metadata(video_url)
-  - oEmbed fields only (title/author/thumbnail/embed_html); no view counts/likes/duration.
+  - oEmbed fields only: title/author/thumbnail/embed html.
+  - Not available via oEmbed: view counts, likes, upload date, duration.
 - extract_youtube_video_id(video_url)
+  - Accepts full URLs, schemeless URLs, or raw 11-char ids.
 - fetch_comprehensive_youtube_video_info(video_url, include_transcript=False)
 
-Transcript tools:
+Transcript tools (requires `youtube-transcript-api`):
 - fetch_youtube_video_transcript(video_url, language='en', auto_generated=True)
 - fetch_available_youtube_transcripts(video_url)
 - fetch_youtube_transcript_languages(video_url)
 
-Notes:
+Operational notes:
+- Tool schemas are **strict** (OpenAI compatibility): pass all parameters, even if a default is shown.
 - If transcripts work locally but fail on a server/cloud VM with TranscriptsDisabled,
   YouTube may be blocking/challenging that egress IP.
 
