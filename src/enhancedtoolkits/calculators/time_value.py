@@ -5,10 +5,6 @@ Provides time value of money calculations including present value,
 future value, annuities, and perpetuities.
 """
 
-from datetime import datetime
-
-from agno.utils.log import log_error, log_info
-
 from .base import (
     BaseCalculatorTools,
     FinancialComputationError,
@@ -19,12 +15,17 @@ from .base import (
 class TimeValueCalculatorTools(BaseCalculatorTools):
     """Calculator for time value of money calculations."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_instructions: bool = True, **kwargs):
         """Initialize the time value calculator and register all methods."""
-        self.add_instructions = True
-        self.instructions = TimeValueCalculatorTools.get_llm_usage_instructions()
-
-        super().__init__(name="time_value_calculator", **kwargs)
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+        super().__init__(
+            name="time_value_calculator",
+            add_instructions=add_instructions,
+            instructions=instructions,
+            **kwargs,
+        )
 
         # Register all time value methods
         self.register(self.calculate_present_value)
@@ -48,7 +49,9 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
             JSON string containing present value calculation
         """
         try:
-            future_value = self._validate_positive_amount(future_value, "future_value")
+            future_value = self._validate_positive_amount(
+                future_value, "future_value"
+            )
             rate = self._validate_rate(rate)
             periods = self._validate_periods(periods)
 
@@ -65,20 +68,18 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
                     "rate": rate,
                     "periods": periods,
                 },
-                "metadata": {
-                    "calculation_method": "compound_discounting",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("compound_discounting"),
             }
 
-            log_info(f"Calculated present value: {present_value:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in present value calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate present value: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate present value", e)
+            raise FinancialComputationError(
+                f"Failed to calculate present value: {e}"
+            ) from e
 
     def calculate_future_value(
         self, present_value: float, rate: float, periods: int
@@ -95,7 +96,9 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
             JSON string containing future value calculation
         """
         try:
-            present_value = self._validate_positive_amount(present_value, "present_value")
+            present_value = self._validate_positive_amount(
+                present_value, "present_value"
+            )
             rate = self._validate_rate(rate)
             periods = self._validate_periods(periods)
 
@@ -109,20 +112,18 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
                     "rate": rate,
                     "periods": periods,
                 },
-                "metadata": {
-                    "calculation_method": "compound_interest",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("compound_interest"),
             }
 
-            log_info(f"Calculated future value: {future_value:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in future value calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate future value: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate future value", e)
+            raise FinancialComputationError(
+                f"Failed to calculate future value: {e}"
+            ) from e
 
     def calculate_annuity_present_value(
         self, payment: float, rate: float, periods: int
@@ -153,28 +154,31 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
             result = {
                 "operation": "annuity_present_value",
                 "result": round(pv_annuity, 2),
-                "inputs": {"payment": payment, "rate": rate, "periods": periods},
+                "inputs": {
+                    "payment": payment,
+                    "rate": rate,
+                    "periods": periods,
+                },
                 "summary": {
                     "present_value": round(pv_annuity, 2),
                     "total_payments": round(total_payments, 2),
                     "discount_amount": round(total_payments - pv_annuity, 2),
                 },
-                "metadata": {
-                    "calculation_method": "ordinary_annuity_pv",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("ordinary_annuity_pv"),
             }
 
-            log_info(f"Calculated annuity present value: {pv_annuity:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in annuity PV calculation: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate annuity present value",
+                e,
+            )
             raise FinancialComputationError(
                 f"Failed to calculate annuity present value: {e}"
-            )
+            ) from e
 
     def calculate_annuity_future_value(
         self, payment: float, rate: float, periods: int
@@ -206,28 +210,31 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
             result = {
                 "operation": "annuity_future_value",
                 "result": round(fv_annuity, 2),
-                "inputs": {"payment": payment, "rate": rate, "periods": periods},
+                "inputs": {
+                    "payment": payment,
+                    "rate": rate,
+                    "periods": periods,
+                },
                 "summary": {
                     "future_value": round(fv_annuity, 2),
                     "total_payments": round(total_payments, 2),
                     "interest_earned": round(interest_earned, 2),
                 },
-                "metadata": {
-                    "calculation_method": "ordinary_annuity_fv",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("ordinary_annuity_fv"),
             }
 
-            log_info(f"Calculated annuity future value: {fv_annuity:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in annuity FV calculation: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate annuity future value",
+                e,
+            )
             raise FinancialComputationError(
                 f"Failed to calculate annuity future value: {e}"
-            )
+            ) from e
 
     def calculate_perpetuity_value(self, payment: float, rate: float) -> str:
         """
@@ -260,59 +267,37 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
                     "annual_payment": payment,
                     "required_rate": rate,
                 },
-                "metadata": {
-                    "calculation_method": "perpetuity_formula",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("perpetuity_formula"),
             }
 
-            log_info(f"Calculated perpetuity value: {perpetuity_value:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in perpetuity calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate perpetuity value: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate perpetuity value",
+                e,
+            )
+            raise FinancialComputationError(
+                f"Failed to calculate perpetuity value: {e}"
+            ) from e
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use time value of money calculations.
-        """
+        """Return short, text-first usage instructions for time-value tools."""
         return """
-<time_value_money_calculator_tools_instructions>
-**TIME VALUE OF MONEY CALCULATIONS TOOLS:**
+<time_value_calculator>
+Time value of money. Tools return JSON strings.
 
-- Use calculate_present_value to calculate the present value of a future sum of money.
-   Parameters:
-      - future_value (float): The amount of money in the future, e.g., 10000.0
-      - rate (float): Discount rate per period as decimal, e.g., 0.05 for 5%
-      - periods (int): Number of periods, e.g., 4
+Tools:
+- calculate_present_value(future_value, rate, periods)
+- calculate_future_value(present_value, rate, periods)
+- calculate_annuity_present_value(payment, rate, periods)
+- calculate_annuity_future_value(payment, rate, periods)
+- calculate_perpetuity_value(payment, rate)
 
-- Use calculate_future_value to calculate the future value of a present sum of money.
-   Parameters:
-      - present_value (float): The current amount of money, e.g., 8000.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.06 for 6%
-      - periods (int): Number of periods, e.g., 5
-
-**ANNUITY CALCULATIONS:**
-
-- Use calculate_annuity_present_value to calculate PV of ordinary annuity.
-   Parameters:
-      - payment (float): Payment per period, e.g., 1000.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.08
-      - periods (int): Number of periods, e.g., 10
-
-- Use calculate_annuity_future_value to calculate FV of ordinary annuity.
-   Parameters:
-      - payment (float): Payment per period, e.g., 500.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.06
-      - periods (int): Number of periods, e.g., 20
-
-- Use calculate_perpetuity_value to calculate present value of perpetuity.
-   Parameters:
-      - payment (float): Payment per period, e.g., 100.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.05
-</time_value_money_calculator_tools_instructions>
+Notes:
+- `rate` is per period as a decimal (e.g. 0.05 for 5%).
+</time_value_calculator>
 """

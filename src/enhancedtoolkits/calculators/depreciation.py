@@ -4,10 +4,6 @@ Depreciation Calculator
 Provides depreciation calculations including straight-line and declining balance methods.
 """
 
-from datetime import datetime
-
-from agno.utils.log import log_error, log_info
-
 from .base import (
     BaseCalculatorTools,
     FinancialComputationError,
@@ -18,12 +14,17 @@ from .base import (
 class DepreciationCalculatorTools(BaseCalculatorTools):
     """Calculator for depreciation calculations."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_instructions: bool = True, **kwargs):
         """Initialize the depreciation calculator and register all methods."""
-        self.add_instructions = True
-        self.instructions = DepreciationCalculatorTools.get_llm_usage_instructions()
-
-        super().__init__(name="depreciation_calculator", **kwargs)
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+        super().__init__(
+            name="depreciation_calculator",
+            add_instructions=add_instructions,
+            instructions=instructions,
+            **kwargs,
+        )
 
         # Register all depreciation methods
         self.register(self.calculate_straight_line_depreciation)
@@ -69,7 +70,9 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
                     {
                         "year": year,
                         "depreciation": round(depreciation, 2),
-                        "accumulated_depreciation": round(accumulated_depreciation, 2),
+                        "accumulated_depreciation": round(
+                            accumulated_depreciation, 2
+                        ),
                         "book_value": round(book_value, 2),
                     }
                 )
@@ -81,25 +84,26 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
                 "summary": {
                     "annual_depreciation": round(annual_depreciation, 2),
                     "total_depreciation": round(total_depreciation, 2),
-                    "depreciation_rate": round((annual_depreciation / cost) * 100, 2),
+                    "depreciation_rate": round(
+                        (annual_depreciation / cost) * 100, 2
+                    ),
                 },
                 "schedule": schedule,
-                "metadata": {
-                    "calculation_method": "straight_line",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("straight_line"),
             }
 
-            log_info(f"Calculated straight-line depreciation: {annual_depreciation:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in straight-line depreciation calculation: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate straight-line depreciation",
+                e,
+            )
             raise FinancialComputationError(
                 f"Failed to calculate straight-line depreciation: {e}"
-            )
+            ) from e
 
     def calculate_declining_balance_depreciation(
         self, cost: float, rate: float, life: int
@@ -134,7 +138,9 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
                     {
                         "year": year,
                         "depreciation": round(depreciation, 2),
-                        "accumulated_depreciation": round(total_depreciation, 2),
+                        "accumulated_depreciation": round(
+                            total_depreciation, 2
+                        ),
                         "book_value": round(book_value, 2),
                     }
                 )
@@ -148,45 +154,34 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
                     "depreciation_method": "declining_balance",
                 },
                 "schedule": schedule,
-                "metadata": {
-                    "calculation_method": "declining_balance",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("declining_balance"),
             }
 
-            log_info(f"Calculated declining balance depreciation schedule")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(
-                f"Unexpected error in declining balance depreciation calculation: {e}"
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate declining balance depreciation",
+                e,
             )
             raise FinancialComputationError(
                 f"Failed to calculate declining balance depreciation: {e}"
-            )
+            ) from e
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use depreciation calculations.
-        """
+        """Return short, text-first usage instructions for depreciation tools."""
         return """
-<deprecation_calculators_tools_instructions>
-**DEPRECIATION CALCULATIONS:**
+<depreciation_calculator>
+Depreciation schedules. Tools return JSON strings.
 
-- Use calculate_straight_line_depreciation for linear depreciation.
-   Parameters:
-      - cost (float): Initial cost of asset, e.g., 50000.0
-      - salvage (float): Salvage value at end of life, e.g., 5000.0
-      - life (int): Useful life in years, e.g., 10
+Tools:
+- calculate_straight_line_depreciation(cost, salvage, life)
+- calculate_declining_balance_depreciation(cost, rate, life)
 
-- Use calculate_declining_balance_depreciation for accelerated depreciation.
-   Parameters:
-      - cost (float): Initial cost of asset, e.g., 30000.0
-      - rate (float): Depreciation rate per period as decimal, e.g., 0.20
-      - life (int): Useful life in years, e.g., 5
-
-</deprecation_calculators_tools_instructions>
+Notes:
+- `rate` is per period as a decimal (e.g., 0.2 for 20%).
+</depreciation_calculator>
 """

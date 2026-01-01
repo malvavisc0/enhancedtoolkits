@@ -12,7 +12,7 @@ from datetime import datetime
 from math import gcd as math_gcd
 from typing import List
 
-from agno.utils.log import log_error, log_info
+from agno.utils.log import log_info
 
 from .base import (
     BaseCalculatorTools,
@@ -24,22 +24,40 @@ from .base import (
 class ArithmeticCalculatorTools(BaseCalculatorTools):
     """Calculator for basic arithmetic operations."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_instructions: bool = True, **kwargs):
         """Initialize the arithmetic calculator and register all methods."""
-        self.add_instructions = True
-        self.instructions = ArithmeticCalculatorTools.get_llm_usage_instructions()
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+        super().__init__(
+            name="basic_arithmetic_calculator",
+            add_instructions=add_instructions,
+            instructions=instructions,
+            **kwargs,
+        )
 
-        super().__init__(name="basic_arithmetic_calculator", **kwargs)
-
-        # Register all arithmetic methods
-        self.register(self.add)
-        self.register(self.subtract)
-        self.register(self.multiply)
-        self.register(self.divide)
-        self.register(self.exponentiate)
-        self.register(self.square_root)
-        self.register(self.factorial)
-        self.register(self.is_prime)
+        # Register core arithmetic methods
+        for fn in (
+            self.add,
+            self.subtract,
+            self.multiply,
+            self.divide,
+            self.exponentiate,
+            self.square_root,
+            self.factorial,
+            self.is_prime,
+            self.modulo,
+            self.absolute,
+            self.round_number,
+            self.log,
+            self.ln,
+            self.gcd,
+            self.lcm,
+            self.mean,
+            self.median,
+            self.standard_deviation,
+        ):
+            self.register(fn)
 
     def add(self, a: float, b: float) -> str:
         """
@@ -68,9 +86,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Adding {a} and {b} to get {result}")
             return self._format_json_response(response)
 
-        except Exception as e:
-            log_error(f"Error in addition: {e}")
-            raise FinancialComputationError(f"Failed to add numbers: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to add numbers", e)
+            raise FinancialComputationError(
+                f"Failed to add numbers: {e}"
+            ) from e
 
     def subtract(self, a: float, b: float) -> str:
         """
@@ -99,9 +119,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Subtracting {b} from {a} to get {result}")
             return self._format_json_response(response)
 
-        except Exception as e:
-            log_error(f"Error in subtraction: {e}")
-            raise FinancialComputationError(f"Failed to subtract numbers: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to subtract numbers", e)
+            raise FinancialComputationError(
+                f"Failed to subtract numbers: {e}"
+            ) from e
 
     def multiply(self, a: float, b: float) -> str:
         """
@@ -130,9 +152,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Multiplying {a} and {b} to get {result}")
             return self._format_json_response(response)
 
-        except Exception as e:
-            log_error(f"Error in multiplication: {e}")
-            raise FinancialComputationError(f"Failed to multiply numbers: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to multiply numbers", e)
+            raise FinancialComputationError(
+                f"Failed to multiply numbers: {e}"
+            ) from e
 
     def divide(self, a: float, b: float) -> str:
         """
@@ -147,7 +171,9 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """
         try:
             if b == 0:
-                raise FinancialComputationError("Division by zero is undefined")
+                raise FinancialComputationError(
+                    "Division by zero is undefined"
+                )
 
             result = a / b
 
@@ -166,9 +192,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except FinancialComputationError:
             raise
-        except Exception as e:
-            log_error(f"Error in division: {e}")
-            raise FinancialComputationError(f"Failed to divide numbers: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to divide numbers", e)
+            raise FinancialComputationError(
+                f"Failed to divide numbers: {e}"
+            ) from e
 
     def exponentiate(self, a: float, b: float) -> str:
         """
@@ -197,9 +225,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Raising {a} to the power of {b} to get {result}")
             return self._format_json_response(response)
 
-        except Exception as e:
-            log_error(f"Error in exponentiation: {e}")
-            raise FinancialComputationError(f"Failed to calculate power: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate power", e)
+            raise FinancialComputationError(
+                f"Failed to calculate power: {e}"
+            ) from e
 
     def square_root(self, n: float) -> str:
         """
@@ -234,9 +264,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in square root calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate square root: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate square root", e)
+            raise FinancialComputationError(
+                f"Failed to calculate square root: {e}"
+            ) from e
 
     def factorial(self, n: int) -> str:
         """
@@ -271,9 +303,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in factorial calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate factorial: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate factorial", e)
+            raise FinancialComputationError(
+                f"Failed to calculate factorial: {e}"
+            ) from e
 
     def is_prime(self, n: int) -> str:
         """
@@ -287,7 +321,9 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """
         try:
             if not isinstance(n, int):
-                raise FinancialValidationError("Prime check requires an integer")
+                raise FinancialValidationError(
+                    "Prime check requires an integer"
+                )
 
             if n <= 1:
                 is_prime_result = False
@@ -319,9 +355,14 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in prime check: {e}")
-            raise FinancialComputationError(f"Failed to check if number is prime: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to check if number is prime",
+                e,
+            )
+            raise FinancialComputationError(
+                f"Failed to check if number is prime: {e}"
+            ) from e
 
     def modulo(self, a: float, b: float) -> str:
         """
@@ -355,9 +396,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except FinancialComputationError:
             raise
-        except Exception as e:
-            log_error(f"Error in modulo calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate modulo: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate modulo", e)
+            raise FinancialComputationError(
+                f"Failed to calculate modulo: {e}"
+            ) from e
 
     def absolute(self, n: float) -> str:
         """
@@ -385,9 +428,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating absolute value of {n} to get {result}")
             return self._format_json_response(response)
 
-        except Exception as e:
-            log_error(f"Error in absolute value calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate absolute value: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate absolute value", e)
+            raise FinancialComputationError(
+                f"Failed to calculate absolute value: {e}"
+            ) from e
 
     def round_number(self, n: float, decimals: int = 0) -> str:
         """
@@ -416,14 +461,18 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
                 },
             }
 
-            log_info(f"Rounding {n} to {decimals} decimal places to get {result}")
+            log_info(
+                f"Rounding {n} to {decimals} decimal places to get {result}"
+            )
             return self._format_json_response(response)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in rounding: {e}")
-            raise FinancialComputationError(f"Failed to round number: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to round number", e)
+            raise FinancialComputationError(
+                f"Failed to round number: {e}"
+            ) from e
 
     def log(self, n: float, base: float = 10.0) -> str:
         """
@@ -463,9 +512,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in logarithm calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate logarithm: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate logarithm", e)
+            raise FinancialComputationError(
+                f"Failed to calculate logarithm: {e}"
+            ) from e
 
     def ln(self, n: float) -> str:
         """
@@ -500,9 +551,14 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in natural logarithm calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate natural logarithm: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate natural logarithm",
+                e,
+            )
+            raise FinancialComputationError(
+                f"Failed to calculate natural logarithm: {e}"
+            ) from e
 
     def gcd(self, a: int, b: int) -> str:
         """
@@ -536,9 +592,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in GCD calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate GCD: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate GCD", e)
+            raise FinancialComputationError(
+                f"Failed to calculate GCD: {e}"
+            ) from e
 
     def lcm(self, a: int, b: int) -> str:
         """
@@ -555,7 +613,9 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             if not isinstance(a, int) or not isinstance(b, int):
                 raise FinancialValidationError("LCM requires integer inputs")
             if a == 0 or b == 0:
-                raise FinancialValidationError("LCM is undefined when any input is zero")
+                raise FinancialValidationError(
+                    "LCM is undefined when any input is zero"
+                )
 
             # LCM(a, b) = |a * b| / GCD(a, b)
             result = abs(a * b) // math_gcd(abs(a), abs(b))
@@ -575,9 +635,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in LCM calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate LCM: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate LCM", e)
+            raise FinancialComputationError(
+                f"Failed to calculate LCM: {e}"
+            ) from e
 
     def mean(self, numbers: List[float]) -> str:
         """
@@ -591,12 +653,16 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """
         try:
             if not numbers:
-                raise FinancialValidationError("Cannot calculate mean of empty list")
+                raise FinancialValidationError(
+                    "Cannot calculate mean of empty list"
+                )
 
             # Validate all elements are numbers
             for num in numbers:
                 if not isinstance(num, (int, float)):
-                    raise FinancialValidationError("All elements must be numbers")
+                    raise FinancialValidationError(
+                        "All elements must be numbers"
+                    )
 
             result = statistics.mean(numbers)
 
@@ -611,14 +677,18 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
                 },
             }
 
-            log_info(f"Calculating mean of {len(numbers)} numbers to get {result}")
+            log_info(
+                f"Calculating mean of {len(numbers)} numbers to get {result}"
+            )
             return self._format_json_response(response)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in mean calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate mean: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate mean", e)
+            raise FinancialComputationError(
+                f"Failed to calculate mean: {e}"
+            ) from e
 
     def median(self, numbers: List[float]) -> str:
         """
@@ -632,12 +702,16 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """
         try:
             if not numbers:
-                raise FinancialValidationError("Cannot calculate median of empty list")
+                raise FinancialValidationError(
+                    "Cannot calculate median of empty list"
+                )
 
             # Validate all elements are numbers
             for num in numbers:
                 if not isinstance(num, (int, float)):
-                    raise FinancialValidationError("All elements must be numbers")
+                    raise FinancialValidationError(
+                        "All elements must be numbers"
+                    )
 
             result = statistics.median(numbers)
 
@@ -652,14 +726,18 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
                 },
             }
 
-            log_info(f"Calculating median of {len(numbers)} numbers to get {result}")
+            log_info(
+                f"Calculating median of {len(numbers)} numbers to get {result}"
+            )
             return self._format_json_response(response)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in median calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate median: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate median", e)
+            raise FinancialComputationError(
+                f"Failed to calculate median: {e}"
+            ) from e
 
     def standard_deviation(self, numbers: List[float]) -> str:
         """
@@ -680,7 +758,9 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             # Validate all elements are numbers
             for num in numbers:
                 if not isinstance(num, (int, float)):
-                    raise FinancialValidationError("All elements must be numbers")
+                    raise FinancialValidationError(
+                        "All elements must be numbers"
+                    )
 
             # Calculate population standard deviation
             population_std_dev = statistics.pstdev(numbers)
@@ -712,117 +792,42 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Error in standard deviation calculation: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to calculate standard deviation",
+                e,
+            )
             raise FinancialComputationError(
                 f"Failed to calculate standard deviation: {e}"
-            )
+            ) from e
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use basic arithmetic operations.
-        """
+        """Return short, text-first usage instructions for arithmetic tools."""
         return """
-<arithmetic_operations_tools_instructions>
-## BASIC ARITHMETIC OPERATIONS TOOLS:
+<arithmetic_calculator>
+Arithmetic utilities. Tools return JSON strings.
 
-CRITICAL: All numeric inputs must be provided as numbers, not strings (15.5, not "15.5")
-CRITICAL: Division by zero is not allowed (b cannot be 0 in divide function)
-CRITICAL: For factorial, input must be a non-negative integer
-CRITICAL: For square_root, input must be non-negative
-CRITICAL: For logarithms, inputs must be positive
-CRITICAL: For statistical functions, lists must contain at least the minimum required elements
+Core tools:
+- add(a, b)
+- subtract(a, b)
+- multiply(a, b)
+- divide(a, b)
+- exponentiate(a, b)
+- square_root(n)
+- factorial(n)
+- is_prime(n)
 
-### Basic Operations
-
-- Use add to add two numbers together.
-   Parameters:
-      - a (float): First number, e.g., 15.5
-      - b (float): Second number, e.g., 23.7
-
-- Use subtract to subtract the second number from the first.
-   Parameters:
-      - a (float): First number (minuend), e.g., 100.0
-      - b (float): Second number (subtrahend), e.g., 25.0
-
-- Use multiply to multiply two numbers together.
-   Parameters:
-      - a (float): First number, e.g., 12.5
-      - b (float): Second number, e.g., 8.0
-
-- Use divide to divide the first number by the second.
-   Parameters:
-      - a (float): Numerator, e.g., 144.0
-      - b (float): Denominator, e.g., 12.0
-
-- Use modulo to calculate the remainder when a is divided by b.
-   Parameters:
-      - a (float): Dividend, e.g., 17.0
-      - b (float): Divisor, e.g., 5.0
-
-- Use absolute to calculate the absolute value of a number.
-   Parameters:
-      - n (float): Number to find absolute value of, e.g., -15.5
-
-- Use round_number to round a number to specified decimal places.
-   Parameters:
-      - n (float): Number to round, e.g., 3.14159
-      - decimals (int, optional): Number of decimal places, e.g., 2 (default: 0)
-
-### Power and Logarithmic Functions
-
-- Use exponentiate to raise the first number to the power of the second.
-   Parameters:
-      - a (float): Base number, e.g., 2.0
-      - b (float): Exponent, e.g., 8.0
-
-- Use square_root to calculate the square root of a number.
-   Parameters:
-      - n (float): Number to find square root of, e.g., 64.0
-
-- Use log to calculate logarithm with specified base.
-   Parameters:
-      - n (float): Number to calculate logarithm of, e.g., 100.0
-      - base (float, optional): Logarithm base, e.g., 10.0 (default: 10.0)
-
-- Use ln to calculate natural logarithm (base e).
-   Parameters:
-      - n (float): Number to calculate natural logarithm of, e.g., 2.718
-
-### Number Theory
-
-- Use factorial to calculate the factorial of a non-negative integer.
-   Parameters:
-      - n (int): Non-negative integer, e.g., 5
-
-- Use is_prime to check if a number is prime.
-   Parameters:
-      - n (int): Integer to check for primality, e.g., 17
-
-- Use gcd to calculate greatest common divisor of two integers.
-   Parameters:
-      - a (int): First integer, e.g., 48
-      - b (int): Second integer, e.g., 18
-
-- Use lcm to calculate least common multiple of two integers.
-   Parameters:
-      - a (int): First integer, e.g., 12
-      - b (int): Second integer, e.g., 15
-
-### Statistical Functions
-
-- Use mean to calculate arithmetic mean of a list of numbers.
-   Parameters:
-      - numbers (List[float]): List of numbers, e.g., [1, 2, 3, 4, 5]
-
-- Use median to calculate median of a list of numbers.
-   Parameters:
-      - numbers (List[float]): List of numbers, e.g., [1, 3, 5, 7, 9]
-
-- Use standard_deviation to calculate standard deviation of a list of numbers.
-   Parameters:
-      - numbers (List[float]): List of numbers, e.g., [2, 4, 4, 4, 5, 5, 7, 9]
-
-</arithmetic_operations_tools_instructions>
+Extras:
+- modulo(a, b)
+- absolute(n)
+- round_number(n, decimals=0)
+- log(n, base=10.0)  # n>0, base>0, base!=1
+- ln(n)  # n>0
+- gcd(a, b)
+- lcm(a, b)
+- mean(numbers)
+- median(numbers)
+- standard_deviation(numbers)  # requires at least 2 values
+</arithmetic_calculator>
 """

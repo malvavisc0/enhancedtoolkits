@@ -4,10 +4,6 @@ Loan Calculator
 Provides loan calculations including payment calculations and amortization schedules.
 """
 
-from datetime import datetime
-
-from agno.utils.log import log_error, log_info
-
 from .base import (
     BaseCalculatorTools,
     FinancialComputationError,
@@ -18,18 +14,37 @@ from .base import (
 class LoanCalculatorTools(BaseCalculatorTools):
     """Calculator for loan calculations."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_instructions: bool = True, **kwargs):
         """Initialize the loan calculator and register all methods."""
-        self.add_instructions = True
-        self.instructions = LoanCalculatorTools.get_llm_usage_instructions()
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+        super().__init__(
+            name="loan_calculator",
+            add_instructions=add_instructions,
+            instructions=instructions,
+            **kwargs,
+        )
 
-        super().__init__(name="loan_calculator", **kwargs)
-
-        # Register all loan methods
         self.register(self.calculate_loan_payment)
         self.register(self.generate_amortization_schedule)
+        self.register(self.calculate_total_interest)
+        self.register(self.calculate_remaining_balance)
 
-    def calculate_loan_payment(self, principal: float, rate: float, periods: int) -> str:
+    @staticmethod
+    def _payment_amount(principal: float, rate: float, periods: int) -> float:
+        """Compute the fixed periodic payment for an amortizing loan."""
+        if rate == 0:
+            return principal / periods
+        return (
+            principal
+            * (rate * (1 + rate) ** periods)
+            / ((1 + rate) ** periods - 1)
+        )
+
+    def calculate_loan_payment(
+        self, principal: float, rate: float, periods: int
+    ) -> str:
         """
         Calculate the periodic payment for a loan.
 
@@ -46,14 +61,7 @@ class LoanCalculatorTools(BaseCalculatorTools):
             rate = self._validate_rate(rate)
             periods = self._validate_periods(periods)
 
-            if rate == 0:
-                payment = principal / periods
-            else:
-                payment = (
-                    principal
-                    * (rate * (1 + rate) ** periods)
-                    / ((1 + rate) ** periods - 1)
-                )
+            payment = self._payment_amount(principal, rate, periods)
 
             total_payments = payment * periods
             total_interest = total_payments - principal
@@ -61,27 +69,31 @@ class LoanCalculatorTools(BaseCalculatorTools):
             result = {
                 "operation": "loan_payment",
                 "result": round(payment, 2),
-                "inputs": {"principal": principal, "rate": rate, "periods": periods},
+                "inputs": {
+                    "principal": principal,
+                    "rate": rate,
+                    "periods": periods,
+                },
                 "summary": {
                     "monthly_payment": round(payment, 2),
                     "total_payments": round(total_payments, 2),
                     "total_interest": round(total_interest, 2),
-                    "interest_percentage": round((total_interest / principal) * 100, 2),
+                    "interest_percentage": round(
+                        (total_interest / principal) * 100, 2
+                    ),
                 },
-                "metadata": {
-                    "calculation_method": "annuity_payment_formula",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("annuity_payment_formula"),
             }
 
-            log_info(f"Calculated loan payment: {payment:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in loan payment calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate loan payment: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate loan payment", e)
+            raise FinancialComputationError(
+                f"Failed to calculate loan payment: {e}"
+            ) from e
 
     def generate_amortization_schedule(
         self, principal: float, rate: float, periods: int
@@ -102,15 +114,7 @@ class LoanCalculatorTools(BaseCalculatorTools):
             rate = self._validate_rate(rate)
             periods = self._validate_periods(periods)
 
-            # Calculate payment amount
-            if rate == 0:
-                payment = principal / periods
-            else:
-                payment = (
-                    principal
-                    * (rate * (1 + rate) ** periods)
-                    / ((1 + rate) ** periods - 1)
-                )
+            payment = self._payment_amount(principal, rate, periods)
 
             schedule = []
             remaining_balance = principal
@@ -139,7 +143,11 @@ class LoanCalculatorTools(BaseCalculatorTools):
 
             result = {
                 "operation": "amortization_schedule",
-                "inputs": {"principal": principal, "rate": rate, "periods": periods},
+                "inputs": {
+                    "principal": principal,
+                    "rate": rate,
+                    "periods": periods,
+                },
                 "summary": {
                     "payment_amount": round(payment, 2),
                     "total_payments": round(payment * periods, 2),
@@ -147,44 +155,116 @@ class LoanCalculatorTools(BaseCalculatorTools):
                     "total_principal": principal,
                 },
                 "schedule": schedule,
-                "metadata": {
-                    "calculation_method": "amortization_formula",
-                    "schedule_length": len(schedule),
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata(
+                    "amortization_formula", schedule_length=len(schedule)
+                ),
             }
 
-            log_info(f"Generated amortization schedule with {periods} payments")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in amortization schedule generation: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error(
+                "Failed to generate amortization schedule",
+                e,
+            )
             raise FinancialComputationError(
                 f"Failed to generate amortization schedule: {e}"
+            ) from e
+
+    def calculate_total_interest(
+        self, principal: float, rate: float, periods: int
+    ) -> str:
+        """Calculate total interest paid over the full loan term."""
+        principal = self._validate_positive_amount(principal, "principal")
+        rate = self._validate_rate(rate)
+        periods = self._validate_periods(periods)
+
+        payment = self._payment_amount(principal, rate, periods)
+        total_payments = payment * periods
+        total_interest = total_payments - principal
+
+        return self._format_json_response(
+            {
+                "operation": "total_interest",
+                "result": round(total_interest, 2),
+                "inputs": {
+                    "principal": principal,
+                    "rate": rate,
+                    "periods": periods,
+                },
+                "summary": {
+                    "payment": round(payment, 2),
+                    "total_payments": round(total_payments, 2),
+                    "total_interest": round(total_interest, 2),
+                },
+                "metadata": self._base_metadata("annuity_payment_formula"),
+            }
+        )
+
+    def calculate_remaining_balance(
+        self, principal: float, rate: float, periods: int, payments_made: int
+    ) -> str:
+        """Calculate remaining balance after `payments_made` payments."""
+        principal = self._validate_positive_amount(principal, "principal")
+        rate = self._validate_rate(rate)
+        periods = self._validate_periods(periods)
+
+        if not isinstance(payments_made, int) or payments_made < 0:
+            raise FinancialValidationError(
+                "payments_made must be a non-negative integer"
             )
+        if payments_made > periods:
+            raise FinancialValidationError(
+                "payments_made cannot exceed periods"
+            )
+
+        payment = self._payment_amount(principal, rate, periods)
+
+        if rate == 0:
+            remaining = max(0.0, principal - payment * payments_made)
+        else:
+            growth = (1 + rate) ** payments_made
+            remaining = principal * growth - payment * (growth - 1) / rate
+            remaining = max(0.0, remaining)
+
+        return self._format_json_response(
+            {
+                "operation": "remaining_balance",
+                "result": round(remaining, 2),
+                "inputs": {
+                    "principal": principal,
+                    "rate": rate,
+                    "periods": periods,
+                    "payments_made": payments_made,
+                },
+                "summary": {
+                    "payment": round(payment, 2),
+                    "remaining_balance": round(remaining, 2),
+                    "payments_remaining": periods - payments_made,
+                },
+                "metadata": self._base_metadata(
+                    "amortization_balance_formula"
+                ),
+            }
+        )
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use loan calculations.
-        """
+        """Return short, text-first usage instructions for loan tools."""
         return """
-<loan_calculations_tools_instructions>
-**LOAN CALCULATIONS TOOLS:**
+<loan_calculator>
+Loan calculations. Tools return JSON strings.
 
-- Use calculate_loan_payment to calculate periodic payment for a loan.
-   Parameters:
-      - principal (float): Loan amount, e.g., 200000.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.005 for 0.5% monthly
-      - periods (int): Total number of payment periods, e.g., 360
+Tools:
+- calculate_loan_payment(principal, rate, periods)
+- generate_amortization_schedule(principal, rate, periods)
+- calculate_total_interest(principal, rate, periods)
+- calculate_remaining_balance(principal, rate, periods, payments_made)
 
-- Use generate_amortization_schedule to create complete loan payment schedule.
-   Parameters:
-      - principal (float): Loan amount, e.g., 100000.0
-      - rate (float): Interest rate per period as decimal, e.g., 0.004167 for monthly
-      - periods (int): Total number of payment periods, e.g., 240
-
-</loan_calculations_tools_instructions>
+Notes:
+- `rate` is the interest rate per payment period as a decimal (e.g. monthly rate).
+- For an annual APR `apr`, monthly rate is `apr / 12`.
+</loan_calculator>
 """

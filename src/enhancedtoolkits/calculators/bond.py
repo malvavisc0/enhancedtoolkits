@@ -4,10 +4,6 @@ Bond Calculator
 Provides bond calculations including bond pricing and yield to maturity calculations.
 """
 
-from datetime import datetime
-
-from agno.utils.log import log_error, log_info
-
 from .base import (
     BaseCalculatorTools,
     FinancialComputationError,
@@ -18,19 +14,28 @@ from .base import (
 class BondCalculatorTools(BaseCalculatorTools):
     """Calculator for bond calculations."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_instructions: bool = True, **kwargs):
         """Initialize the bond calculator and register all methods."""
-        self.add_instructions = True
-        self.instructions = BondCalculatorTools.get_llm_usage_instructions()
-
-        super().__init__(name="bond_calculator", **kwargs)
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+        super().__init__(
+            name="bond_calculator",
+            add_instructions=add_instructions,
+            instructions=instructions,
+            **kwargs,
+        )
 
         # Register all bond methods
         self.register(self.calculate_bond_price)
         self.register(self.calculate_yield_to_maturity)
 
     def calculate_bond_price(
-        self, face_value: float, coupon_rate: float, periods: int, yield_rate: float
+        self,
+        face_value: float,
+        coupon_rate: float,
+        periods: int,
+        yield_rate: float,
     ) -> str:
         """
         Calculate the price of a bond.
@@ -45,7 +50,9 @@ class BondCalculatorTools(BaseCalculatorTools):
             JSON string containing bond price calculation
         """
         try:
-            face_value = self._validate_positive_amount(face_value, "face_value")
+            face_value = self._validate_positive_amount(
+                face_value, "face_value"
+            )
             coupon_rate = self._validate_rate(coupon_rate)
             yield_rate = self._validate_rate(yield_rate)
             periods = self._validate_periods(periods)
@@ -57,7 +64,9 @@ class BondCalculatorTools(BaseCalculatorTools):
             else:
                 # Present value of coupon payments
                 pv_coupons = (
-                    coupon_payment * (1 - (1 + yield_rate) ** -periods) / yield_rate
+                    coupon_payment
+                    * (1 - (1 + yield_rate) ** -periods)
+                    / yield_rate
                 )
                 # Present value of face value
                 pv_face_value = face_value / ((1 + yield_rate) ** periods)
@@ -85,20 +94,18 @@ class BondCalculatorTools(BaseCalculatorTools):
                         else "discount" if premium_discount < 0 else "par"
                     ),
                 },
-                "metadata": {
-                    "calculation_method": "present_value_cash_flows",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("present_value_cash_flows"),
             }
 
-            log_info(f"Calculated bond price: {bond_price:.2f}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in bond price calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate bond price: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate bond price", e)
+            raise FinancialComputationError(
+                f"Failed to calculate bond price: {e}"
+            ) from e
 
     def calculate_yield_to_maturity(
         self, price: float, face_value: float, coupon_rate: float, periods: int
@@ -117,7 +124,9 @@ class BondCalculatorTools(BaseCalculatorTools):
         """
         try:
             price = self._validate_positive_amount(price, "price")
-            face_value = self._validate_positive_amount(face_value, "face_value")
+            face_value = self._validate_positive_amount(
+                face_value, "face_value"
+            )
             coupon_rate = self._validate_rate(coupon_rate)
             periods = self._validate_periods(periods)
 
@@ -144,43 +153,31 @@ class BondCalculatorTools(BaseCalculatorTools):
                     "coupon_payment": round(coupon_payment, 2),
                     "current_yield": round((coupon_payment / price) * 100, 4),
                 },
-                "metadata": {
-                    "calculation_method": "iterative_approximation",
-                    "timestamp": datetime.now().isoformat(),
-                },
+                "metadata": self._base_metadata("iterative_approximation"),
             }
 
-            log_info(f"Calculated YTM: {ytm:.4%}")
             return self._format_json_response(result)
 
         except (FinancialValidationError, FinancialComputationError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error in YTM calculation: {e}")
-            raise FinancialComputationError(f"Failed to calculate YTM: {e}")
+        except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
+            self._log_unexpected_error("Failed to calculate YTM", e)
+            raise FinancialComputationError(
+                f"Failed to calculate YTM: {e}"
+            ) from e
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use bond calculations.
-        """
+        """Return short, text-first usage instructions for bond tools."""
         return """
-<bond_calculations_tools_instructions>
-**BOND CALCULATIONS TOOLS:**
+<bond_calculator>
+Bond pricing and yield. Tools return JSON strings.
 
-- Use calculate_bond_price to calculate the price of a bond.
-   Parameters:
-      - face_value (float): Bond face value, e.g., 1000.0
-      - coupon_rate (float): Annual coupon rate as decimal, e.g., 0.06
-      - periods (int): Number of periods until maturity, e.g., 10
-      - yield_rate (float): Yield to maturity per period as decimal, e.g., 0.07
+Tools:
+- calculate_bond_price(face_value, coupon_rate, periods, yield_rate)
+- calculate_yield_to_maturity(price, face_value, coupon_rate, periods)
 
-- Use calculate_yield_to_maturity to estimate YTM for a bond.
-   Parameters:
-      - price (float): Current bond price, e.g., 950.0
-      - face_value (float): Bond face value, e.g., 1000.0
-      - coupon_rate (float): Annual coupon rate as decimal, e.g., 0.05
-      - periods (int): Number of periods until maturity, e.g., 8
-
-</bond_calculations_tools_instructions>
+Notes:
+- `coupon_rate` and `yield_rate` are per period as decimals.
+</bond_calculator>
 """
