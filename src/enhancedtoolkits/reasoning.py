@@ -33,7 +33,7 @@ COGNITIVE_MODES = [
 ]
 
 
-class EnhancedReasoningTools(StrictToolkit):
+class ReasoningTools(StrictToolkit):
     """Enhanced Universal Reasoning Tools v5.0.
 
     Text-first reasoning utilities with lightweight session state.

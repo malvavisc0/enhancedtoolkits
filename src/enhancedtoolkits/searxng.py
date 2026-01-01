@@ -56,7 +56,7 @@ class UnsupportedFileTypeError(SearxngContentError):
     """Custom exception for unsupported file types."""
 
 
-class EnhancedSearxngTools(
+class SearxngTools(
     StrictToolkit
 ):  # pylint: disable=too-many-instance-attributes
     """
@@ -123,7 +123,7 @@ class EnhancedSearxngTools(
             10, min(300, file_download_timeout)
         )  # 10-300 seconds
         self.add_instructions = add_instructions
-        self.instructions = EnhancedSearxngTools.get_llm_usage_instructions()
+        self.instructions = SearxngTools.get_llm_usage_instructions()
 
         super().__init__(name="enhanced_searxng_tools", **kwargs)
 

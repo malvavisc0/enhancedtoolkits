@@ -26,7 +26,7 @@ class FileOperationError(Exception):
     """Raised when file operation fails."""
 
 
-class EnhancedFilesTools(StrictToolkit):
+class FilesTools(StrictToolkit):
     """
     Secure toolkit for file operations with comprehensive security controls.
     """
@@ -54,7 +54,7 @@ class EnhancedFilesTools(StrictToolkit):
             Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
         )
         self.add_instructions = True
-        self.instructions = EnhancedFilesTools.get_llm_usage_instructions()
+        self.instructions = FilesTools.get_llm_usage_instructions()
 
         super().__init__(name="secure_files_toolkit", **kwargs)
         self.register(self.read_file_lines_chunk)

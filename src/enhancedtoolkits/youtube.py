@@ -44,7 +44,7 @@ class YouTubeDataError(YouTubeError):
     """Exception for data retrieval errors."""
 
 
-class EnhancedYouTubeTools(StrictToolkit):
+class YouTubeTools(StrictToolkit):
     """YouTube metadata + transcript tools.
 
     - Metadata uses YouTube oEmbed.

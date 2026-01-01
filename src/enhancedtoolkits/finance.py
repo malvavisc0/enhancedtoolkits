@@ -32,7 +32,7 @@ class YFinanceDataError(YFinanceError):
     """Exception for data retrieval errors."""
 
 
-class EnhancedYFinanceTools(
+class YFinanceTools(
     StrictToolkit
 ):  # pylint: disable=too-many-instance-attributes
     """
@@ -93,7 +93,7 @@ class EnhancedYFinanceTools(
             rate_limit_delay: Delay between API requests in seconds
         """
         self.add_instructions = True
-        self.instructions = EnhancedYFinanceTools.get_llm_usage_instructions()
+        self.instructions = YFinanceTools.get_llm_usage_instructions()
 
         super().__init__(
             name="enhanced_yfinance_tools",

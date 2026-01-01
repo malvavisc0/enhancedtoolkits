@@ -94,7 +94,7 @@ class ThinkingChain:
         ).hexdigest()[:8]
 
 
-class EnhancedThinkingTools(StrictToolkit):
+class ThinkingTools(StrictToolkit):
     """Text-first thinking/journaling utilities for agents."""
 
     def __init__(

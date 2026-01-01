@@ -59,7 +59,7 @@ class ContentParsingError(Exception):
     """Custom exception for content parsing errors."""
 
 
-class URLContentDownloader(
+class DownloadingTools(
     StrictToolkit
 ):  # pylint: disable=too-many-instance-attributes
     """
@@ -153,7 +153,7 @@ class URLContentDownloader(
         self.user_agent_rotation = user_agent_rotation
         self.enable_caching = enable_caching
         self.add_instructions = add_instructions
-        self.instructions = URLContentDownloader.get_llm_usage_instructions()
+        self.instructions = DownloadingTools.get_llm_usage_instructions()
 
         super().__init__(
             name="url_content_downloader",

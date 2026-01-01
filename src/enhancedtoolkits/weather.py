@@ -51,7 +51,7 @@ class WeatherValidationError(WeatherError):
     """Exception for input validation errors."""
 
 
-class EnhancedWeatherTools(StrictToolkit):
+class WeatherTools(StrictToolkit):
     """
     Enhanced Weather Tools v1.0
 
