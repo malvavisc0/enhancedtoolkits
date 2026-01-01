@@ -1,1 +1,1 @@
-::: enhancedtoolkits.downloader.URLContentDownloader
+::: enhancedtoolkits.downloading.DownloadingTools

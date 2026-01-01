@@ -1,1 +1,1 @@
-::: enhancedtoolkits.weather.EnhancedWeatherTools
+::: enhancedtoolkits.weather.WeatherTools

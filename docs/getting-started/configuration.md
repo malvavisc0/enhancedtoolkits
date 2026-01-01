@@ -1,116 +1,68 @@
 # Configuration
 
-Configure Enhanced Toolkits for production use with caching, rate limiting, and security controls.
+Most toolkits are configured via Python constructor arguments.
+
+Some toolkits also read a few environment variables (primarily for BYPARR and downloader defaults).
 
 ## Environment Variables
 
-Set up environment variables for API keys and configuration:
+### BYPARR (optional)
+Used by `DownloadingTools` and optionally by `SearxngTools` when content fetching is enabled.
 
 ```bash
-# Required for specific tools
-export OPENWEATHERMAP_API_KEY="your_api_key"
-export YOUTUBE_API_KEY="your_api_key"
-
-# Optional configuration
-export SEARXNG_HOST="http://localhost:8080"
-export CACHE_TTL="300"
-export RATE_LIMIT_DELAY="0.1"
+# BYPARR service configuration
+export BYPARR_URL="http://byparr:8191/v1"
+export BYPARR_TIMEOUT="60"
+export BYPARR_ENABLED="false"   # true/false
 ```
 
-## Tool Configuration
+### URL downloader defaults
+Used by `DownloadingTools`.
 
-### Reasoning Tools
-
-```python
-from enhancedtoolkits import ReasoningTools
-
-reasoning = ReasoningTools(
-    reasoning_depth=5,
-    enable_bias_detection=True,
-    max_iterations=10
-)
+```bash
+export URL_DOWNLOADER_MAX_RETRIES="3"
+export URL_DOWNLOADER_TIMEOUT="30"
 ```
 
-### Search Tools
+## Toolkit Configuration Examples
+
+### Search (SearxNG)
 
 ```python
 from enhancedtoolkits import SearxngTools
 
 search = SearxngTools(
-    host="http://your-searxng:8080",
+    host="http://searxng:8080",
     max_results=10,
-    enable_content_fetching=True,
-    timeout=30
+    enable_content_fetching=False,
 )
 ```
 
-### Finance Tools
-
-```python
-from enhancedtoolkits import YFinanceTools
-
-finance = YFinanceTools(
-    enable_caching=True,
-    cache_ttl=300,
-    rate_limit_delay=0.1
-)
-```
-
-### Files Tools
+### Files (sandbox)
 
 ```python
 from enhancedtoolkits import FilesTools
 
-files = FilesTools(
-    allowed_extensions=['.txt', '.json', '.csv'],
-    max_file_size=10485760,  # 10MB
-    enable_security_scan=True
-)
+files = FilesTools(base_dir="/app/workspace")
 ```
 
-## Production Settings
-
-For production deployments, consider these settings:
+### Finance
 
 ```python
-# Enable caching for all tools
-tools_config = {
-    'enable_caching': True,
-    'cache_ttl': 300,
-    'rate_limit_delay': 0.1,
-    'timeout': 30,
-    'max_retries': 3
-}
+from enhancedtoolkits import YFinanceTools
 
-# Apply to all tools
-reasoning = ReasoningTools(**tools_config)
-finance = YFinanceTools(**tools_config)
-search = SearxngTools(host="http://searxng:8080", **tools_config)
+finance = YFinanceTools(enable_caching=True, cache_ttl=300, rate_limit_delay=0.1)
 ```
 
-## Security Configuration
+## Optional dependencies
 
-```python
-# Files Tools security settings
-files = FilesTools(
-    allowed_extensions=['.txt', '.json', '.csv', '.md'],
-    blocked_extensions=['.exe', '.bat', '.sh'],
-    max_file_size=10485760,  # 10MB
-    enable_security_scan=True,
-    scan_timeout=10
-)
+Some toolkits require optional dependencies:
 
-# Downloader Tools security settings
-downloader = DownloaderTools(
-    allowed_domains=['example.com', 'trusted-site.org'],
-    blocked_domains=['malicious-site.com'],
-    max_file_size=52428800,  # 50MB
-    enable_virus_scan=True
-)
-```
+- Search + downloading require `markitdown` (install `enhancedtoolkits[content]`).
+- YouTube requires `youtube-transcript-api` (install `enhancedtoolkits[youtube]`).
+- Weather requires `pywttr` + models (install `enhancedtoolkits[weather]`).
 
 ## Next Steps
 
-- [Quick Start Guide](quick-start.md)
-- [Core Toolkits](../toolkits/index.md)
-- [API Reference](../api/index.md)
+- [`docs/getting-started/quick-start.md`](quick-start.md)
+- [`docs/toolkits/index.md`](../toolkits/index.md)

@@ -76,17 +76,15 @@ Install with specific optional dependencies:
 Verify your installation:
 
 ```python
-import enhancedtoolkits
+import importlib.metadata
 
-# Check version
-print(enhancedtoolkits.__version__)
+print(importlib.metadata.version("enhancedtoolkits"))
 
-# Test basic import
-from enhancedtoolkits import (
-    ReasoningTools,
-    SearxngTools,
-    CalculatorTools
-)
+# Test basic imports (core toolkits)
+from enhancedtoolkits import ReasoningTools, SearxngTools, YFinanceTools
+
+# Test calculator imports
+from enhancedtoolkits.calculators import ArithmeticCalculatorTools
 
 print("✅ Enhanced Toolkits installed successfully!")
 ```
@@ -201,6 +199,5 @@ After installation:
 
 If you encounter installation issues:
 
-<!-- - 📖 Check our [FAQ](../developer/faq.md) -->
 - 🐛 [Report an issue](https://github.com/malvavisc0/enhancedtoolkits/issues)
 - 💬 [Join discussions](https://github.com/malvavisc0/enhancedtoolkits/discussions)

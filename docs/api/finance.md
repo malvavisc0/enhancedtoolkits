@@ -1,1 +1,1 @@
-::: enhancedtoolkits.finance.EnhancedYFinanceTools
+::: enhancedtoolkits.finance.YFinanceTools

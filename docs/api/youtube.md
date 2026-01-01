@@ -1,1 +1,1 @@
-::: enhancedtoolkits.youtube.EnhancedYouTubeTools
+::: enhancedtoolkits.youtube.YouTubeTools

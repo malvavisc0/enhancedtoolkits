@@ -1,1 +1,1 @@
-::: enhancedtoolkits.reasoning.EnhancedReasoningTools
+::: enhancedtoolkits.reasoning.ReasoningTools

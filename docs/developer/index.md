@@ -42,7 +42,7 @@ enhancedtoolkits/
 │   ├── finance.py                 # Financial data
 │   ├── youtube.py                 # YouTube integration
 │   ├── weather.py                 # Weather data
-│   ├── downloader.py              # Content downloading
+│   ├── downloading.py             # Content downloading
 │   ├── calculators/               # Calculator modules
 │   │   ├── __init__.py
 │   │   ├── base.py                # Calculator base classes
@@ -151,29 +151,36 @@ tests/
 ### Writing Tests
 
 ```python
+import json
 import pytest
-from enhancedtoolkits import CalculatorTools
+
+from enhancedtoolkits.calculators import ArithmeticCalculatorTools
+from enhancedtoolkits.calculators.base import FinancialComputationError
+
 
 class TestArithmeticCalculator:
     def setup_method(self):
-        self.calculator = CalculatorTools()
-    
+        self.calculator = ArithmeticCalculatorTools()
+
     def test_add_positive_numbers(self):
-        result = self.calculator.add(5, 3)
-        assert result == "8"
-    
+        payload = json.loads(self.calculator.add(5, 3))
+        assert payload["result"] == 8
+
     def test_divide_by_zero_raises_error(self):
-        with pytest.raises(ZeroDivisionError):
+        with pytest.raises(FinancialComputationError):
             self.calculator.divide(10, 0)
-    
-    @pytest.mark.parametrize("a,b,expected", [
-        (1, 1, "2"),
-        (0, 5, "5"),
-        (-3, 3, "0")
-    ])
+
+    @pytest.mark.parametrize(
+        "a,b,expected",
+        [
+            (1, 1, 2),
+            (0, 5, 5),
+            (-3, 3, 0),
+        ],
+    )
     def test_add_various_inputs(self, a, b, expected):
-        result = self.calculator.add(a, b)
-        assert result == expected
+        payload = json.loads(self.calculator.add(a, b))
+        assert payload["result"] == expected
 ```
 
 ## 🔧 Development Tools

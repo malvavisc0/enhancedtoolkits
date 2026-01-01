@@ -1,1 +1,1 @@
-::: enhancedtoolkits.thinking.EnhancedThinkingTools
+::: enhancedtoolkits.thinking.ThinkingTools

@@ -1,1 +1,1 @@
-::: enhancedtoolkits.searxng.EnhancedSearxngTools
+::: enhancedtoolkits.searxng.SearxngTools

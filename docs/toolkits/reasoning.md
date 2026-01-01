@@ -1,265 +1,115 @@
 # Reasoning Tools
 
-The Reasoning Tools provide multi-modal reasoning capabilities with cognitive bias detection and session management for AI agents.
+The [`ReasoningTools`](../api/reasoning.md) toolkit provides **text-first reasoning utilities** for AI agents:
 
-## Overview
+- Build a compact reasoning chain (steps + reflections + scratchpad)
+- Optionally detect simple bias markers in text
+- Assess chain quality and suggest improvements
+- Synthesize the chain into a short conclusion/summary/insight
 
-The `ReasoningTools` class offers sophisticated reasoning capabilities that help AI agents think through complex problems using various reasoning methodologies while detecting and mitigating cognitive biases.
+All public functions return **strings** (human-readable, markdown-ish).
 
-## Key Features
+## 🤖 AI Agent Setup (Agno)
 
-- **6 Reasoning Types**: Deductive, Inductive, Abductive, Causal, Probabilistic, Analogical
-- **Bias Detection**: Automatic identification of cognitive biases
-- **Session Tracking**: Reasoning step history and workflow management
-- **Quality Assessment**: Confidence levels and evidence evaluation
-- **Multi-modal Integration**: Combine multiple reasoning approaches
+```python
+from agno.agent import Agent
+from enhancedtoolkits import ReasoningTools
 
-## Installation
-
-```bash
-pip install "enhancedtoolkits[full] @ git+https://github.com/malvavisc0/enhancedtoolkits.git"
+agent = Agent(
+    name="Analyst",
+    model="gpt-4",
+    tools=[ReasoningTools(reasoning_depth=5, enable_bias_detection=True)],
+)
 ```
 
-## Basic Usage
+> The `agent_or_team` parameter should be your agent/team object (it is used as the session state container).
+
+## 🔧 Key Concepts
+
+### Valid values
+
+- `cognitive_mode`: `analysis | synthesis | evaluation | planning | creative | reflection`
+- `reasoning_type`: `deductive | inductive | abductive | causal | probabilistic | analogical`
+- `synthesis_type`: `conclusion | summary | insights`
+- scratchpad `operation`: `set | get | list | clear`
+
+## 🧠 Available Functions
+
+### `add_structured_reasoning_step(agent_or_team, problem, cognitive_mode='analysis', reasoning_type='deductive', evidence=None, confidence=0.5)`
+Adds a numbered reasoning step and (optionally) records evidence and bias markers.
+
+### `add_meta_cognitive_reflection(agent_or_team, reflection, step_id=None)`
+Adds a reflection entry for the current reasoning chain.
+
+### `manage_working_memory_scratchpad(agent_or_team, key, value=None, operation='set')`
+Simple key/value scratchpad:
+- `set`: set `key=value`
+- `get`: retrieve one key
+- `list`: list all keys
+- `clear`: clear one key or all keys (`key='all'`)
+
+### `assess_reasoning_quality_and_suggest_improvements(agent_or_team)`
+Computes a compact quality score and suggests improvements.
+
+### `synthesize_reasoning_chain_into_conclusion_or_insight(agent_or_team, synthesis_type='conclusion')`
+Produces a short synthesis and marks the chain as completed.
+
+### `retrieve_current_reasoning_session_state(agent_or_team)`
+Returns a compact summary of the current chain state.
+
+### `reset_reasoning_session_state(agent_or_team)`
+Clears the current reasoning session.
+
+## ✅ Example Workflow
 
 ```python
 from enhancedtoolkits import ReasoningTools
 
-# Initialize reasoning tools
-reasoning = ReasoningTools(
-    reasoning_depth=5,
-    enable_bias_detection=True,
-    instructions="Custom reasoning instructions..."
-)
-```
+reasoning = ReasoningTools()
 
-## Available Methods
-
-### `reason()`
-
-Apply specific reasoning type to a problem.
-
-```python
-result = reasoning.reason(
+# 1) Add a step
+reasoning.add_structured_reasoning_step(
     agent_or_team=agent,
-    problem="Should we invest in renewable energy?",
-    reasoning_type="analytical",
-    evidence=[
-        "Government incentives increasing",
-        "Technology costs decreasing",
-        "Market demand growing"
-    ],
-    context="Investment decision for Q4 2024"
+    problem="Should we invest in renewable energy stocks?",
+    cognitive_mode="analysis",
+    reasoning_type="inductive",
+    evidence=["Costs are declining", "Policy incentives are rising"],
+    confidence=0.6,
 )
-```
 
-**Parameters:**
-- `agent_or_team`: Your agent instance for session tracking
-- `problem` (str): The problem to reason about
-- `reasoning_type` (str): Type of reasoning to apply
-- `evidence` (List[str]): Supporting evidence
-- `context` (str, optional): Additional context
-
-### `multi_modal_reason()`
-
-Combine multiple reasoning approaches for complex problems.
-
-```python
-result = reasoning.multi_modal_reason(
+# 2) Add a reflection
+reasoning.add_meta_cognitive_reflection(
     agent_or_team=agent,
-    problem="Evaluate market entry strategy",
-    reasoning_types=["analytical", "probabilistic", "causal"],
-    evidence=[
-        "Market size: $50B",
-        "Competition: 5 major players",
-        "Our competitive advantage: AI technology"
-    ]
+    reflection="We may be overweighting recent headlines; check longer-term fundamentals.",
+    step_id=1,
 )
-```
 
-### `analyze_reasoning()`
-
-Evaluate reasoning results and determine next actions.
-
-```python
-analysis = reasoning.analyze_reasoning(
+# 3) Store something in scratchpad
+reasoning.manage_working_memory_scratchpad(
     agent_or_team=agent,
-    reasoning_content="Previous reasoning output...",
-    focus_areas=["evidence_strength", "logical_consistency"]
+    key="tickers",
+    value="ICLN,TAN",
+    operation="set",
 )
-```
 
-### `detect_biases()`
+# 4) Assess quality
+reasoning.assess_reasoning_quality_and_suggest_improvements(agent_or_team=agent)
 
-Identify cognitive biases in reasoning content.
-
-```python
-bias_analysis = reasoning.detect_biases(
+# 5) Synthesize
+reasoning.synthesize_reasoning_chain_into_conclusion_or_insight(
     agent_or_team=agent,
-    reasoning_content="Our analysis shows..."
+    synthesis_type="conclusion",
 )
+
+# 6) Reset
+reasoning.reset_reasoning_session_state(agent_or_team=agent)
 ```
 
-### `get_reasoning_history()`
+## 📝 Notes / Best Practices
 
-Retrieve session reasoning history.
-
-```python
-history = reasoning.get_reasoning_history(agent_or_team=agent)
-```
-
-## Reasoning Types
-
-### Analytical Reasoning
-Systematic breakdown of complex problems into components.
-
-```python
-result = reasoning.reason(
-    agent_or_team=agent,
-    problem="Optimize supply chain efficiency",
-    reasoning_type="analytical",
-    evidence=["Current bottlenecks", "Cost analysis", "Performance metrics"]
-)
-```
-
-### Probabilistic Reasoning
-Reasoning under uncertainty with probability assessments.
-
-```python
-result = reasoning.reason(
-    agent_or_team=agent,
-    problem="Predict market trends",
-    reasoning_type="probabilistic",
-    evidence=["Historical data", "Market indicators", "Expert opinions"]
-)
-```
-
-### Causal Reasoning
-Understanding cause-and-effect relationships.
-
-```python
-result = reasoning.reason(
-    agent_or_team=agent,
-    problem="Why did sales decline?",
-    reasoning_type="causal",
-    evidence=["Sales data", "Market conditions", "Product changes"]
-)
-```
-
-## Bias Detection
-
-The system automatically detects common cognitive biases:
-
-- **Confirmation Bias**: Seeking information that confirms existing beliefs
-- **Anchoring Bias**: Over-relying on first information received
-- **Availability Heuristic**: Overestimating likelihood of memorable events
-- **Overconfidence Bias**: Overestimating one's own abilities
-- **Sunk Cost Fallacy**: Continuing based on previously invested resources
-
-## Configuration Options
-
-```python
-reasoning = ReasoningTools(
-    reasoning_depth=5,              # Maximum reasoning steps
-    enable_bias_detection=True,     # Enable cognitive bias detection
-    enable_quality_assessment=True, # Enable quality metrics
-    instructions="Custom instructions for reasoning process"
-)
-```
-
-## Advanced Examples
-
-### Investment Decision Analysis
-
-```python
-def analyze_investment_opportunity():
-    reasoning = ReasoningTools(enable_bias_detection=True)
-    
-    # Multi-modal reasoning for investment decision
-    result = reasoning.multi_modal_reason(
-        agent_or_team=agent,
-        problem="Should we invest $1M in AI startup XYZ?",
-        reasoning_types=["analytical", "probabilistic", "causal"],
-        evidence=[
-            "Startup has 50% YoY growth",
-            "Market size: $10B by 2025",
-            "Team has 2 successful exits",
-            "Current valuation: $50M",
-            "Competitive landscape: 20+ players"
-        ]
-    )
-    
-    # Analyze for biases
-    bias_check = reasoning.detect_biases(
-        agent_or_team=agent,
-        reasoning_content=result
-    )
-    
-    return result, bias_check
-```
-
-### Strategic Planning
-
-```python
-def strategic_planning_session():
-    reasoning = ReasoningTools(reasoning_depth=7)
-    
-    # Iterative reasoning for complex strategy
-    result = reasoning.iterative_reason(
-        agent_or_team=agent,
-        problem="Develop 5-year growth strategy",
-        max_iterations=5,
-        evidence=[
-            "Current market position",
-            "Resource constraints",
-            "Competitive threats",
-            "Technology trends"
-        ]
-    )
-    
-    # Get reasoning history
-    history = reasoning.get_reasoning_history(agent_or_team=agent)
-    
-    return result, history
-```
-
-## Error Handling
-
-```python
-try:
-    result = reasoning.reason(
-        agent_or_team=agent,
-        problem="Complex problem",
-        reasoning_type="analytical",
-        evidence=["Evidence 1", "Evidence 2"]
-    )
-except ReasoningError as e:
-    print(f"Reasoning error: {e}")
-except Exception as e:
-    print(f"General error: {e}")
-```
-
-## Best Practices
-
-1. **Provide Quality Evidence**: Include diverse, credible evidence sources
-2. **Use Appropriate Reasoning Types**: Match reasoning type to problem nature
-3. **Enable Bias Detection**: Always check for cognitive biases
-4. **Review Reasoning History**: Learn from previous reasoning sessions
-5. **Combine Multiple Types**: Use multi-modal reasoning for complex decisions
-
-## Performance Tips
-
-- Enable caching for repeated reasoning patterns
-- Use session management for related reasoning tasks
-- Monitor reasoning depth to balance quality and performance
-- Regular bias detection helps improve reasoning quality
-
-## Related Tools
-
-- [Thinking Tools](thinking.md) - Structured cognitive frameworks
-- [Calculator Tools](../calculators/index.md) - Mathematical reasoning support
-- [Finance Tools](finance.md) - Financial data for reasoning
+- Keep each step short (1–3 sentences). Store bulky details in `evidence` or scratchpad keys.
+- Prefer synthesis outputs instead of returning the entire chain verbatim.
 
 ## API Reference
 
-For complete API documentation, see the [API Reference](../api/reasoning.md).
+- [`docs/api/reasoning.md`](../api/reasoning.md)

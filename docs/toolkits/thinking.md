@@ -1,169 +1,99 @@
-# Thinking Tools for AI Agents
+# Thinking Tools
 
-The Thinking Tools provide structured cognitive frameworks for systematic problem analysis and decision-making in AI agents.
+The [`ThinkingTools`](../api/thinking.md) toolkit provides a **text-first thinking/journaling chain** for agents:
 
-## 🤖 AI Agent Setup
+- Build a step-by-step chain
+- Add meta-cognitive reflections
+- Store intermediate data in a scratchpad
+- Synthesize the chain into a compact output
 
-```python
-from enhancedtoolkits import ThinkingTools
+All public functions return **strings** (human-readable, markdown-ish).
 
-# Initialize for your AI agent
-thinking = ThinkingTools(
-    enable_bias_detection=True,      # Detect cognitive biases
-    enable_quality_assessment=True,  # Assess thinking quality
-    thinking_depth=3                 # Analysis depth level
-)
+## 🤖 AI Agent Setup (Agno)
 
-# Register with your agent
-agent.register_tools([thinking])
-```
-
-## ⚙️ Configuration Options
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `enable_bias_detection` | bool | `True` | Detect cognitive biases in thinking |
-| `enable_quality_assessment` | bool | `True` | Assess thinking depth and clarity |
-| `thinking_depth` | int | `3` | Maximum depth of analysis |
-| `instructions` | str | `None` | Custom thinking instructions |
-
-## 🧠 Available Functions
-
-Your AI agent will have access to these functions:
-
-### `think()`
-Process thoughts using structured cognitive frameworks.
-
-**Parameters:**
-- `agent_or_team`: Agent instance for session tracking
-- `thought`: The thought or problem to analyze
-- `thinking_type`: Type of thinking framework to apply
-- `context`: Additional context for analysis
-
-**Thinking Types:**
-- `"analysis"` - Systematic breakdown and examination
-- `"synthesis"` - Combining elements into coherent whole
-- `"evaluation"` - Critical assessment and judgment
-- `"reflection"` - Self-examination and metacognition
-- `"planning"` - Strategic planning and goal setting
-- `"problem_solving"` - Systematic problem resolution
-- `"creative"` - Creative and innovative thinking
-- `"critical"` - Critical analysis and reasoning
-
-### `analyze_thinking_quality()`
-Assess the quality of thinking processes.
-
-### `detect_thinking_biases()`
-Identify cognitive biases in thinking patterns.
-
-## 🎯 AI Agent Integration Examples
-
-### OpenAI Function Calling
-```python
-import openai
-from enhancedtoolkits import ThinkingTools
-
-thinking = ThinkingTools()
-
-# Get function schema for OpenAI
-tools = [thinking.get_openai_schema()]
-
-response = openai.ChatCompletion.create(
-    model="gpt-4",
-    messages=[{
-        "role": "user", 
-        "content": "Analyze the pros and cons of remote work"
-    }],
-    tools=tools,
-    tool_choice="auto"
-)
-```
-
-### Agno Framework
 ```python
 from agno.agent import Agent
 from enhancedtoolkits import ThinkingTools
 
 agent = Agent(
-    name="Strategic Analyst",
+    name="Planner",
     model="gpt-4",
-    tools=[ThinkingTools(thinking_depth=5)]
+    tools=[ThinkingTools(max_chain_length=10, confidence_threshold=0.7)],
 )
-
-# Agent can now use thinking functions
-response = agent.run("Think through the strategic implications of AI adoption")
 ```
 
-## 🔧 Production Configuration
+> The `agent` parameter is used as the session state container.
 
-### Basic Setup
+## 🔧 Valid values
+
+- `thinking_type`: `analysis | synthesis | evaluation | planning | creative | reflection`
+- `synthesis_type`: `conclusion | summary | insights | next_steps`
+- scratchpad `operation`: `set | get | list | clear`
+
+## 🧠 Available Functions
+
+### `build_step_by_step_reasoning_chain(agent, problem, thinking_type='analysis', context=None, evidence=None, confidence=0.5)`
+Starts a chain (first call) or appends a step (subsequent calls).
+
+### `add_meta_cognitive_reflection(agent, reflection, step_id=None)`
+Adds a reflection entry for the current chain.
+
+### `manage_working_memory_scratchpad(agent, key, value=None, operation='set')`
+Scratchpad operations:
+- `set`: set `key=value`
+- `get`: retrieve one key
+- `list`: list all keys
+- `clear`: clear one key or all keys (`key='all'`)
+
+### `assess_reasoning_chain_quality_and_suggest_improvements(agent)`
+Computes a compact quality score and suggests improvements.
+
+### `synthesize_reasoning_chain_into_output(agent, synthesis_type='conclusion')`
+Returns a short synthesis and closes the current chain.
+
+### `retrieve_current_thinking_chain_state(agent)`
+Returns a compact state summary.
+
+### `reset_current_thinking_chain(agent)`
+Clears the current chain (does not delete history summaries).
+
+## ✅ Example Workflow
+
 ```python
+from enhancedtoolkits import ThinkingTools
+
 thinking = ThinkingTools()
-```
 
-### Advanced Setup
-```python
-thinking = ThinkingTools(
-    enable_bias_detection=True,
-    enable_quality_assessment=True,
-    thinking_depth=5,
-    instructions="Focus on strategic and long-term implications"
+# 1) Start a chain
+thinking.build_step_by_step_reasoning_chain(
+    agent=agent,
+    problem="Plan a 2-week study schedule for system design interviews",
+    thinking_type="planning",
+    context="I can study 90 minutes per weekday and 3h on weekends",
+    confidence=0.6,
+)
+
+# 2) Add another step
+thinking.build_step_by_step_reasoning_chain(
+    agent=agent,
+    problem="Week 1: focus on scalability fundamentals + 2 mock designs",
+    thinking_type="planning",
+    confidence=0.7,
+)
+
+# 3) Add a reflection
+thinking.add_meta_cognitive_reflection(
+    agent=agent,
+    reflection="Risk: underestimating review time; schedule buffer slots.",
+)
+
+# 4) Synthesize into next steps
+thinking.synthesize_reasoning_chain_into_output(
+    agent=agent,
+    synthesis_type="next_steps",
 )
 ```
 
-### Environment Variables
-```bash
-# Optional: Set logging level
-LOG_LEVEL=INFO
-```
+## API Reference
 
-## 🛡️ Features
-
-- **8 Thinking Types**: Analysis, synthesis, evaluation, reflection, planning, problem-solving, creative, critical
-- **Bias Detection**: Automatic identification of cognitive biases
-- **Quality Assessment**: Depth, clarity, and evidence integration analysis
-- **Session Tracking**: Maintains thinking patterns and progression
-- **Structured Output**: Consistent, analyzable thinking results
-
-## 🔍 Example Agent Interactions
-
-**Agent Query:** "Think through the decision to expand into international markets"
-
-**Thinking Tool Response:**
-```json
-{
-  "thinking_type": "analysis",
-  "analysis": {
-    "factors": ["Market size", "Competition", "Regulatory environment"],
-    "considerations": ["Cultural differences", "Currency risks", "Local partnerships"],
-    "framework": "Systematic market analysis"
-  },
-  "quality_assessment": {
-    "depth": "High",
-    "clarity": "Clear",
-    "evidence_integration": "Good"
-  },
-  "detected_biases": [],
-  "recommendations": ["Conduct market research", "Assess regulatory requirements"]
-}
-```
-
-## 📊 Monitoring
-
-Enable detailed logging to monitor thinking processes:
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-thinking = ThinkingTools(debug=True)
-```
-
-## 🚀 Next Steps
-
-1. **Initialize** ThinkingTools with your preferred configuration
-2. **Register** with your AI agent framework
-3. **Test** with sample thinking queries
-4. **Monitor** thinking quality and bias detection
-5. **Adjust** thinking depth and bias detection as needed
-
-The Thinking Tools help your AI agent develop more structured, unbiased, and high-quality thought processes for complex decision-making scenarios.
+- [`docs/api/thinking.md`](../api/thinking.md)
