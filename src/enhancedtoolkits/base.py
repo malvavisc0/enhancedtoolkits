@@ -24,7 +24,56 @@ class StrictToolkit(Toolkit):
 
     This keeps the override signature compatible with agno (fixing the “red” method
     warning) while preserving strict behavior for normal callables.
+
+    Orchestration auto-load:
+    - On toolkit construction, we attempt to *load once* the orchestration singleton
+      from [`get_orchestration_tools()`](src/enhancedtoolkits/orchestration.py:1).
+    - We also auto-register a small set of orchestration functions into *every*
+      toolkit instance, so that planning/orchestration tools are available even if
+      the user only adds one toolkit.
+
+    Tool names are prefixed with `orchestrator_` to avoid collisions.
     """
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+
+        # Skip injection for the orchestration toolkit itself.
+        if getattr(self, "_disable_auto_orchestrator", False):
+            return
+
+        try:
+            # Local import to avoid circular import at module load time.
+            from .orchestration import get_orchestration_tools
+
+            orchestrator = get_orchestration_tools()
+            # Expose for direct Python usage.
+            self.orchestrator = orchestrator
+
+            # Auto-inject orchestration functions (available when using any toolkit).
+            injections = [
+                ("orchestrator_create_plan", orchestrator.create_plan),
+                ("orchestrator_add_task", orchestrator.add_task),
+                (
+                    "orchestrator_update_task_status",
+                    orchestrator.update_task_status,
+                ),
+                ("orchestrator_next_actions", orchestrator.next_actions),
+                (
+                    "orchestrator_summarize_progress",
+                    orchestrator.summarize_progress,
+                ),
+                ("orchestrator_reset_plan", orchestrator.reset_plan),
+            ]
+
+            for tool_name, fn in injections:
+                # Avoid re-registering if a derived toolkit already defines it.
+                if tool_name in self.functions:
+                    continue
+                self.register(fn, name=tool_name)
+
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.warning("Failed to auto-load orchestration tools: %s", exc)
 
     def register(
         self,

@@ -8,6 +8,7 @@ In this project, most API pages are rendered from the Python source via MkDocs p
 
 ## Core Toolkits
 
+- **[Orchestration Tools](orchestration.md)** — `OrchestrationTools`
 - **[Reasoning Tools](reasoning.md)** — `ReasoningTools`
 - **[Search Tools (SearxNG)](searxng.md)** — `SearxngTools`
 - **[Thinking Tools](thinking.md)** — `ThinkingTools`
@@ -40,6 +41,7 @@ Calculator tools are separate classes under `enhancedtoolkits.calculators`.
 ```python
 # Core toolkits
 from enhancedtoolkits import (
+    OrchestrationTools,
     ReasoningTools,
     SearxngTools,
     ThinkingTools,

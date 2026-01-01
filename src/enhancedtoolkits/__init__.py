@@ -6,6 +6,7 @@ from .base import StrictToolkit
 from .downloading import DownloadingTools
 from .files import FilesTools
 from .finance import YFinanceTools
+from .orchestration import OrchestrationTools
 from .reasoning import ReasoningTools
 from .searxng import SearxngTools
 from .thinking import ThinkingTools
@@ -17,6 +18,7 @@ __all__ = [
     "DownloadingTools",
     "FilesTools",
     "YFinanceTools",
+    "OrchestrationTools",
     "ReasoningTools",
     "SearxngTools",
     "ThinkingTools",

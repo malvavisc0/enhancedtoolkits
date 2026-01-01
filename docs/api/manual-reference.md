@@ -6,6 +6,29 @@ For authoritative details, see the API pages in this section (or browse the repo
 
 ## Core Toolkits (function names agents can call)
 
+### OrchestrationTools
+Class: `OrchestrationTools` (see [API page](orchestration.md))
+
+Returns: **JSON string**
+
+Direct toolkit function names:
+
+- `create_plan(agent_or_team, goal, tasks=None, constraints=None, max_tasks=50)`
+- `add_task(agent_or_team, title, description=None, priority=0, depends_on=None)`
+- `update_task_status(agent_or_team, task_id, status, result_summary=None)`
+- `next_actions(agent_or_team, max_actions=1, mark_in_progress=True)`
+- `summarize_progress(agent_or_team)`
+- `reset_plan(agent_or_team)`
+
+Auto-injected function names (available from any toolkit instance):
+
+- `orchestrator_create_plan(...)`
+- `orchestrator_add_task(...)`
+- `orchestrator_update_task_status(...)`
+- `orchestrator_next_actions(...)`
+- `orchestrator_summarize_progress(...)`
+- `orchestrator_reset_plan(...)`
+
 ### ReasoningTools
 Class: `ReasoningTools` (see [API page](reasoning.md))
 

@@ -8,7 +8,7 @@ Production-ready AI agent tools for developers building agents with **Agno** and
 
 This repository contains:
 
-- **8 core toolkits** (search, reasoning, thinking, files, finance, weather, youtube, url downloading)
+- **9 core toolkits** (search, reasoning, thinking, files, finance, weather, youtube, url downloading, orchestration/planning)
 - **9 calculator modules** under `enhancedtoolkits.calculators`
 
 ## Installation
@@ -37,6 +37,7 @@ Extras are defined in [`pyproject.toml`](pyproject.toml).
 ```python
 from agno.agent import Agent
 from enhancedtoolkits import (
+    OrchestrationTools,
     ReasoningTools,
     SearxngTools,
     ThinkingTools,
@@ -51,6 +52,8 @@ agent = Agent(
     name="AI Assistant",
     model="gpt-4",
     tools=[
+        # Orchestration tools are auto-injected into every toolkit instance
+        # (see OrchestrationTools), so adding it explicitly is optional.
         ReasoningTools(),
         SearxngTools(host="http://searxng:8080"),
         ThinkingTools(),
@@ -87,6 +90,13 @@ agent = Agent(
 ```
 
 ## Toolkit Overview (public tool/function names)
+
+### Orchestration / Planning
+Class: [`OrchestrationTools`](src/enhancedtoolkits/orchestration.py)
+
+- `orchestrator_create_plan()` / `orchestrator_add_task()`
+- `orchestrator_update_task_status()` / `orchestrator_next_actions()`
+- `orchestrator_summarize_progress()` / `orchestrator_reset_plan()`
 
 ### Reasoning
 Class: [`ReasoningTools`](src/enhancedtoolkits/reasoning.py)

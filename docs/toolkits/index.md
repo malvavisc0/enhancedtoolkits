@@ -1,6 +1,6 @@
 # Core Toolkits for AI Agents
 
-Enhanced Toolkits provides **8 core toolkits** designed for AI agents. These toolkits are built on top of [`StrictToolkit`](../api/base.md) and are intended to be used via agent tool/function calling (Agno or OpenAI-compatible schemas).
+Enhanced Toolkits provides **9 core toolkits** designed for AI agents. These toolkits are built on top of [`StrictToolkit`](../api/base.md) and are intended to be used via agent tool/function calling (Agno or OpenAI-compatible schemas).
 
 > Important: tool schemas are **strict**. In practice, agents should pass **all parameters** shown in function signatures, even when Python has defaults.
 
@@ -36,6 +36,21 @@ agent = Agent(
 ```
 
 ## 🛠️ Available Toolkits
+
+### 🧩 Orchestration & Planning Tools
+Class: [`OrchestrationTools`](../api/orchestration.md)
+
+**Auto-available when using any toolkit** (injected tool names):
+- `orchestrator_create_plan()`
+- `orchestrator_add_task()`
+- `orchestrator_update_task_status()`
+- `orchestrator_next_actions()`
+- `orchestrator_summarize_progress()`
+- `orchestrator_reset_plan()`
+
+[Setup Guide →](orchestration.md)
+
+---
 
 ### 🧠 Reasoning Tools
 Class: [`ReasoningTools`](../api/reasoning.md)

@@ -4,7 +4,7 @@ Enhanced Toolkits is a collection of **agent-ready toolkits** built on top of [`
 
 It provides:
 
-- **8 core toolkits** (exported from `enhancedtoolkits`)
+- **9 core toolkits** (exported from `enhancedtoolkits`)
 - **9 calculator modules** under `enhancedtoolkits.calculators`
 
 ## What you can build

@@ -4,7 +4,7 @@ Production-ready AI agent tools with **OpenAI-compatible tool calling** and firs
 
 Enhanced Toolkits provides:
 
-- **8 core toolkits** (reasoning, search, thinking, files, finance, youtube, weather, url downloading)
+- **9 core toolkits** (reasoning, search, thinking, files, finance, youtube, weather, url downloading, orchestration/planning)
 - **9 calculator modules** under `enhancedtoolkits.calculators`
 
 ## 🚀 Quick Start (Agno)

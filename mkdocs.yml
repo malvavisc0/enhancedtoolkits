@@ -139,6 +139,7 @@ nav:
     - Configuration: getting-started/configuration.md
   - Core Toolkits:
     - toolkits/index.md
+    - Orchestration Tools: toolkits/orchestration.md
     - Reasoning Tools: toolkits/reasoning.md
     - Search Tools: toolkits/searxng.md
     - Thinking Tools: toolkits/thinking.md
@@ -162,6 +163,7 @@ nav:
     - api/index.md
     - Manual Reference: api/manual-reference.md
     - Auto-Generated APIs:
+      - Orchestration Tools: api/orchestration.md
       - Reasoning Tools: api/reasoning.md
       - Search Tools: api/searxng.md
       - Finance Tools: api/finance.md
