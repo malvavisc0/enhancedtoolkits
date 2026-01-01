@@ -1,91 +1,64 @@
-"""
-Enhanced YouTube Tools v2.0
+"""YouTube tools.
 
-A production-ready YouTube toolkit that provides:
-- Comprehensive video metadata retrieval
-- Robust transcript fetching with language support
-- Enhanced error handling and validation
-- URL format validation and normalization
-- Rate limiting and retry logic
-- Multiple transcript language support
-- Video duration and statistics parsing
+This toolkit uses:
+
+- Metadata: YouTube oEmbed (title/author/thumbnail/embed html)
+- Transcripts: `youtube-transcript-api`
+
+All public tools return **JSON strings**.
+
+Notes:
+- oEmbed does **not** include view counts / likes / upload date / duration.
+- Transcript tools require `youtube-transcript-api`.
 
 Author: malvavisc0
 License: MIT
-Version: 2.0.0
 """
 
+from __future__ import annotations
+
 import json
-import re
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 
-from agno.utils.log import log_debug, log_error, log_info, log_warning
+from agno.utils.log import log_error, log_info, log_warning
+from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
+from youtube_transcript_api._errors import (  # type: ignore
+    NoTranscriptFound,
+    TranscriptsDisabled,
+    VideoUnavailable,
+)
 
 from .base import StrictToolkit
 
-# Optional youtube-transcript-api import
-try:
-    from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
-    from youtube_transcript_api._errors import (
-        NoTranscriptFound,
-        TranscriptsDisabled,
-        VideoUnavailable,
-    )
-
-    TRANSCRIPT_API_AVAILABLE = True
-except ImportError:
-    TRANSCRIPT_API_AVAILABLE = False
-    YouTubeTranscriptApi = None
-    TranscriptsDisabled = Exception
-    NoTranscriptFound = Exception
-    VideoUnavailable = Exception
-    log_warning(
-        "youtube-transcript-api not available. Transcript functionality will be limited."
-    )
-
 
 class YouTubeError(Exception):
-    """Custom exception for YouTube-related errors."""
-
-    pass
+    """Base exception for YouTube-related errors."""
 
 
 class YouTubeValidationError(YouTubeError):
     """Exception for input validation errors."""
 
-    pass
-
 
 class YouTubeDataError(YouTubeError):
     """Exception for data retrieval errors."""
 
-    pass
-
 
 class EnhancedYouTubeTools(StrictToolkit):
+    """YouTube metadata + transcript tools.
+
+    - Metadata uses YouTube oEmbed.
+    - Transcripts use `youtube-transcript-api`.
+
+    All tools return JSON strings.
     """
-    Enhanced YouTube Tools v2.0
 
-    A production-ready YouTube toolkit with comprehensive error handling,
-    input validation, transcript support, and enhanced metadata extraction.
-    """
-
-    # YouTube URL patterns for validation
-    YOUTUBE_URL_PATTERNS = [
-        r"(?:https?://)?(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})",
-        r"(?:https?://)?(?:www\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})",
-        r"(?:https?://)?(?:www\.)?youtube\.com/v/([a-zA-Z0-9_-]{11})",
-        r"(?:https?://)?youtu\.be/([a-zA-Z0-9_-]{11})",
-        r"(?:https?://)?(?:www\.)?youtube\.com/watch\?.*v=([a-zA-Z0-9_-]{11})",
-    ]
-
-    # Common transcript languages
-    COMMON_LANGUAGES = [
+    # Common transcript languages (used only for convenience filtering)
+    COMMON_LANGUAGES: List[str] = [
         "en",
         "es",
         "fr",
@@ -102,29 +75,36 @@ class EnhancedYouTubeTools(StrictToolkit):
 
     def __init__(
         self,
-        rate_limit_delay: float = 0.5,  # 500ms between requests
+        rate_limit_delay: float = 0.5,
         timeout: int = 30,
         max_retries: int = 3,
+        add_instructions: bool = True,
         **kwargs,
     ):
-        """
-        Initialize Enhanced YouTube Tools.
+        """Initialize the toolkit.
 
         Args:
-            rate_limit_delay: Delay between API requests in seconds
-            timeout: Request timeout in seconds
-            max_retries: Maximum number of retry attempts
+            rate_limit_delay: Delay between outbound requests (seconds).
+            timeout: HTTP request timeout (seconds).
+            max_retries: Retry attempts for transcript fetches.
+            add_instructions: Whether to attach LLM usage instructions.
         """
-        self.add_instructions = True
-        self.instructions = EnhancedYouTubeTools.get_llm_usage_instructions()
 
-        super().__init__(name="enhanced_youtube_tools", **kwargs)
+        self.rate_limit_delay = float(max(0.1, min(5.0, rate_limit_delay)))
+        self.timeout = int(max(5, min(120, timeout)))
+        self.max_retries = int(max(1, min(10, max_retries)))
+        self._last_request_time = 0.0
 
-        # Configuration
-        self.rate_limit_delay = max(0.1, min(5.0, rate_limit_delay))
-        self.timeout = max(5, min(120, timeout))
-        self.max_retries = max(1, min(10, max_retries))
-        self.last_request_time = 0.0
+        instructions = (
+            self.get_llm_usage_instructions() if add_instructions else ""
+        )
+
+        super().__init__(
+            name="enhanced_youtube_tools",
+            instructions=instructions,
+            add_instructions=add_instructions,
+            **kwargs,
+        )
 
         # Register methods
         self.register(self.fetch_youtube_video_metadata)
@@ -132,625 +112,557 @@ class EnhancedYouTubeTools(StrictToolkit):
         self.register(self.extract_youtube_video_id)
         self.register(self.fetch_comprehensive_youtube_video_info)
 
-        # Register backward compatibility methods
-        self.register(self.legacy_fetch_youtube_video_metadata)
-        self.register(self.legacy_fetch_youtube_video_transcript)
-
-        if TRANSCRIPT_API_AVAILABLE:
-            self.register(self.fetch_available_youtube_transcripts)
-            self.register(self.fetch_youtube_transcript_languages)
+        self.register(self.fetch_available_youtube_transcripts)
+        self.register(self.fetch_youtube_transcript_languages)
 
         log_info(
-            f"Enhanced YouTube Tools initialized - Rate Limit: {rate_limit_delay}s, Timeout: {timeout}s, Transcript API: {TRANSCRIPT_API_AVAILABLE}"
+            "Enhanced YouTube Tools initialized - "
+            f"Rate Limit: {self.rate_limit_delay}s, "
+            f"Timeout: {self.timeout}s"
         )
 
     def fetch_youtube_video_metadata(self, video_url: str) -> str:
-        """
-        Retrieve comprehensive metadata for a YouTube video.
-
-        Args:
-            video_url: The URL of the YouTube video
-
-        Returns:
-            JSON string containing video metadata
-
-        Raises:
-            YouTubeValidationError: If URL is invalid
-            YouTubeDataError: If metadata cannot be retrieved
-        """
+        """Fetch basic metadata for a YouTube video via oEmbed."""
         try:
             video_id = self._extract_video_id(video_url)
-            log_debug(f"Getting metadata for video: {video_id}")
-
-            # Apply rate limiting
             self._apply_rate_limit()
 
-            # Get metadata from YouTube oEmbed API
-            metadata = self._fetch_oembed_data(video_id)
+            oembed = self._fetch_oembed_data(video_id)
+            metadata = self._enhance_oembed_metadata(
+                oembed, video_id, video_url
+            )
 
-            # Enhance metadata with additional information
-            enhanced_metadata = self._enhance_metadata(metadata, video_id, video_url)
-
-            return self._format_json_response(enhanced_metadata)
-
+            return self._format_json_response(metadata)
         except (YouTubeValidationError, YouTubeDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting metadata for {video_url}: {e}")
-            raise YouTubeDataError(f"Failed to get video metadata: {e}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting metadata for {video_url}: {e}"
+            )
+            raise YouTubeDataError(f"Failed to get video metadata: {e}") from e
 
     def fetch_youtube_video_transcript(
         self, video_url: str, language: str = "en", auto_generated: bool = True
     ) -> str:
-        """
-        Retrieve transcript for a YouTube video with language support.
-
-        Args:
-            video_url: The URL of the YouTube video
-            language: Preferred language code (e.g., 'en', 'es', 'fr')
-            auto_generated: Whether to include auto-generated transcripts
-
-        Returns:
-            JSON string containing transcript data
-
-        Raises:
-            YouTubeValidationError: If URL is invalid
-            YouTubeDataError: If transcript cannot be retrieved
-        """
+        """Fetch a transcript (if available) with optional language preference."""
         try:
-            if not TRANSCRIPT_API_AVAILABLE:
-                raise YouTubeDataError(
-                    "Transcript API not available. Install youtube-transcript-api package."
-                )
-
             video_id = self._extract_video_id(video_url)
-            log_debug(f"Getting transcript for video: {video_id} (language: {language})")
 
-            # Apply rate limiting
             self._apply_rate_limit()
-
-            # Get transcript with retry logic
-            transcript_data = self._fetch_transcript_with_retry(
-                video_id, language, auto_generated
+            transcript = self._fetch_transcript_with_retry(
+                video_id=video_id,
+                language=(language or "en").strip().lower(),
+                auto_generated=bool(auto_generated),
             )
 
-            return self._format_json_response(transcript_data)
-
+            return self._format_json_response(transcript)
         except (YouTubeValidationError, YouTubeDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting transcript for {video_url}: {e}")
-            raise YouTubeDataError(f"Failed to get video transcript: {e}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting transcript for {video_url}: {e}"
+            )
+            raise YouTubeDataError(
+                f"Failed to get video transcript: {e}"
+            ) from e
 
     def fetch_available_youtube_transcripts(self, video_url: str) -> str:
-        """
-        Get list of available transcript languages for a video.
-
-        Args:
-            video_url: The URL of the YouTube video
-
-        Returns:
-            JSON string containing available transcript languages
-
-        Raises:
-            YouTubeValidationError: If URL is invalid
-            YouTubeDataError: If transcript info cannot be retrieved
-        """
+        """List available transcript tracks for a video."""
         try:
-            if not TRANSCRIPT_API_AVAILABLE:
-                raise YouTubeDataError(
-                    "Transcript API not available. Install youtube-transcript-api package."
-                )
-
             video_id = self._extract_video_id(video_url)
-            log_debug(f"Getting available transcripts for video: {video_id}")
-
-            # Apply rate limiting
             self._apply_rate_limit()
 
-            try:
-                if not TRANSCRIPT_API_AVAILABLE or YouTubeTranscriptApi is None:
-                    raise YouTubeDataError("Transcript API not available")
-                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            ytt = YouTubeTranscriptApi()
 
-                available_transcripts = {
-                    "video_id": video_id,
-                    "manual_transcripts": [],
-                    "auto_generated_transcripts": [],
-                    "translatable_transcripts": [],
-                }
-
-                for transcript in transcript_list:
-                    transcript_info = {
-                        "language": transcript.language,
-                        "language_code": transcript.language_code,
-                        "is_generated": transcript.is_generated,
-                        "is_translatable": transcript.is_translatable,
-                    }
-
-                    if transcript.is_generated:
-                        available_transcripts["auto_generated_transcripts"].append(
-                            transcript_info
-                        )
-                    else:
-                        available_transcripts["manual_transcripts"].append(
-                            transcript_info
-                        )
-
-                    if transcript.is_translatable:
-                        available_transcripts["translatable_transcripts"].append(
-                            transcript_info
-                        )
-
-                available_transcripts["timestamp"] = datetime.now().isoformat()
-                return self._format_json_response(available_transcripts)
-
-            except (TranscriptsDisabled, NoTranscriptFound) as e:
-                return self._format_json_response(
-                    {
-                        "video_id": video_id,
-                        "available_transcripts": [],
-                        "message": f"No transcripts available: {e}",
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
-
-        except (YouTubeValidationError, YouTubeDataError):
-            raise
-        except Exception as e:
-            log_error(
-                f"Unexpected error getting available transcripts for {video_url}: {e}"
-            )
-            raise YouTubeDataError(f"Failed to get available transcripts: {e}")
-
-    def fetch_youtube_transcript_languages(self, video_url: str) -> str:
-        """
-        Get simplified list of available transcript language codes.
-
-        Args:
-            video_url: The URL of the YouTube video
-
-        Returns:
-            JSON string containing language codes
-
-        Raises:
-            YouTubeValidationError: If URL is invalid
-            YouTubeDataError: If language info cannot be retrieved
-        """
-        try:
-            transcripts_data = self.fetch_available_youtube_transcripts(video_url)
-            transcripts = json.loads(transcripts_data)
-
-            language_codes = set()
-
-            # Collect all language codes
-            for transcript_type in ["manual_transcripts", "auto_generated_transcripts"]:
-                for transcript in transcripts.get(transcript_type, []):
-                    language_codes.add(transcript["language_code"])
-
-            result = {
-                "video_id": transcripts.get("video_id"),
-                "available_languages": sorted(list(language_codes)),
-                "common_languages_available": [
-                    lang for lang in self.COMMON_LANGUAGES if lang in language_codes
-                ],
+            result: Dict[str, Any] = {
+                "video_id": video_id,
+                "manual_transcripts": [],
+                "auto_generated_transcripts": [],
+                "translatable_transcripts": [],
                 "timestamp": datetime.now().isoformat(),
             }
+
+            try:
+                transcript_list = ytt.list(video_id)
+            except (
+                TranscriptsDisabled,
+                NoTranscriptFound,
+                VideoUnavailable,
+            ) as e:
+                result["message"] = f"No transcripts available: {e}"
+                if isinstance(e, TranscriptsDisabled):
+                    result["note"] = (
+                        "TranscriptsDisabled can be a false-positive on some cloud "
+                        "environments (IP-based blocking/challenges). If it works locally, "
+                        "try a different egress IP or use the library's ProxyConfig."
+                    )
+                return self._format_json_response(result)
+
+            for transcript in transcript_list:
+                is_translatable = bool(
+                    getattr(transcript, "is_translatable", False)
+                )
+                info = {
+                    "language": transcript.language,
+                    "language_code": transcript.language_code,
+                    "is_generated": transcript.is_generated,
+                    "is_translatable": is_translatable,
+                }
+
+                if transcript.is_generated:
+                    result["auto_generated_transcripts"].append(info)
+                else:
+                    result["manual_transcripts"].append(info)
+
+                if is_translatable:
+                    result["translatable_transcripts"].append(info)
 
             return self._format_json_response(result)
 
         except (YouTubeValidationError, YouTubeDataError):
             raise
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting available transcripts for {video_url}: {e}"
+            )
+            raise YouTubeDataError(
+                f"Failed to get available transcripts: {e}"
+            ) from e
+
+    def fetch_youtube_transcript_languages(self, video_url: str) -> str:
+        """Return a simplified list of available transcript language codes."""
+        try:
+            transcripts = json.loads(
+                self.fetch_available_youtube_transcripts(video_url)
+            )
+
+            language_codes: set[str] = set()
+            for key in ("manual_transcripts", "auto_generated_transcripts"):
+                for item in transcripts.get(key, []) or []:
+                    code = item.get("language_code")
+                    if code:
+                        language_codes.add(code)
+
+            result: Dict[str, Any] = {
+                "video_id": transcripts.get("video_id"),
+                "available_languages": sorted(language_codes),
+                "common_languages_available": [
+                    lang
+                    for lang in self.COMMON_LANGUAGES
+                    if lang in language_codes
+                ],
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            # Preserve capability errors (e.g., missing list_transcripts).
+            if isinstance(transcripts, dict) and transcripts.get("error"):
+                result["error"] = transcripts.get("error")
+
+            return self._format_json_response(result)
+        except (YouTubeValidationError, YouTubeDataError):
+            raise
+        except Exception as e:  # pylint: disable=broad-exception-caught
             log_error(
                 f"Unexpected error getting transcript languages for {video_url}: {e}"
             )
-            raise YouTubeDataError(f"Failed to get transcript languages: {e}")
+            raise YouTubeDataError(
+                f"Failed to get transcript languages: {e}"
+            ) from e
 
     def extract_youtube_video_id(self, video_url: str) -> str:
-        """
-        Extract video ID from YouTube URL (public method).
-
-        Args:
-            video_url: The URL of the YouTube video
-
-        Returns:
-            Video ID string
-
-        Raises:
-            YouTubeValidationError: If URL is invalid or video ID cannot be extracted
-        """
+        """Extract a YouTube video id from a URL (or accept a raw id)."""
         return self._extract_video_id(video_url)
 
-    def fetch_comprehensive_youtube_video_info(self, video_url: str, include_transcript: bool = False) -> str:
-        """
-        Get comprehensive video information including metadata and optionally transcript.
-
-        Args:
-            video_url: The URL of the YouTube video
-            include_transcript: Whether to include transcript data
-
-        Returns:
-            JSON string containing comprehensive video information
-
-        Raises:
-            YouTubeValidationError: If URL is invalid
-            YouTubeDataError: If video info cannot be retrieved
-        """
+    def fetch_comprehensive_youtube_video_info(
+        self, video_url: str, include_transcript: bool = False
+    ) -> str:
+        """Combine oEmbed metadata and optional transcript info into one response."""
         try:
             video_id = self._extract_video_id(video_url)
-            log_debug(f"Getting comprehensive info for video: {video_id}")
 
-            # Get metadata
-            metadata_str = self.fetch_youtube_video_metadata(video_url)
-            metadata = json.loads(metadata_str)
+            metadata = json.loads(self.fetch_youtube_video_metadata(video_url))
 
-            comprehensive_info = {
+            result: Dict[str, Any] = {
                 "video_id": video_id,
                 "video_url": video_url,
                 "metadata": metadata,
                 "timestamp": datetime.now().isoformat(),
             }
 
-            # Add transcript info if requested and available
-            if include_transcript and TRANSCRIPT_API_AVAILABLE:
+            if include_transcript:
+                # languages + best-effort transcript
                 try:
-                    # Get available languages first
-                    languages_str = self.fetch_youtube_transcript_languages(video_url)
-                    languages_data = json.loads(languages_str)
-
-                    comprehensive_info["transcript_info"] = {
-                        "available_languages": languages_data.get(
+                    languages = json.loads(
+                        self.fetch_youtube_transcript_languages(video_url)
+                    )
+                    result["transcript_info"] = {
+                        "available_languages": languages.get(
                             "available_languages", []
                         ),
-                        "common_languages_available": languages_data.get(
+                        "common_languages_available": languages.get(
                             "common_languages_available", []
                         ),
                     }
 
-                    # Try to get English transcript if available
-                    if "en" in languages_data.get("available_languages", []):
-                        try:
-                            transcript_str = self.fetch_youtube_video_transcript(video_url, "en")
-                            transcript_data = json.loads(transcript_str)
-                            comprehensive_info["transcript"] = transcript_data
-                        except Exception as e:
-                            log_warning(f"Could not get English transcript: {e}")
-                            comprehensive_info["transcript_error"] = str(e)
+                    # Fetch English if available, else first available language.
+                    preferred: Optional[str] = None
+                    available = languages.get("available_languages", []) or []
+                    if "en" in available:
+                        preferred = "en"
+                    elif available:
+                        preferred = available[0]
 
-                except Exception as e:
-                    log_warning(f"Could not get transcript info: {e}")
-                    comprehensive_info["transcript_info"] = {"error": str(e)}
+                    if preferred:
+                        result["transcript"] = json.loads(
+                            self.fetch_youtube_video_transcript(
+                                video_url, preferred
+                            )
+                        )
+                except (
+                    Exception
+                ) as e:  # pylint: disable=broad-exception-caught
+                    log_warning(f"Could not add transcript data: {e}")
+                    result["transcript_info"] = {"error": str(e)}
 
-            return self._format_json_response(comprehensive_info)
+            return self._format_json_response(result)
 
         except (YouTubeValidationError, YouTubeDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting video info for {video_url}: {e}")
-            raise YouTubeDataError(f"Failed to get comprehensive video info: {e}")
-
-    # Backward compatibility methods
-
-    def legacy_fetch_youtube_video_metadata(self, video_url: str) -> str:
-        """
-        Legacy method for backward compatibility.
-        Use fetch_youtube_video_metadata() instead.
-        """
-        return self.fetch_youtube_video_metadata(video_url)
-
-    def legacy_fetch_youtube_video_transcript(self, video_url: str) -> str:
-        """
-        Legacy method for backward compatibility.
-        Use fetch_youtube_video_transcript() instead.
-        """
-        try:
-            transcript_data_str = self.fetch_youtube_video_transcript(video_url)
-            transcript_data = json.loads(transcript_data_str)
-
-            # Return just the text for backward compatibility
-            if "transcript_text" in transcript_data:
-                return transcript_data["transcript_text"]
-            elif "segments" in transcript_data:
-                return " ".join(
-                    [segment.get("text", "") for segment in transcript_data["segments"]]
-                )
-            else:
-                return "No transcript text available"
-
-        except Exception as e:
-            raise Exception(f"Error getting video transcript: {e}")
-
-    def legacy_extract_youtube_video_id(self, youtube_url: str) -> str:
-        """
-        Legacy method for backward compatibility.
-        Use extract_youtube_video_id() instead.
-        """
-        return self._extract_video_id(youtube_url)
-
-    # Private helper methods
-
-    def _extract_video_id(self, video_url: str) -> str:
-        """
-        Extract video ID from various YouTube URL formats.
-
-        Args:
-            video_url: YouTube video URL
-
-        Returns:
-            Video ID string
-
-        Raises:
-            YouTubeValidationError: If URL is invalid or video ID cannot be extracted
-        """
-        if not video_url or not isinstance(video_url, str):
-            raise YouTubeValidationError("Video URL cannot be empty")
-
-        video_url = video_url.strip()
-
-        # Try each pattern
-        for pattern in self.YOUTUBE_URL_PATTERNS:
-            match = re.search(pattern, video_url)
-            if match:
-                video_id = match.group(1)
-                # Validate video ID format
-                if re.match(r"^[a-zA-Z0-9_-]{11}$", video_id):
-                    return video_id
-
-        raise YouTubeValidationError(
-            f"Could not extract valid video ID from URL: {video_url}"
-        )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting video info for {video_url}: {e}"
+            )
+            raise YouTubeDataError(
+                f"Failed to get comprehensive video info: {e}"
+            ) from e
 
     def _apply_rate_limit(self) -> None:
-        """Apply rate limiting between API requests."""
-        if self.rate_limit_delay > 0:
-            current_time = time.time()
-            time_since_last = current_time - self.last_request_time
-            if time_since_last < self.rate_limit_delay:
-                sleep_time = self.rate_limit_delay - time_since_last
-                time.sleep(sleep_time)
-            self.last_request_time = time.time()
+        """Apply an inter-request delay."""
+        if self.rate_limit_delay <= 0:
+            return
+
+        now = time.time()
+        elapsed = now - self._last_request_time
+        if elapsed < self.rate_limit_delay:
+            time.sleep(self.rate_limit_delay - elapsed)
+
+        self._last_request_time = time.time()
+
+    def _extract_video_id(self, video_url: str) -> str:
+        """Extract a video id from common YouTube URL formats.
+
+        Accepts either:
+        - a full URL
+        - a scheme-less URL (`youtu.be/<id>`, `youtube.com/watch?v=<id>`)
+        - a raw 11-character video id
+        """
+        if not isinstance(video_url, str) or not video_url.strip():
+            raise YouTubeValidationError("Video URL cannot be empty")
+
+        raw = video_url.strip()
+
+        # Accept a raw id.
+        if self._looks_like_video_id(raw):
+            return raw
+
+        # Ensure urlparse sees netloc for schemeless URLs.
+        candidate = raw if "://" in raw else f"https://{raw}"
+        parsed = urlparse(candidate)
+
+        host = (parsed.netloc or "").lower()
+        path = parsed.path or ""
+
+        # youtu.be/<id>
+        if host.endswith("youtu.be"):
+            video_id = path.strip("/").split("/")[0]
+            if self._looks_like_video_id(video_id):
+                return video_id
+
+        # youtube.com/watch?v=<id>
+        if "youtube.com" in host:
+            if path == "/watch":
+                qs = parse_qs(parsed.query or "")
+                v = (qs.get("v") or [""])[0]
+                if self._looks_like_video_id(v):
+                    return v
+
+            # /embed/<id>, /v/<id>, /shorts/<id>
+            parts = [p for p in path.split("/") if p]
+            if len(parts) >= 2 and parts[0] in {"embed", "v", "shorts"}:
+                video_id = parts[1]
+                if self._looks_like_video_id(video_id):
+                    return video_id
+
+            # Fallback: any query contains v
+            qs = parse_qs(parsed.query or "")
+            v = (qs.get("v") or [""])[0]
+            if self._looks_like_video_id(v):
+                return v
+
+        raise YouTubeValidationError(
+            f"Could not extract valid video ID from: {video_url}"
+        )
+
+    @staticmethod
+    def _looks_like_video_id(value: str) -> bool:
+        """Return True if value matches the YouTube 11-char id shape."""
+        if not isinstance(value, str):
+            return False
+        if len(value) != 11:
+            return False
+        return all(c.isalnum() or c in "_-" for c in value)
 
     def _fetch_oembed_data(self, video_id: str) -> Dict[str, Any]:
-        """
-        Fetch metadata from YouTube oEmbed API.
+        """Fetch metadata from YouTube oEmbed."""
+        params = {
+            "format": "json",
+            "url": f"https://www.youtube.com/watch?v={video_id}",
+        }
+        url = "https://www.youtube.com/oembed?" + urlencode(params)
 
-        Args:
-            video_id: YouTube video ID
-
-        Returns:
-            Metadata dictionary
-
-        Raises:
-            YouTubeDataError: If metadata cannot be retrieved
-        """
         try:
-            params = {
-                "format": "json",
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-            }
-            url = "https://www.youtube.com/oembed?" + urlencode(params)
-
             with urlopen(url, timeout=self.timeout) as response:
-                response_text = response.read()
-                return json.loads(response_text.decode())
-
+                return json.loads(response.read().decode("utf-8"))
         except HTTPError as e:
             if e.code == 404:
-                raise YouTubeDataError(f"Video not found or unavailable: {video_id}")
-            else:
-                raise YouTubeDataError(f"HTTP error {e.code} getting video metadata")
+                raise YouTubeDataError(
+                    f"Video not found or unavailable: {video_id}"
+                ) from e
+            raise YouTubeDataError(
+                f"HTTP error {e.code} getting video metadata"
+            ) from e
         except URLError as e:
-            raise YouTubeDataError(f"Network error getting video metadata: {e}")
+            raise YouTubeDataError(
+                f"Network error getting video metadata: {e}"
+            ) from e
         except json.JSONDecodeError as e:
-            raise YouTubeDataError(f"Invalid response format from YouTube API: {e}")
-        except Exception as e:
-            raise YouTubeDataError(f"Unexpected error getting video metadata: {e}")
+            raise YouTubeDataError(
+                f"Invalid response format from YouTube API: {e}"
+            ) from e
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            raise YouTubeDataError(
+                f"Unexpected error getting video metadata: {e}"
+            ) from e
 
-    def _enhance_metadata(
-        self, metadata: Dict[str, Any], video_id: str, video_url: str
+    @staticmethod
+    def _enhance_oembed_metadata(
+        oembed: Dict[str, Any], video_id: str, video_url: str
     ) -> Dict[str, Any]:
-        """
-        Enhance basic metadata with additional information.
-
-        Args:
-            metadata: Basic metadata from oEmbed
-            video_id: Video ID
-            video_url: Original video URL
-
-        Returns:
-            Enhanced metadata dictionary
-        """
-        enhanced = {
+        """Normalize oEmbed response into stable output."""
+        return {
             "video_id": video_id,
             "video_url": video_url,
-            "title": metadata.get("title", "Unknown Title"),
-            "author_name": metadata.get("author_name", "Unknown Author"),
-            "author_url": metadata.get("author_url", ""),
-            "thumbnail_url": metadata.get("thumbnail_url", ""),
-            "provider_name": metadata.get("provider_name", "YouTube"),
-            "provider_url": metadata.get("provider_url", "https://www.youtube.com/"),
-            "type": metadata.get("type", "video"),
-            "width": metadata.get("width"),
-            "height": metadata.get("height"),
-            "html": metadata.get("html", ""),
+            "title": oembed.get("title", ""),
+            "author_name": oembed.get("author_name", ""),
+            "author_url": oembed.get("author_url", ""),
+            "thumbnail_url": oembed.get("thumbnail_url", ""),
+            "provider_name": oembed.get("provider_name", "YouTube"),
+            "provider_url": oembed.get(
+                "provider_url", "https://www.youtube.com/"
+            ),
+            "type": oembed.get("type", "video"),
+            "width": oembed.get("width"),
+            "height": oembed.get("height"),
+            "html": oembed.get("html", ""),
             "timestamp": datetime.now().isoformat(),
             "api_source": "YouTube oEmbed",
         }
 
-        return enhanced
-
     def _fetch_transcript_with_retry(
         self, video_id: str, language: str, auto_generated: bool
     ) -> Dict[str, Any]:
+        """Fetch transcript with retries.
+
+        Current `youtube-transcript-api` uses an instance-based API:
+        - `YouTubeTranscriptApi().list(video_id)`
+        - `Transcript.fetch()` returning a `FetchedTranscript`
+
+        This toolkit converts the fetched transcript to a list of dicts.
         """
-        Fetch transcript with retry logic and error handling.
+        last_error: Optional[str] = None
 
-        Args:
-            video_id: YouTube video ID
-            language: Language code
-            auto_generated: Include auto-generated transcripts
-
-        Returns:
-            Transcript data dictionary
-
-        Raises:
-            YouTubeDataError: If transcript cannot be retrieved
-        """
-        last_error = None
-
-        for attempt in range(self.max_retries):
+        for attempt in range(1, self.max_retries + 1):
             try:
-                # Get transcript list
-                if not TRANSCRIPT_API_AVAILABLE or YouTubeTranscriptApi is None:
-                    raise YouTubeDataError("Transcript API not available")
-                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                ytt = YouTubeTranscriptApi()
+                transcript_list = ytt.list(video_id)
 
-                # Try to find requested language
-                transcript = None
-                try:
-                    transcript = transcript_list.find_transcript([language])
-                except NoTranscriptFound:
-                    # Try to find any available transcript
-                    available_transcripts = []
-                    for t in transcript_list:
-                        if auto_generated or not t.is_generated:
-                            available_transcripts.append(t)
+                transcript = self._select_transcript(
+                    transcript_list=transcript_list,
+                    preferred_language=language,
+                    allow_generated=auto_generated,
+                )
 
-                    if available_transcripts:
-                        transcript = available_transcripts[0]
-                        log_warning(
-                            f"Requested language '{language}' not found, using '{transcript.language_code}'"
-                        )
+                fetched = transcript.fetch()
+                segments = self._normalize_transcript_segments(fetched)
 
-                if not transcript:
-                    raise YouTubeDataError(
-                        f"No suitable transcript found for video {video_id}"
-                    )
-
-                # Fetch transcript data
-                transcript_data = transcript.fetch()
-
-                # Process transcript
-                processed_transcript = {
+                return {
                     "video_id": video_id,
                     "language": transcript.language,
                     "language_code": transcript.language_code,
                     "is_generated": transcript.is_generated,
-                    "is_translatable": transcript.is_translatable,
-                    "segments": transcript_data,
-                    "transcript_text": " ".join(
-                        [getattr(entry, "text", "") for entry in transcript_data]
+                    "is_translatable": bool(
+                        getattr(transcript, "is_translatable", False)
                     ),
-                    "duration_seconds": (
-                        max(
-                            [
-                                getattr(entry, "start", 0) + getattr(entry, "duration", 0)
-                                for entry in transcript_data
-                            ]
-                        )
-                        if transcript_data
-                        else 0
+                    "segments": segments,
+                    "transcript_text": self._segments_to_text(segments),
+                    "duration_seconds": self._segments_duration_seconds(
+                        segments
                     ),
-                    "segment_count": len(transcript_data),
+                    "segment_count": len(segments),
                     "timestamp": datetime.now().isoformat(),
                 }
 
-                return processed_transcript
-
             except (TranscriptsDisabled, VideoUnavailable) as e:
-                raise YouTubeDataError(f"Transcript unavailable: {e}")
+                # `TranscriptsDisabled` can be a false-positive on some cloud
+                # environments where YouTube blocks or alters responses by IP.
+                raise YouTubeDataError(
+                    "Transcript unavailable. If this works locally but fails on a "
+                    "server/cloud VM, your egress IP may be blocked or challenged by "
+                    "YouTube. Try a different egress IP, or use the library's ProxyConfig. "
+                    f"Original error: {e}"
+                ) from e
             except NoTranscriptFound as e:
                 raise YouTubeDataError(
                     f"No transcript found for language '{language}': {e}"
+                ) from e
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                msg = str(e)
+                last_error = msg
+
+                is_rate_limited = (
+                    "rate" in msg.lower() or "limit" in msg.lower()
                 )
-            except Exception as e:
-                # Handle rate limiting or other API errors
-                if "rate" in str(e).lower() or "limit" in str(e).lower():
-                    last_error = (
-                        f"Rate limited (attempt {attempt + 1}/{self.max_retries})"
+                if is_rate_limited and attempt < self.max_retries:
+                    backoff = 2 ** (attempt - 1)
+                    log_warning(
+                        f"Rate limited fetching transcript (attempt {attempt}/{self.max_retries}), "
+                        f"sleeping {backoff}s"
                     )
-                    log_warning(last_error)
-                    if attempt < self.max_retries - 1:
-                        time.sleep(2**attempt)  # Exponential backoff
-                        continue
-                # Handle other exceptions
-                last_error = f"Transcript fetch failed: {e}"
-                log_error(last_error)
-                if attempt < self.max_retries - 1:
+                    time.sleep(backoff)
+                    continue
+
+                log_error(
+                    f"Transcript fetch failed (attempt {attempt}/{self.max_retries}): {e}"
+                )
+                if attempt < self.max_retries:
                     time.sleep(1)
 
         raise YouTubeDataError(
             f"Failed to get transcript after {self.max_retries} attempts: {last_error}"
         )
 
-    def _format_json_response(self, data: Any) -> str:
-        """
-        Format response data as clean JSON string.
+    @staticmethod
+    def _select_transcript(
+        transcript_list: Any,
+        preferred_language: str,
+        allow_generated: bool,
+    ) -> Any:
+        """Pick a transcript:
 
-        Args:
-            data: Data to format
-
-        Returns:
-            Clean JSON string
+        1) Try preferred language.
+        2) Fallback to the first allowed transcript.
         """
         try:
+            if allow_generated:
+                return transcript_list.find_transcript([preferred_language])
+            return transcript_list.find_manually_created_transcript(
+                [preferred_language]
+            )
+        except NoTranscriptFound:
+            pass
+
+        allowed: List[Any] = []
+        for t in transcript_list:
+            if allow_generated or not getattr(t, "is_generated", False):
+                allowed.append(t)
+
+        if not allowed:
+            raise YouTubeDataError("No suitable transcript found")
+
+        fallback = allowed[0]
+        log_warning(
+            f"Requested language '{preferred_language}' not found; "
+            f"using '{fallback.language_code}'"
+        )
+        return fallback
+
+    @staticmethod
+    def _normalize_transcript_segments(segments: Any) -> List[Dict[str, Any]]:
+        """Return transcript segments as a `list[dict]`.
+
+        `youtube-transcript-api` v1+ returns a `FetchedTranscript` object; older
+        variants often return a `list[dict]`.
+        """
+        to_raw_data = getattr(segments, "to_raw_data", None)
+        if callable(to_raw_data):
+            try:
+                raw = to_raw_data()
+                if isinstance(raw, list):
+                    return [item for item in raw if isinstance(item, dict)]
+            except Exception:  # pylint: disable=broad-exception-caught
+                return []
+
+        if not isinstance(segments, list):
+            return []
+
+        return [item for item in segments if isinstance(item, dict)]
+
+    @staticmethod
+    def _segments_to_text(segments: List[Dict[str, Any]]) -> str:
+        """Join segment `text` fields into one string."""
+        return " ".join(
+            [(seg.get("text") or "").strip() for seg in segments]
+        ).strip()
+
+    @staticmethod
+    def _segments_duration_seconds(segments: List[Dict[str, Any]]) -> float:
+        """Compute max(start + duration) over segments."""
+        end_times: List[float] = []
+        for seg in segments:
+            try:
+                start = float(seg.get("start") or 0.0)
+                dur = float(seg.get("duration") or 0.0)
+                end_times.append(start + dur)
+            except (TypeError, ValueError):
+                continue
+
+        return max(end_times) if end_times else 0.0
+
+    @staticmethod
+    def _format_json_response(data: Any) -> str:
+        """Format response data as JSON."""
+        try:
             return json.dumps(data, indent=2, ensure_ascii=False, default=str)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             log_error(f"Error formatting JSON response: {e}")
             return json.dumps({"error": f"Failed to format response: {e}"})
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedYouTubeTools.
-        Each instruction includes the method name, description, parameters, types, and example values.
-        """
-        instructions = """
-<youtube_tools_instructions>
-*** YouTube Tools Instructions ***
+        """Return short, text-first usage instructions for the YouTube tools."""
+        return """
+<youtube_tools>
+YouTube metadata (oEmbed) + transcripts.
+All tools return JSON strings.
 
-By leveraging the following set of tools, you can retrieve comprehensive metadata, transcripts, and video information from YouTube. These tools empower you to deliver accurate, real-time video intelligence and content extraction with ease. Here are the detailed instructions for using the set of tools:
+Tools:
+- fetch_youtube_video_metadata(video_url)
+  - oEmbed fields only (title/author/thumbnail/embed_html); no view counts/likes/duration.
+- extract_youtube_video_id(video_url)
+- fetch_comprehensive_youtube_video_info(video_url, include_transcript=False)
 
-- Use fetch_youtube_video_metadata to retrieve metadata for a YouTube video.
-   Parameters:
-      - video_url (str): The URL of the YouTube video, e.g., "https://www.youtube.com/watch?v=dQw4w9WgXcQ".
-
-- Use fetch_youtube_video_transcript to retrieve the transcript for a YouTube video (requires youtube-transcript-api).
-   Parameters:
-      - video_url (str): The URL of the YouTube video, e.g., "https://youtu.be/dQw4w9WgXcQ".
-      - language (str, optional): Preferred language code, e.g., "en", "es", "fr" (default: "en").
-      - auto_generated (bool, optional): Whether to include auto-generated transcripts (default: True).
-
-- Use fetch_available_youtube_transcripts to list available transcript languages for a video (requires youtube-transcript-api).
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
-
-- Use fetch_youtube_transcript_languages to get a simplified list of available transcript language codes (requires youtube-transcript-api).
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
-
-- Use extract_youtube_video_id to extract the video ID from a YouTube URL.
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
-
-- Use fetch_comprehensive_youtube_video_info to get comprehensive video information, including metadata and optionally transcript.
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
-      - include_transcript (bool, optional): Whether to include transcript data (default: False).
-
-- Use legacy_fetch_youtube_video_metadata for backward compatibility (same as fetch_youtube_video_metadata).
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
-
-- Use legacy_fetch_youtube_video_transcript for backward compatibility (same as fetch_youtube_video_transcript).
-   Parameters:
-      - video_url (str): The URL of the YouTube video.
+Transcript tools:
+- fetch_youtube_video_transcript(video_url, language='en', auto_generated=True)
+- fetch_available_youtube_transcripts(video_url)
+- fetch_youtube_transcript_languages(video_url)
 
 Notes:
-- Transcript-related tools (fetch_youtube_video_transcript, fetch_available_youtube_transcripts, fetch_youtube_transcript_languages) require the youtube-transcript-api package to be installed.
-- The language parameter for transcripts should be a valid language code, e.g., "en" for English, "es" for Spanish.
-- The auto_generated parameter controls whether to include auto-generated transcripts.
-</youtube_tools_instructions>
+- If transcripts work locally but fail on a server/cloud VM with TranscriptsDisabled,
+  YouTube may be blocking/challenging that egress IP.
+
+Suggested workflow:
+1) fetch_youtube_video_metadata(url)
+2) fetch_youtube_transcript_languages(url)
+3) fetch_youtube_video_transcript(url, language='en')
+</youtube_tools>
 """
-        return instructions
