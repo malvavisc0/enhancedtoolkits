@@ -73,8 +73,6 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate present value", e)
             raise FinancialComputationError(
@@ -117,8 +115,6 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate future value", e)
             raise FinancialComputationError(
@@ -169,8 +165,6 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate annuity present value",
@@ -225,8 +219,6 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate annuity future value",
@@ -272,8 +264,6 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate perpetuity value",
@@ -288,6 +278,11 @@ class TimeValueCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for time-value tools."""
         return """
 <time_value_calculator>
+Time value of money (PV/FV/annuities/perpetuities)
+
+GOAL
+- Compute PV/FV and annuity/perpetuity values and return JSON.
+
 Time value of money. Tools return JSON strings.
 
 Tools:
@@ -299,5 +294,8 @@ Tools:
 
 Notes:
 - `rate` is per period as a decimal (e.g. 0.05 for 5%).
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Prefer reporting the single `result` + key inputs; avoid dumping full JSON.
 </time_value_calculator>
 """

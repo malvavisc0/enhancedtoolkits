@@ -1,4 +1,5 @@
-"""OpenAI schema utilities.
+"""
+OpenAI schema utilities.
 
 This module provides lightweight helpers to validate and normalize tool/function
 schemas for OpenAI tool calling.
@@ -12,7 +13,6 @@ from __future__ import annotations
 import inspect
 from enum import Enum
 from typing import Any, Callable, get_args, get_origin
-
 
 JsonObject = dict[str, Any]
 
@@ -49,13 +49,17 @@ class OpenAISchemaValidator:
 
         properties = parameters.get("properties")
         if not isinstance(properties, dict):
-            errors.append("Missing or invalid 'properties' field in parameters")
+            errors.append(
+                "Missing or invalid 'properties' field in parameters"
+            )
             return errors
 
         # Strict-mode requirement: every property should be required.
         for prop_name in properties.keys():
             if prop_name not in required_list:
-                errors.append(f"Property '{prop_name}' missing from required array")
+                errors.append(
+                    f"Property '{prop_name}' missing from required array"
+                )
 
         # Common schema patterns that are frequently rejected by OpenAI validators.
         for prop_name, prop_schema in properties.items():
@@ -112,7 +116,9 @@ class OpenAISchemaValidator:
                     if isinstance(option, dict) and isinstance(
                         option.get("enum"), list
                     ):
-                        enum_values = [x for x in option["enum"] if isinstance(x, str)]
+                        enum_values = [
+                            x for x in option["enum"] if isinstance(x, str)
+                        ]
                         break
 
             if enum_values:
@@ -158,7 +164,9 @@ class OpenAISchemaValidator:
                 "annotation": str(annotation),
                 "has_default": param.default != inspect.Parameter.empty,
                 "default_value": (
-                    param.default if param.default != inspect.Parameter.empty else None
+                    param.default
+                    if param.default != inspect.Parameter.empty
+                    else None
                 ),
                 "issues": [],
             }
@@ -168,7 +176,9 @@ class OpenAISchemaValidator:
                 # Fallback for some typing representations.
                 origin = getattr(annotation, "__origin__", None)
 
-            if origin is not None and origin is getattr(__import__("typing"), "Union"):
+            if origin is not None and origin is getattr(
+                __import__("typing"), "Union"
+            ):
                 param_info["issues"].append(
                     "Uses Union type which may produce an anyOf schema"
                 )

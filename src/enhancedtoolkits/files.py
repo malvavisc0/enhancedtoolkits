@@ -1,12 +1,6 @@
 """
-Enhanced Files Tools v2.0
-
 Provides robust, secure file operations with comprehensive security controls,
 resource limits, and proper error handling for LLM interactions.
-
-Author: malvavisc0
-License: MIT
-Version: 2.0.0
 """
 
 import fcntl
@@ -27,13 +21,9 @@ from .base import StrictToolkit
 class FileSecurityError(Exception):
     """Raised when file operation violates security constraints."""
 
-    pass
-
 
 class FileOperationError(Exception):
     """Raised when file operation fails."""
-
-    pass
 
 
 class EnhancedFilesTools(StrictToolkit):
@@ -60,7 +50,9 @@ class EnhancedFilesTools(StrictToolkit):
     BLOCKED_PATTERNS = {"..", "~", "$", "`", ";", "|", "&", "<", ">"}
 
     def __init__(self, base_dir: Optional[Path] = None, **kwargs):
-        self.base_dir = Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
+        self.base_dir = (
+            Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
+        )
         self.add_instructions = True
         self.instructions = EnhancedFilesTools.get_llm_usage_instructions()
 
@@ -80,7 +72,9 @@ class EnhancedFilesTools(StrictToolkit):
     ) -> str:
         """Read a chunk of lines from a file with security validation."""
         try:
-            self._validate_inputs(file_name, chunk_size=chunk_size, offset=offset)
+            self._validate_inputs(
+                file_name, chunk_size=chunk_size, offset=offset
+            )
             file_path = self._secure_resolve_path(file_name)
 
             with self._secure_file_lock(file_path, "r") as f:
@@ -100,8 +94,8 @@ class EnhancedFilesTools(StrictToolkit):
             }
             log_info(f"Read {len(lines)} lines from {file_name}")
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("read_file_chunk", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("read_file_chunk", file_name, exc)
 
     def replace_file_lines_chunk(
         self, file_name: str, new_lines: List[str], offset: int, length: int
@@ -127,15 +121,21 @@ class EnhancedFilesTools(StrictToolkit):
                 "result": f"Replaced {length} lines at offset {offset}",
                 "metadata": {"timestamp": self._timestamp()},
             }
-            log_info(f"Edited {file_name}: replaced {length} lines at {offset}")
+            log_info(
+                f"Edited {file_name}: replaced {length} lines at {offset}"
+            )
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("edit_file_chunk", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("edit_file_chunk", file_name, exc)
 
-    def insert_lines_into_file_chunk(self, file_name: str, new_lines: List[str], offset: int) -> str:
+    def insert_lines_into_file_chunk(
+        self, file_name: str, new_lines: List[str], offset: int
+    ) -> str:
         """Insert lines with security validation."""
         try:
-            self._validate_inputs(file_name, new_lines=new_lines, offset=offset)
+            self._validate_inputs(
+                file_name, new_lines=new_lines, offset=offset
+            )
             file_path = self._secure_resolve_path(file_name)
 
             with tempfile.NamedTemporaryFile(
@@ -153,10 +153,12 @@ class EnhancedFilesTools(StrictToolkit):
             }
             log_info(f"Inserted {len(new_lines)} lines in {file_name}")
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("insert_file_chunk", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("insert_file_chunk", file_name, exc)
 
-    def delete_lines_from_file_chunk(self, file_name: str, offset: int, length: int) -> str:
+    def delete_lines_from_file_chunk(
+        self, file_name: str, offset: int, length: int
+    ) -> str:
         """Delete lines with security validation."""
         try:
             self._validate_inputs(file_name, offset=offset, length=length)
@@ -177,10 +179,12 @@ class EnhancedFilesTools(StrictToolkit):
             }
             log_info(f"Deleted {length} lines from {file_name}")
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("delete_file_chunk", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("delete_file_chunk", file_name, exc)
 
-    def save_file_with_validation(self, contents: str, file_name: str, overwrite: bool = True) -> str:
+    def save_file_with_validation(
+        self, contents: str, file_name: str, overwrite: bool = True
+    ) -> str:
         """Save file with security validation."""
         try:
             self._validate_inputs(file_name, contents=contents)
@@ -210,8 +214,8 @@ class EnhancedFilesTools(StrictToolkit):
             }
             log_info(f"Saved file {file_name}")
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("save_file", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("save_file", file_name, exc)
 
     def retrieve_file_metadata(self, file_name: str) -> str:
         """Get file metadata with security validation."""
@@ -233,8 +237,8 @@ class EnhancedFilesTools(StrictToolkit):
                 "metadata": {"timestamp": self._timestamp()},
             }
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("get_file_metadata", file_name, e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("get_file_metadata", file_name, exc)
 
     def list_files_with_pattern(self, pattern: str = "**/*") -> str:
         """List files with security validation."""
@@ -250,11 +254,14 @@ class EnhancedFilesTools(StrictToolkit):
             result = {
                 "operation": "list_files",
                 "result": sorted(files),
-                "metadata": {"file_count": len(files), "timestamp": self._timestamp()},
+                "metadata": {
+                    "file_count": len(files),
+                    "timestamp": self._timestamp(),
+                },
             }
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("list_files", str(self.base_dir), e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response("list_files", str(self.base_dir), exc)
 
     # Security and validation methods
 
@@ -267,13 +274,20 @@ class EnhancedFilesTools(StrictToolkit):
             raise FileSecurityError("File name contains blocked patterns")
 
         if kwargs.get("chunk_size", 0) > self.MAX_CHUNK_SIZE:
-            raise FileSecurityError(f"Chunk size exceeds limit: {self.MAX_CHUNK_SIZE}")
+            raise FileSecurityError(
+                f"Chunk size exceeds limit: {self.MAX_CHUNK_SIZE}"
+            )
 
         if kwargs.get("offset", 0) < 0 or kwargs.get("length", 0) < 0:
             raise FileSecurityError("Negative offset or length not allowed")
 
-        if "contents" in kwargs and len(kwargs["contents"]) > self.MAX_FILE_SIZE:
-            raise FileSecurityError(f"Content size exceeds limit: {self.MAX_FILE_SIZE}")
+        if (
+            "contents" in kwargs
+            and len(kwargs["contents"]) > self.MAX_FILE_SIZE
+        ):
+            raise FileSecurityError(
+                f"Content size exceeds limit: {self.MAX_FILE_SIZE}"
+            )
 
         if "new_lines" in kwargs:
             for line in kwargs["new_lines"]:
@@ -298,16 +312,20 @@ class EnhancedFilesTools(StrictToolkit):
 
             # Validate file extension
             if file_path.suffix.lower() not in self.ALLOWED_EXTENSIONS:
-                raise FileSecurityError(f"File type not allowed: {file_path.suffix}")
+                raise FileSecurityError(
+                    f"File type not allowed: {file_path.suffix}"
+                )
 
             return file_path
-        except Exception as e:
-            raise FileSecurityError(f"Path resolution failed: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise FileSecurityError(f"Path resolution failed: {exc}") from exc
 
     def _secure_file_lock(self, file_path: Path, mode: str):
         """Secure file locking context manager."""
 
         class FileLock:
+            """Context manager that opens and locks a file for exclusive access."""
+
             def __init__(self, path, mode):
                 self.path = path
                 self.mode = mode
@@ -325,7 +343,9 @@ class EnhancedFilesTools(StrictToolkit):
 
         return FileLock(file_path, mode)
 
-    def _stream_read_lines(self, file_obj, offset: int, chunk_size: int) -> List[str]:
+    def _stream_read_lines(
+        self, file_obj, offset: int, chunk_size: int
+    ) -> List[str]:
         """Memory-efficient line reading."""
         lines = []
         current_line = 0
@@ -347,8 +367,13 @@ class EnhancedFilesTools(StrictToolkit):
                 count += chunk.count(b"\n")
         return count
 
-    def _atomic_edit(
-        self, src_file, tmp_file, new_lines: List[str], offset: int, length: int
+    def _atomic_edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        src_file,
+        tmp_file,
+        new_lines: List[str],
+        offset: int,
+        length: int,
     ):
         """Atomic edit operation."""
         current_line = 0
@@ -372,7 +397,9 @@ class EnhancedFilesTools(StrictToolkit):
                 tmp_file.write(line)
             current_line += 1
 
-    def _atomic_insert(self, src_file, tmp_file, new_lines: List[str], offset: int):
+    def _atomic_insert(
+        self, src_file, tmp_file, new_lines: List[str], offset: int
+    ):
         """Atomic insert operation."""
         current_line = 0
         inserted = False
@@ -395,7 +422,7 @@ class EnhancedFilesTools(StrictToolkit):
         """Atomic delete operation."""
         current_line = 0
         for line in src_file:
-            if not (offset <= current_line < offset + length):
+            if not offset <= current_line < offset + length:
                 tmp_file.write(line)
             current_line += 1
 
@@ -414,11 +441,13 @@ class EnhancedFilesTools(StrictToolkit):
         """Safe JSON serialization."""
         try:
             return json.dumps(data, ensure_ascii=False, indent=2)
-        except Exception as e:
-            log_error(f"JSON serialization error: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"JSON serialization error: {exc}")
             return json.dumps({"error": "Serialization failed"})
 
-    def _error_response(self, operation: str, file_name: str, exc: Exception) -> str:
+    def _error_response(
+        self, operation: str, file_name: str, exc: Exception
+    ) -> str:
         """Secure error response without information disclosure."""
         if isinstance(exc, FileSecurityError):
             error_msg = f"Security validation failed: {str(exc)}"
@@ -434,7 +463,10 @@ class EnhancedFilesTools(StrictToolkit):
             {
                 "operation": operation,
                 "result": None,
-                "metadata": {"error": error_msg, "timestamp": self._timestamp()},
+                "metadata": {
+                    "error": error_msg,
+                    "timestamp": self._timestamp(),
+                },
             }
         )
 
@@ -466,24 +498,31 @@ class EnhancedFilesTools(StrictToolkit):
 
         for dp in dangerous_patterns:
             if dp in regex_pattern:
-                raise FileSecurityError(f"Potentially dangerous regex pattern detected")
+                raise FileSecurityError(
+                    "Potentially dangerous regex pattern detected"
+                )
 
         # Validate regex compilation
         try:
             re.compile(regex_pattern)
-        except re.error as e:
-            raise FileSecurityError(f"Invalid regex pattern: {e}")
+        except re.error as exc:
+            raise FileSecurityError(f"Invalid regex pattern: {exc}") from exc
 
-    def search_files_by_name_regex(
-        self, regex_pattern: str, recursive: bool = True, max_results: int = 1000
+    def search_files_by_name_regex(  # pylint: disable=too-many-nested-blocks
+        self,
+        regex_pattern: str,
+        recursive: bool = True,
+        max_results: int = 1000,
     ) -> str:
         """
         Search for files with names matching a regex pattern with security validation.
 
         Args:
-            regex_pattern (str): Regular expression pattern to match against file names
-            recursive (bool, optional): Whether to search recursively in subdirectories. Defaults to True.
-            max_results (int, optional): Maximum number of results to return. Defaults to 1000.
+            regex_pattern (str): Regular expression pattern to match against file names.
+            recursive (bool, optional): Whether to search recursively in subdirectories.
+                Defaults to True.
+            max_results (int, optional): Maximum number of results to return.
+                Defaults to 1000.
 
         Returns:
             str: JSON string containing the search results and metadata
@@ -502,8 +541,12 @@ class EnhancedFilesTools(StrictToolkit):
                 for root, _, filenames in os.walk(search_path):
                     for filename in filenames:
                         file_path = Path(root) / filename
-                        if self._is_safe_file(file_path) and pattern.search(filename):
-                            rel_path = str(file_path.relative_to(self.base_dir))
+                        if self._is_safe_file(file_path) and pattern.search(
+                            filename
+                        ):
+                            rel_path = str(
+                                file_path.relative_to(self.base_dir)
+                            )
                             files.append(rel_path)
                             if len(files) >= max_results:  # Limit results
                                 break
@@ -531,12 +574,16 @@ class EnhancedFilesTools(StrictToolkit):
                     "timestamp": self._timestamp(),
                 },
             }
-            log_info(f"Found {len(files)} files matching pattern '{regex_pattern}'")
+            log_info(
+                f"Found {len(files)} files matching pattern '{regex_pattern}'"
+            )
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("search_files_by_name", str(self.base_dir), e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response(
+                "search_files_by_name", str(self.base_dir), exc
+            )
 
-    def search_file_contents_by_regex(
+    def search_file_contents_by_regex(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-branches,too-many-nested-blocks
         self,
         regex_pattern: str,
         file_pattern: str = "**/*",
@@ -549,12 +596,17 @@ class EnhancedFilesTools(StrictToolkit):
         Search for content inside files matching a regex pattern with security validation.
 
         Args:
-            regex_pattern (str): Regular expression pattern to match against file content
-            file_pattern (str, optional): Glob pattern to filter files. Defaults to "**/*".
-            recursive (bool, optional): Whether to search recursively in subdirectories. Defaults to False.
-            max_files (int, optional): Maximum number of files to search. Defaults to 100.
-            max_matches (int, optional): Maximum number of matches to return. Defaults to 1000.
-            context_lines (int, optional): Number of context lines to include before and after match. Defaults to 2.
+            regex_pattern (str): Regular expression pattern to match against file content.
+            file_pattern (str, optional): Glob pattern to filter files.
+                Defaults to "**/*".
+            recursive (bool, optional): Whether to search recursively in subdirectories.
+                Defaults to False.
+            max_files (int, optional): Maximum number of files to search.
+                Defaults to 100.
+            max_matches (int, optional): Maximum number of matches to return.
+                Defaults to 1000.
+            context_lines (int, optional): Number of context lines to include before and
+                after match. Defaults to 2.
 
         Returns:
             str: JSON string containing the search results and metadata
@@ -605,7 +657,8 @@ class EnhancedFilesTools(StrictToolkit):
                                 "line_number": i + 1,
                                 "content": line.rstrip("\n\r"),
                                 "context": [
-                                    lines[j].rstrip("\n\r") for j in range(start, end)
+                                    lines[j].rstrip("\n\r")
+                                    for j in range(start, end)
                                 ],
                             }
 
@@ -616,12 +669,16 @@ class EnhancedFilesTools(StrictToolkit):
                                 break
 
                     if file_matches:
-                        matches.append({"file": rel_path, "matches": file_matches})
+                        matches.append(
+                            {"file": rel_path, "matches": file_matches}
+                        )
 
                     if total_matches >= max_matches:
                         break
 
-                except Exception as file_error:
+                except (
+                    Exception
+                ) as file_error:  # pylint: disable=broad-exception-caught
                     # Skip files with errors
                     log_error(f"Error searching file {rel_path}: {file_error}")
                     continue
@@ -638,87 +695,51 @@ class EnhancedFilesTools(StrictToolkit):
                 },
             }
             log_info(
-                f"Found {total_matches} matches in {files_searched} files for pattern '{regex_pattern}'"
+                f"Found {total_matches} matches in {files_searched} files for pattern "
+                f"'{regex_pattern}'"
             )
             return self._safe_json(result)
-        except Exception as e:
-            return self._error_response("search_inside_files", str(self.base_dir), e)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return self._error_response(
+                "search_inside_files", str(self.base_dir), exc
+            )
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use each tool in EnhancedFilesTools.
-        Each instruction includes the method name, description, parameters, types, example values, and security notes.
-        """
+        """Return precise, structured instructions for LLM tool calling."""
         instructions = """
 <file_tools_instructions>
-*** Secure Files Toolkit Instructions ***
+Secure sandboxed file operations (read/search/edit/write)
 
-This toolkit provides robust, secure file operations for LLMs. All operations are subject to strict security validation, resource limits, and atomicity guarantees. Use the following tools:
+GOAL
+- Perform safe, constrained file operations within `base_dir`.
+- Keep outputs small via chunked reads/searches.
 
-- read_file_lines_chunk: Read a chunk of lines from a file.
-   Parameters:
-      - file_name (str): File path, e.g., "data/example.txt"
-      - chunk_size (int, optional): Number of lines to read (default: 100, max: 10000)
-      - offset (int, optional): Line offset to start reading from (default: 0)
-   Notes: Only certain file types are allowed (.txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml), max file size 100MB.
+RETURN FORMAT (ALWAYS)
+- Every method returns a JSON string with:
+  - operation: str
+  - result: payload or null
+  - metadata: includes timestamp; on failure includes metadata.error (sanitized)
 
-- replace_file_lines_chunk: Replace lines in a file atomically.
-   Parameters:
-      - file_name (str): File path, e.g., "notes.md"
-      - new_lines (List[str]): List of new lines to write, e.g., ["line1", "line2"]
-      - offset (int): Line offset to start replacing, e.g., 10
-      - length (int): Number of lines to replace, e.g., 2
+SAFETY / SCOPE
+- All paths resolve under `base_dir`.
+- No path traversal, no symlinks, extension allowlist enforced.
 
-- insert_lines_into_file_chunk: Insert lines at a specific offset.
-   Parameters:
-      - file_name (str): File path, e.g., "script.py"
-      - new_lines (List[str]): Lines to insert, e.g., ["import os"]
-      - offset (int): Line offset to insert at, e.g., 5
+TOOLS (PREFER SMALL OUTPUTS)
+- read_file_lines_chunk(file_name, chunk_size=100, offset=0)  # offset is 0-based
+- replace_file_lines_chunk(file_name, new_lines, offset, length)
+- insert_lines_into_file_chunk(file_name, new_lines, offset)
+- delete_lines_from_file_chunk(file_name, offset, length)
+- save_file_with_validation(contents, file_name, overwrite=True)
+- retrieve_file_metadata(file_name)
+- list_files_with_pattern(pattern="**/*")  # capped
+- search_files_by_name_regex(regex_pattern, recursive=True, max_results=1000)
+- search_file_contents_by_regex(regex_pattern, file_pattern="**/*", recursive=False, max_files=100, max_matches=1000, context_lines=2)
 
-- delete_lines_from_file_chunk: Delete lines from a file.
-   Parameters:
-      - file_name (str): File path, e.g., "data.csv"
-      - offset (int): Line offset to start deleting, e.g., 20
-      - length (int): Number of lines to delete, e.g., 3
-
-- save_file_with_validation: Save contents to a file with validation.
-   Parameters:
-      - contents (str): File contents, e.g., "# Title\nContent"
-      - file_name (str): File path, e.g., "output.txt"
-      - overwrite (bool, optional): Overwrite if file exists (default: True)
-
-- retrieve_file_metadata: Get metadata for a file.
-   Parameters:
-      - file_name (str): File path, e.g., "report.json"
-
-- list_files_with_pattern: List files matching a pattern.
-   Parameters:
-      - pattern (str, optional): Glob pattern (default: "**/*"), e.g., "*.py"
-
-- search_files_by_name_regex: Search for files with names matching a regex pattern.
-   Parameters:
-      - regex_pattern (str): Regular expression pattern
-      - recursive (bool, optional): Whether to search recursively (default: True)
-      - max_results (int, optional): Maximum number of results to return (default: 1000)
-
-- search_file_contents_by_regex: Search for content inside files matching a regex pattern.
-   Parameters:
-      - regex_pattern (str): Regular expression pattern
-      - file_pattern (str, optional): Glob pattern to filter files (default: "**/*")
-      - recursive (bool, optional): Whether to search recursively (default: False)
-      - max_files (int, optional): Maximum number of files to search (default: 100)
-      - max_matches (int, optional): Maximum number of matches to return (default: 1000)
-      - context_lines (int, optional): Number of context lines to include (default: 2)
-
-**Security Notes:**
-- Allowed extensions: .txt, .py, .js, .json, .md, .csv, .log, .yaml, .yml, .xml
-- Max file size: 100MB
-- Max chunk size: 10000 lines
-- Max line length: 10000 characters
-- Blocked patterns: "..", "~", "$", "`", ";", "|", "&", "<", ">"
-- All operations are atomic and errors are returned in a secure, non-leaky format.
-- All file operations are subject to comprehensive validation and security checks.
+CONTEXT-SIZE RULES (IMPORTANT)
+- Never read an entire large file; use small chunks and targeted searches.
+- For edits: read a small region → edit that region → re-read only that region to verify.
+- When returning results to the user, summarize instead of pasting large JSON blocks.
 
 </file_tools_instructions>
 """

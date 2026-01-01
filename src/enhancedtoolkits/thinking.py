@@ -1,14 +1,9 @@
-"""Enhanced Thinking Tools.
-
+"""
 Text-first thinking/journaling utilities for agents:
 - Step-by-step thinking chains
 - Meta-cognitive reflection
 - Working-memory scratchpad
 - Quality assessment + synthesis
-
-Author: malvavisc0
-License: MIT
-Version: 1.2.0
 """
 
 import hashlib
@@ -111,27 +106,29 @@ class EnhancedThinkingTools(StrictToolkit):
     ):
         self.instructions = """
 <thinking_tools>
-General problem-solving and task progress journaling (text-first).
+Thinking/journaling chain (steps/reflections/scratchpad) + synthesis
 
-Valid thinking_type values:
-- analysis|synthesis|evaluation|planning|creative|reflection
+GOAL
+- Build a short step-by-step thinking chain (steps + reflections + scratchpad) and synthesize it.
 
-Core tools:
-- build_step_by_step_reasoning_chain(agent, problem, thinking_type='analysis',
-  context=None, evidence=None, confidence=0.5)
+VALID VALUES
+- thinking_type: analysis|synthesis|evaluation|planning|creative|reflection
+- synthesis_type: conclusion|summary|insights|next_steps
+- scratchpad operation: set|get|list|clear
+
+TOOLS (RETURN TEXT)
+- build_step_by_step_reasoning_chain(agent, problem, thinking_type='analysis', context=None, evidence=None, confidence=0.5)
 - add_meta_cognitive_reflection(agent, reflection, step_id=None)
-- manage_working_memory_scratchpad(agent, key, value=None,
-  operation='set|get|list|clear')
+- manage_working_memory_scratchpad(agent, key, value=None, operation='set')
 - assess_reasoning_chain_quality_and_suggest_improvements(agent)
-- synthesize_reasoning_chain_into_output(agent,
-  synthesis_type='conclusion|summary|insights|next_steps')
+- synthesize_reasoning_chain_into_output(agent, synthesis_type='conclusion')
+- retrieve_current_thinking_chain_state(agent)
+- reset_current_thinking_chain(agent)
 
-Example:
-1) build_step_by_step_reasoning_chain(agent, "Clarify requirements", "analysis")
-2) build_step_by_step_reasoning_chain(agent, "Draft approach", "planning")
-3) add_meta_cognitive_reflection(agent, "What am I assuming?", step_id=2)
-4) assess_reasoning_chain_quality_and_suggest_improvements(agent)
-5) synthesize_reasoning_chain_into_output(agent, "next_steps")
+CONTEXT-SIZE RULES (IMPORTANT)
+- Keep steps concise (1-3 sentences). Put bulky text into scratchpad keys.
+- When producing user-facing output, call synthesize_reasoning_chain_into_output and summarize.
+
 </thinking_tools>
 """
 

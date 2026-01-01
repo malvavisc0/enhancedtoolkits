@@ -75,9 +75,17 @@ class BusinessAnalysisCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for business analysis tools."""
         return """
 <business_analysis_calculator>
+Break-even analysis
+
+GOAL
+- Compute break-even units and sales and return JSON.
+
 Break-even analysis. Tools return JSON strings.
 
 Tools:
 - calculate_break_even_point(fixed_costs, price_per_unit, variable_cost_per_unit)
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- In final user responses, report break-even units + sales and key assumptions; avoid dumping full JSON.
 </business_analysis_calculator>
 """

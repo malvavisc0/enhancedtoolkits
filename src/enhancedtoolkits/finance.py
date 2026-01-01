@@ -1,6 +1,4 @@
 """
-Enhanced YFinance Tools v2.0
-
 A production-ready financial data toolkit that provides:
 - Comprehensive stock market data retrieval
 - Robust error handling and validation
@@ -8,10 +6,6 @@ A production-ready financial data toolkit that provides:
 - Rate limiting and retry logic
 - Consistent data formatting
 - Performance optimizations
-
-Author: malvavisc0
-License: MIT
-Version: 2.0.0
 """
 
 import json
@@ -29,22 +23,18 @@ from .base import StrictToolkit
 class YFinanceError(Exception):
     """Custom exception for YFinance-related errors."""
 
-    pass
-
 
 class YFinanceValidationError(YFinanceError):
     """Exception for input validation errors."""
-
-    pass
 
 
 class YFinanceDataError(YFinanceError):
     """Exception for data retrieval errors."""
 
-    pass
 
-
-class EnhancedYFinanceTools(StrictToolkit):
+class EnhancedYFinanceTools(
+    StrictToolkit
+):  # pylint: disable=too-many-instance-attributes
     """
     Enhanced YFinance Tools v2.0
 
@@ -140,7 +130,8 @@ class EnhancedYFinanceTools(StrictToolkit):
         self.register(self.fetch_price_history)
 
         log_info(
-            f"Enhanced YFinance Tools initialized - Caching: {enable_caching}, Rate Limit: {rate_limit_delay}s"
+            f"Enhanced YFinance Tools initialized - Caching: {enable_caching}, "
+            f"Rate Limit: {rate_limit_delay}s"
         )
 
     def fetch_current_stock_price(self, ticker: str) -> str:
@@ -172,7 +163,9 @@ class EnhancedYFinanceTools(StrictToolkit):
             )
 
             if current_price is None:
-                raise YFinanceDataError(f"No price data available for {ticker}")
+                raise YFinanceDataError(
+                    f"No price data available for {ticker}"
+                )
 
             # Get additional price context
             currency = info.get("currency", "USD")
@@ -205,9 +198,13 @@ class EnhancedYFinanceTools(StrictToolkit):
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting current price for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get current price for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting current price for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get current price for {ticker}: {exc}"
+            ) from exc
 
     def fetch_company_information(self, ticker: str) -> str:
         """
@@ -258,7 +255,9 @@ class EnhancedYFinanceTools(StrictToolkit):
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
                     "fifty_day_average": info.get("fiftyDayAverage"),
-                    "two_hundred_day_average": info.get("twoHundredDayAverage"),
+                    "two_hundred_day_average": info.get(
+                        "twoHundredDayAverage"
+                    ),
                 },
                 "financial_health": {
                     "total_cash": info.get("totalCash"),
@@ -273,7 +272,9 @@ class EnhancedYFinanceTools(StrictToolkit):
                 "analyst_data": {
                     "recommendation_key": info.get("recommendationKey"),
                     "recommendation_mean": info.get("recommendationMean"),
-                    "number_of_analyst_opinions": info.get("numberOfAnalystOpinions"),
+                    "number_of_analyst_opinions": info.get(
+                        "numberOfAnalystOpinions"
+                    ),
                     "target_high_price": info.get("targetHighPrice"),
                     "target_low_price": info.get("targetLowPrice"),
                     "target_mean_price": info.get("targetMeanPrice"),
@@ -296,11 +297,13 @@ class EnhancedYFinanceTools(StrictToolkit):
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting company info for {ticker}: {e}")
-            raise YFinanceDataError(
-                f"Failed to get company information for {ticker}: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting company info for {ticker}: {exc}"
             )
+            raise YFinanceDataError(
+                f"Failed to get company information for {ticker}: {exc}"
+            ) from exc
 
     def fetch_ticker_news(self, ticker: str, max_articles: int = 10) -> str:
         """
@@ -330,8 +333,10 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             try:
                 news_data = ticker_obj.news
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch news data: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch news data: {exc}"
+                ) from exc
 
             if not news_data:
                 return self._format_json_response(
@@ -356,7 +361,9 @@ class EnhancedYFinanceTools(StrictToolkit):
                                 "title": content.get("title", "No title"),
                                 "summary": content.get("summary", ""),
                                 "published_date": content.get("pubDate", ""),
-                                "url": content.get("canonicalUrl", {}).get("url", ""),
+                                "url": content.get("canonicalUrl", {}).get(
+                                    "url", ""
+                                ),
                                 "source": article.get("source", "Unknown"),
                             }
                         else:
@@ -364,15 +371,17 @@ class EnhancedYFinanceTools(StrictToolkit):
                             processed_article = {
                                 "title": article.get("title", "No title"),
                                 "summary": article.get("summary", ""),
-                                "published_date": article.get("providerPublishTime", ""),
+                                "published_date": article.get(
+                                    "providerPublishTime", ""
+                                ),
                                 "url": article.get("link", ""),
                                 "source": article.get("publisher", "Unknown"),
                             }
 
                         articles.append(processed_article)
 
-                except Exception as e:
-                    log_warning(f"Error processing news article {i}: {e}")
+                except (KeyError, TypeError, ValueError) as exc:
+                    log_warning(f"Error processing news article {i}: {exc}")
                     continue
 
             result = {
@@ -386,9 +395,11 @@ class EnhancedYFinanceTools(StrictToolkit):
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting news for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get news for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Unexpected error getting news for {ticker}: {exc}")
+            raise YFinanceDataError(
+                f"Failed to get news for {ticker}: {exc}"
+            ) from exc
 
     def fetch_earnings_history(self, ticker: str) -> str:
         """
@@ -415,14 +426,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     earnings_data, ticker, "earnings_history"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch earnings history: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch earnings history: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting earnings history for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get earnings history for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting earnings history for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get earnings history for {ticker}: {exc}"
+            ) from exc
 
     def fetch_income_statement(self, ticker: str) -> str:
         """
@@ -449,14 +466,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     financials_data, ticker, "income_statement"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch income statement: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch income statement: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting income statement for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get income statement for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting income statement for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get income statement for {ticker}: {exc}"
+            ) from exc
 
     def fetch_quarterly_financials(self, ticker: str) -> str:
         """
@@ -483,16 +506,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     quarterly_data, ticker, "quarterly_financials"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch quarterly financials: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch quarterly financials: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting quarterly financials for {ticker}: {e}")
-            raise YFinanceDataError(
-                f"Failed to get quarterly financials for {ticker}: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting quarterly financials for {ticker}: {exc}"
             )
+            raise YFinanceDataError(
+                f"Failed to get quarterly financials for {ticker}: {exc}"
+            ) from exc
 
     def fetch_balance_sheet(self, ticker: str) -> str:
         """
@@ -519,14 +546,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     balance_sheet_data, ticker, "balance_sheet"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch balance sheet: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch balance sheet: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting balance sheet for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get balance sheet for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting balance sheet for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get balance sheet for {ticker}: {exc}"
+            ) from exc
 
     def fetch_quarterly_balance_sheet(self, ticker: str) -> str:
         """
@@ -553,18 +586,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     quarterly_balance_data, ticker, "quarterly_balance_sheet"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch quarterly balance sheet: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch quarterly balance sheet: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             log_error(
-                f"Unexpected error getting quarterly balance sheet for {ticker}: {e}"
+                f"Unexpected error getting quarterly balance sheet for {ticker}: {exc}"
             )
             raise YFinanceDataError(
-                f"Failed to get quarterly balance sheet for {ticker}: {e}"
-            )
+                f"Failed to get quarterly balance sheet for {ticker}: {exc}"
+            ) from exc
 
     def fetch_cashflow_statement(self, ticker: str) -> str:
         """
@@ -588,15 +623,23 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             try:
                 cashflow_data = ticker_obj.cashflow
-                return self._process_dataframe_response(cashflow_data, ticker, "cashflow")
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch cash flow: {e}")
+                return self._process_dataframe_response(
+                    cashflow_data, ticker, "cashflow"
+                )
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch cash flow: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting cash flow for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get cash flow for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting cash flow for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get cash flow for {ticker}: {exc}"
+            ) from exc
 
     def fetch_quarterly_cashflow_statement(self, ticker: str) -> str:
         """
@@ -623,16 +666,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     quarterly_cashflow_data, ticker, "quarterly_cashflow"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch quarterly cash flow: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch quarterly cash flow: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting quarterly cash flow for {ticker}: {e}")
-            raise YFinanceDataError(
-                f"Failed to get quarterly cash flow for {ticker}: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting quarterly cash flow for {ticker}: {exc}"
             )
+            raise YFinanceDataError(
+                f"Failed to get quarterly cash flow for {ticker}: {exc}"
+            ) from exc
 
     def fetch_major_shareholders(self, ticker: str) -> str:
         """
@@ -659,14 +706,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     major_holders_data, ticker, "major_holders"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch major holders: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch major holders: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting major holders for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get major holders for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting major holders for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get major holders for {ticker}: {exc}"
+            ) from exc
 
     def fetch_institutional_shareholders(self, ticker: str) -> str:
         """
@@ -693,16 +746,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     institutional_holders_data, ticker, "institutional_holders"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch institutional holders: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch institutional holders: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting institutional holders for {ticker}: {e}")
-            raise YFinanceDataError(
-                f"Failed to get institutional holders for {ticker}: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting institutional holders for {ticker}: {exc}"
             )
+            raise YFinanceDataError(
+                f"Failed to get institutional holders for {ticker}: {exc}"
+            ) from exc
 
     def fetch_analyst_recommendations(self, ticker: str) -> str:
         """
@@ -729,14 +786,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                 return self._process_dataframe_response(
                     recommendations_data, ticker, "recommendations"
                 )
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch recommendations: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch recommendations: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting recommendations for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get recommendations for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting recommendations for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get recommendations for {ticker}: {exc}"
+            ) from exc
 
     def fetch_sustainability_scores(self, ticker: str) -> str:
         """
@@ -786,7 +849,9 @@ class EnhancedYFinanceTools(StrictToolkit):
 
                         esg_scores = {
                             "total_esg": scores.get("totalEsg"),
-                            "environment_score": scores.get("environmentScore"),
+                            "environment_score": scores.get(
+                                "environmentScore"
+                            ),
                             "social_score": scores.get("socialScore"),
                             "governance_score": scores.get("governanceScore"),
                             "esg_performance": scores.get("esgPerformance"),
@@ -802,16 +867,20 @@ class EnhancedYFinanceTools(StrictToolkit):
 
                 return self._format_json_response(result)
 
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch sustainability scores: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch sustainability scores: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting sustainability scores for {ticker}: {e}")
-            raise YFinanceDataError(
-                f"Failed to get sustainability scores for {ticker}: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting sustainability scores for {ticker}: {exc}"
             )
+            raise YFinanceDataError(
+                f"Failed to get sustainability scores for {ticker}: {exc}"
+            ) from exc
 
     def fetch_price_history(
         self, ticker: str, period: str = "1y", interval: str = "1d"
@@ -821,8 +890,12 @@ class EnhancedYFinanceTools(StrictToolkit):
 
         Args:
             ticker: The stock ticker symbol
-            period: The time period ('1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max')
-            interval: The time interval ('1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo')
+            period: The time period. One of:
+                '1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd',
+                'max'
+            interval: The time interval. One of:
+                '1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d',
+                '1wk', '1mo', '3mo'
 
         Returns:
             JSON string containing price history data
@@ -836,13 +909,15 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             # Validate period and interval
             if period not in self.VALID_PERIODS:
+                valid_periods = ", ".join(self.VALID_PERIODS)
                 raise YFinanceValidationError(
-                    f"Invalid period '{period}'. Valid periods: {', '.join(self.VALID_PERIODS)}"
+                    f"Invalid period '{period}'. Valid periods: {valid_periods}"
                 )
 
             if interval not in self.VALID_INTERVALS:
+                valid_intervals = ", ".join(self.VALID_INTERVALS)
                 raise YFinanceValidationError(
-                    f"Invalid interval '{interval}'. Valid intervals: {', '.join(self.VALID_INTERVALS)}"
+                    f"Invalid interval '{interval}'. Valid intervals: {valid_intervals}"
                 )
 
             log_debug(
@@ -852,7 +927,9 @@ class EnhancedYFinanceTools(StrictToolkit):
             ticker_obj = self._get_ticker_with_cache(ticker)
 
             try:
-                history_data = ticker_obj.history(period=period, interval=interval)
+                history_data = ticker_obj.history(
+                    period=period, interval=interval
+                )
 
                 if history_data.empty:
                     return self._format_json_response(
@@ -873,14 +950,20 @@ class EnhancedYFinanceTools(StrictToolkit):
                     {"period": period, "interval": interval},
                 )
 
-            except Exception as e:
-                raise YFinanceDataError(f"Failed to fetch price history: {e}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                raise YFinanceDataError(
+                    f"Failed to fetch price history: {exc}"
+                ) from exc
 
         except (YFinanceValidationError, YFinanceDataError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error getting price history for {ticker}: {e}")
-            raise YFinanceDataError(f"Failed to get price history for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(
+                f"Unexpected error getting price history for {ticker}: {exc}"
+            )
+            raise YFinanceDataError(
+                f"Failed to get price history for {ticker}: {exc}"
+            ) from exc
 
     # Private helper methods
 
@@ -909,7 +992,9 @@ class EnhancedYFinanceTools(StrictToolkit):
             )
 
         if not self.TICKER_PATTERN.match(ticker):
-            raise YFinanceValidationError(f"Invalid ticker symbol format: {ticker}")
+            raise YFinanceValidationError(
+                f"Invalid ticker symbol format: {ticker}"
+            )
 
         return ticker
 
@@ -936,7 +1021,10 @@ class EnhancedYFinanceTools(StrictToolkit):
         ticker_obj = yf.Ticker(ticker)
 
         if self.enable_caching:
-            self._ticker_cache[ticker] = {"ticker": ticker_obj, "timestamp": time.time()}
+            self._ticker_cache[ticker] = {
+                "ticker": ticker_obj,
+                "timestamp": time.time(),
+            }
 
         return ticker_obj
 
@@ -957,10 +1045,14 @@ class EnhancedYFinanceTools(StrictToolkit):
         try:
             info = ticker_obj.info
             if not info or not isinstance(info, dict):
-                raise YFinanceDataError(f"No information available for {ticker}")
+                raise YFinanceDataError(
+                    f"No information available for {ticker}"
+                )
             return info
-        except Exception as e:
-            raise YFinanceDataError(f"Failed to get ticker info for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise YFinanceDataError(
+                f"Failed to get ticker info for {ticker}: {exc}"
+            ) from exc
 
     def _apply_rate_limit(self) -> None:
         """Apply rate limiting between API requests."""
@@ -983,11 +1075,13 @@ class EnhancedYFinanceTools(StrictToolkit):
             Clean JSON string
         """
         try:
-            json_str = json.dumps(data, indent=2, ensure_ascii=False, default=str)
+            json_str = json.dumps(
+                data, indent=2, ensure_ascii=False, default=str
+            )
             return json_str
-        except Exception as e:
-            log_error(f"Error formatting JSON response: {e}")
-            return json.dumps({"error": f"Failed to format response: {e}"})
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Error formatting JSON response: {exc}")
+            return json.dumps({"error": f"Failed to format response: {exc}"})
 
     def _process_dataframe_response(
         self,
@@ -1009,7 +1103,9 @@ class EnhancedYFinanceTools(StrictToolkit):
             JSON string containing processed data
         """
         try:
-            if dataframe is None or (hasattr(dataframe, "empty") and dataframe.empty):
+            if dataframe is None or (
+                hasattr(dataframe, "empty") and dataframe.empty
+            ):
                 return self._format_json_response(
                     {
                         "ticker": ticker,
@@ -1023,7 +1119,9 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             # Convert DataFrame to JSON
             if hasattr(dataframe, "to_json"):
-                json_data = dataframe.to_json(orient="index", date_format="iso")
+                json_data = dataframe.to_json(
+                    orient="index", date_format="iso"
+                )
                 parsed_data = json.loads(json_data)
             else:
                 # Handle non-DataFrame data
@@ -1039,115 +1137,58 @@ class EnhancedYFinanceTools(StrictToolkit):
 
             return self._format_json_response(result)
 
-        except Exception as e:
-            log_error(f"Error processing {data_type} data for {ticker}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Error processing {data_type} data for {ticker}: {exc}")
             return self._format_json_response(
                 {
                     "ticker": ticker,
                     "data_type": data_type,
-                    "error": f"Failed to process {data_type} data: {e}",
+                    "error": f"Failed to process {data_type} data: {exc}",
                     "timestamp": datetime.now().isoformat(),
                 }
             )
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedYFinanceTools.
-        Each instruction includes the method name, description, parameters, types, and example values.
-        """
+        """Return precise, structured instructions for LLM tool calling."""
         instructions = """
 <yahoo_finance_tools_instructions>
-*** Yahoo Finance Tools - LLM Usage Guide ***
+Yahoo Finance market + company data for a single ticker
 
-Use these tools to retrieve financial data for stocks. Each tool returns JSON data that you can analyze and present to users.
+GOAL
+- Fetch market + company fundamentals from Yahoo Finance (via yfinance) for ONE ticker.
 
-### When to Use Each Tool
+OUTPUT (ALWAYS)
+- Returns a JSON string.
+- Many responses include `timestamp`.
 
-**For current stock prices and basic info:**
-- fetch_current_stock_price: When user asks for current/latest price, today's performance, or market status
-- fetch_company_information: When user asks about company details, business description, financial metrics, or company profile
+INPUT
+- ticker: e.g. "AAPL", "MSFT", or with exchange suffix like "ASML.AS".
 
-**For financial analysis:**
-- fetch_income_statement: When analyzing profitability, revenue, expenses, or annual financial performance
-- fetch_quarterly_financials: When user wants recent quarterly results or quarterly trends
-- fetch_balance_sheet: When analyzing company assets, liabilities, debt, or financial position
-- fetch_quarterly_balance_sheet: When user wants recent quarterly balance sheet data
-- fetch_cashflow_statement: When analyzing cash generation, operating cash flow, or annual cash trends
-- fetch_quarterly_cashflow_statement: When user wants recent quarterly cash flow data
+ROUTING (PICK ONE)
+- Price now: fetch_current_stock_price(ticker)
+- Profile/summary/metrics: fetch_company_information(ticker)
+- News: fetch_ticker_news(ticker, max_articles=10)  # 1..50
+- Chart/history: fetch_price_history(ticker, period="1mo", interval="1d")
+- Earnings: fetch_earnings_history(ticker)
+- Annual statements: fetch_income_statement / fetch_balance_sheet / fetch_cashflow_statement
+- Quarterly statements: fetch_quarterly_financials / fetch_quarterly_balance_sheet / fetch_quarterly_cashflow_statement
+- Ownership: fetch_major_shareholders / fetch_institutional_shareholders
+- Analyst sentiment: fetch_analyst_recommendations
+- ESG: fetch_sustainability_scores
 
-**For market intelligence:**
-- fetch_ticker_news: When user asks about recent news, events, or what's happening with a stock
-- fetch_earnings_history: When analyzing earnings trends, EPS history, or earnings surprises
-- fetch_analyst_recommendations: When user asks about analyst opinions, price targets, or buy/sell ratings
-- fetch_sustainability_scores: When user asks about ESG ratings, environmental impact, or sustainability
+VALID PERIODS / INTERVALS
+- period: 1d/5d/1mo/3mo/6mo/1y/2y/5y/10y/ytd/max
+- interval: 1m/2m/5m/15m/30m/60m/90m/1h/1d/5d/1wk/1mo/3mo
 
-**For ownership and trading data:**
-- fetch_major_shareholders: When user asks about major shareholders, insider ownership, or who owns the stock
-- fetch_institutional_shareholders: When analyzing institutional ownership or fund holdings
-- fetch_price_history: When user wants charts, historical prices, or technical analysis data
+CONTEXT-SIZE RULES (IMPORTANT)
+- Prefer SHORTER `period` and COARSER `interval` to keep outputs small.
+  - Good defaults: period="1mo", interval="1d" (or period="1y", interval="1wk").
+- Avoid dumping full JSON history/statements into the final answer; summarize key values.
 
-### Tool Parameters
-
-**All tools require:**
-- ticker (str): Stock symbol like "AAPL", "GOOGL", "TSLA" (automatically converted to uppercase)
-
-**Special parameters:**
-- fetch_ticker_news: max_articles (int, 1-50, default 10) - how many news articles to return
-- fetch_price_history:
-  - period (str): "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"
-  - interval (str): "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"
-
-### Common Usage Patterns
-
-**User asks "How is AAPL doing?"**
-→ Use fetch_current_stock_price for price, then fetch_ticker_news for recent developments
-
-**User asks "Tell me about Microsoft"**
-→ Use fetch_company_information for comprehensive company profile
-
-**User asks "Show me TSLA's financials"**
-→ Use fetch_income_statement, fetch_balance_sheet, and fetch_cashflow_statement for complete picture
-
-**User asks "What do analysts think about NVDA?"**
-→ Use fetch_analyst_recommendations for analyst ratings and price targets
-
-**User asks "AMZN news today"**
-→ Use fetch_ticker_news with max_articles=5 for recent news
-
-**User asks "GOOGL stock chart"**
-→ Use fetch_price_history with appropriate period (default "1y" and "1d")
-
-### Data Interpretation
-
-**Price data includes:**
-- Current price, daily change, percentage change, currency, market state
-
-**Company information includes:**
-- Business description, sector, industry, financial ratios, market cap, employee count
-
-**Financial statements include:**
-- Income: Revenue, expenses, profit margins, EPS
-- Balance: Assets, liabilities, debt levels, cash position
-- Cash flow: Operating, investing, financing cash flows
-
-**News data includes:**
-- Article titles, summaries, publication dates, source names
-
-### Error Handling
-
-If a tool returns an error or no data:
-- Inform user that data is not available for that ticker
-- Suggest checking the ticker symbol spelling
-- For international stocks, mention they may need exchange suffix (e.g., "ASML.AS")
-
-### Response Guidelines
-
-- Always mention the data source (Yahoo Finance) and timestamp when presenting financial data
-- For price data, include currency and market state context
-- When showing financial metrics, explain what they mean in simple terms
-- For news, summarize key points and mention publication dates
-- If data seems outdated, mention the timestamp to user
+ERRORS
+- Bad input: YFinanceValidationError
+- Retrieval/processing: YFinanceDataError
 
 </yahoo_finance_tools_instructions>
 """

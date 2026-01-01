@@ -190,8 +190,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Dividing {a} by {b} to get {result}")
             return self._format_json_response(response)
 
-        except FinancialComputationError:
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to divide numbers", e)
             raise FinancialComputationError(
@@ -262,8 +260,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating square root of {n} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate square root", e)
             raise FinancialComputationError(
@@ -301,8 +297,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating factorial of {n} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate factorial", e)
             raise FinancialComputationError(
@@ -353,8 +347,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Checking if {n} is prime: {is_prime_result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to check if number is prime",
@@ -394,8 +386,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating {a} modulo {b} to get {result}")
             return self._format_json_response(response)
 
-        except FinancialComputationError:
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate modulo", e)
             raise FinancialComputationError(
@@ -466,8 +456,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             )
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to round number", e)
             raise FinancialComputationError(
@@ -510,8 +498,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating log base {base} of {n} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate logarithm", e)
             raise FinancialComputationError(
@@ -549,8 +535,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating natural logarithm of {n} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate natural logarithm",
@@ -590,8 +574,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating GCD of {a} and {b} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate GCD", e)
             raise FinancialComputationError(
@@ -633,8 +615,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             log_info(f"Calculating LCM of {a} and {b} to get {result}")
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate LCM", e)
             raise FinancialComputationError(
@@ -682,8 +662,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             )
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate mean", e)
             raise FinancialComputationError(
@@ -731,8 +709,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             )
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate median", e)
             raise FinancialComputationError(
@@ -790,8 +766,6 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
             )
             return self._format_json_response(response)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate standard deviation",
@@ -806,6 +780,11 @@ class ArithmeticCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for arithmetic tools."""
         return """
 <arithmetic_calculator>
+Basic arithmetic + simple statistics
+
+GOAL
+- Compute small arithmetic/statistics results and return JSON.
+
 Arithmetic utilities. Tools return JSON strings.
 
 Core tools:
@@ -829,5 +808,9 @@ Extras:
 - mean(numbers)
 - median(numbers)
 - standard_deviation(numbers)  # requires at least 2 values
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Keep list inputs (e.g., numbers) reasonably small; don’t pass huge arrays.
+- In final user responses, summarize results instead of pasting full JSON.
 </arithmetic_calculator>
 """

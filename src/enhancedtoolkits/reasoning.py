@@ -1,15 +1,9 @@
 """
-Enhanced Universal Reasoning Tools v5.0
-
 A simplified, LLM-optimized reasoning toolkit that combines:
 - Multi-modal reasoning with string-based types
 - Meta-cognitive capabilities (reflection, working memory)
 - Bias detection with iterative correction
 - Flexible cognitive modes and quality assessment
-
-Author: malvavisc0
-License: MIT
-Version: 5.0.0
 """
 
 import hashlib
@@ -54,29 +48,30 @@ class EnhancedReasoningTools(StrictToolkit):
     ):
         self.instructions = """
 <reasoning_tools>
-Record, review, and improve an agent's reasoning process.
+Reasoning log (steps/reflections/scratchpad) + quality checks + synthesis
 
-Guidelines:
-- Keep steps short and concrete; include evidence when available.
-- Prefer alternating analysis → synthesis → evaluation, then synthesize.
+GOAL
+- Maintain a compact reasoning log (steps + reflections + scratchpad) and produce short syntheses.
 
-Valid values:
+VALID VALUES
 - cognitive_mode: analysis|synthesis|evaluation|planning|creative|reflection
 - reasoning_type: deductive|inductive|abductive|causal|probabilistic|analogical
+- synthesis_type: conclusion|summary|insights
+- scratchpad operation: set|get|list|clear
 
-Primary tools:
-- add_structured_reasoning_step(agent, problem, cognitive_mode='analysis',
-  reasoning_type='deductive', evidence=None, confidence=0.5)
-- add_meta_cognitive_reflection(agent, reflection, step_id=None)
-- manage_working_memory_scratchpad(agent, key, value=None,
-  operation='set|get|list|clear')
-- assess_reasoning_quality_and_suggest_improvements(agent)
-- synthesize_reasoning_chain_into_conclusion_or_insight(agent,
-  synthesis_type='conclusion|summary|insights')
+TOOLS (RETURN TEXT)
+- add_structured_reasoning_step(agent_or_team, problem, cognitive_mode='analysis', reasoning_type='deductive', evidence=None, confidence=0.5)
+- add_meta_cognitive_reflection(agent_or_team, reflection, step_id=None)
+- manage_working_memory_scratchpad(agent_or_team, key, value=None, operation='set')
+- assess_reasoning_quality_and_suggest_improvements(agent_or_team)
+- synthesize_reasoning_chain_into_conclusion_or_insight(agent_or_team, synthesis_type='conclusion')
+- retrieve_current_reasoning_session_state(agent_or_team)
+- reset_reasoning_session_state(agent_or_team)
 
-Session:
-- retrieve_current_reasoning_session_state(agent)
-- reset_reasoning_session_state(agent)
+CONTEXT-SIZE RULES (IMPORTANT)
+- Keep each step short (1-3 sentences); store bulky details in evidence or scratchpad keys.
+- Do not paste the full reasoning chain into user-facing answers; use synthesis tools and summarize.
+
 </reasoning_tools>
 """
 

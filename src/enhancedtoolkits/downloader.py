@@ -1,6 +1,4 @@
 """
-URL Content Downloader Tool v1.1
-
 A production-ready URL content downloading toolkit that provides:
 - Universal file downloading with BYPARR integration
 - Anti-bot bypass mechanisms
@@ -9,16 +7,13 @@ A production-ready URL content downloading toolkit that provides:
 - Input validation and sanitization
 - Configurable timeouts and retry logic
 - Multiple output formats support
-
-Author: Assistant
-License: MIT
-Version: 1.1.0
 """
 
 import json
 import mimetypes
 import os
 import random
+import re
 import tempfile
 import time
 from typing import Dict, List, Optional, Union
@@ -35,40 +30,38 @@ BYPARR_TIMEOUT = int(os.environ.get("BYPARR_TIMEOUT", "60"))
 BYPARR_ENABLED = os.environ.get("BYPARR_ENABLED", "false").lower() == "true"
 
 # URL Downloader configuration
-URL_DOWNLOADER_MAX_RETRIES = int(os.environ.get("URL_DOWNLOADER_MAX_RETRIES", "3"))
+URL_DOWNLOADER_MAX_RETRIES = int(
+    os.environ.get("URL_DOWNLOADER_MAX_RETRIES", "3")
+)
 URL_DOWNLOADER_TIMEOUT = int(os.environ.get("URL_DOWNLOADER_TIMEOUT", "30"))
 
-# Optional MarkItDown import
+# MarkItDown is a hard dependency for this toolkit.
 try:
     from markitdown import MarkItDown
+except ImportError as exc:
+    raise ImportError(
+        "MarkItDown is required for URLContentDownloader. "
+        "Install it with: pip install markitdown"
+    ) from exc
 
-    MARKITDOWN_AVAILABLE = True
-    markitdown_converter = MarkItDown()
-except ImportError:
-    MARKITDOWN_AVAILABLE = False
-    markitdown_converter = None
-    log_warning("MarkItDown not available. Content parsing will be limited.")
+MARKITDOWN_CONVERTER = MarkItDown()
 
 
 class URLDownloadError(Exception):
     """Custom exception for URL download errors."""
 
-    pass
-
 
 class AntiBotDetectedError(Exception):
     """Custom exception for anti-bot detection."""
-
-    pass
 
 
 class ContentParsingError(Exception):
     """Custom exception for content parsing errors."""
 
-    pass
 
-
-class URLContentDownloader(StrictToolkit):
+class URLContentDownloader(
+    StrictToolkit
+):  # pylint: disable=too-many-instance-attributes
     """
     URL Content Downloader Tool v1.1
 
@@ -78,11 +71,30 @@ class URLContentDownloader(StrictToolkit):
 
     # Common user agents for rotation
     USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
+            "Gecko/20100101 Firefox/121.0"
+        ),
+        (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+            "Version/17.2 Safari/605.1.15"
+        ),
+        (
+            "Mozilla/5.0 (X11; Linux x86_64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
     ]
 
     # Supported output formats
@@ -114,7 +126,7 @@ class URLContentDownloader(StrictToolkit):
         "application/octet-stream",
     ]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         byparr_enabled: Optional[bool] = None,
         max_retries: int = URL_DOWNLOADER_MAX_RETRIES,
@@ -143,7 +155,12 @@ class URLContentDownloader(StrictToolkit):
         self.add_instructions = add_instructions
         self.instructions = URLContentDownloader.get_llm_usage_instructions()
 
-        super().__init__(name="url_content_downloader", **kwargs)
+        super().__init__(
+            name="url_content_downloader",
+            instructions=self.instructions,
+            add_instructions=self.add_instructions,
+            **kwargs,
+        )
 
         # BYPARR configuration
         if byparr_enabled is not None:
@@ -159,7 +176,9 @@ class URLContentDownloader(StrictToolkit):
         )
 
         # Simple cache for downloaded content
-        self.content_cache = {} if enable_caching else None
+        # Always a dict to keep typing/simple usage straightforward; guarded by
+        # ``self.enable_caching``.
+        self.content_cache: Dict[str, str] = {}
 
         # Register methods
         self.register(self.access_website_content)
@@ -216,7 +235,7 @@ class URLContentDownloader(StrictToolkit):
 
             # Check cache first
             cache_key = f"{validated_url}:{validated_format}"
-            if self.content_cache and cache_key in self.content_cache:
+            if self.enable_caching and cache_key in self.content_cache:
                 log_debug(f"Using cached content for: {validated_url}")
                 return self.content_cache[cache_key]
 
@@ -226,22 +245,34 @@ class URLContentDownloader(StrictToolkit):
 
             if self.byparr_enabled:
                 try:
-                    byparr_result = self._fetch_content_with_byparr(validated_url)
+                    byparr_result = self._fetch_content_with_byparr(
+                        validated_url
+                    )
                     if byparr_result:
                         response_data = byparr_result
-                        content_type = "text/html"  # BYPARR typically returns HTML
+                        # BYPARR typically returns HTML.
+                        content_type = "text/html"
                         log_info(
                             f"Successfully fetched content via BYPARR: {validated_url}"
                         )
-                except Exception as e:
+                except (
+                    httpx.HTTPError,
+                    ValueError,
+                    KeyError,
+                    TypeError,
+                ) as exc:
                     log_warning(
-                        f"BYPARR failed for {url}: {e}, falling back to direct fetch"
+                        f"BYPARR failed for {url}: {exc}; falling back to direct fetch"
                     )
 
             # Fallback to direct fetch with anti-bot bypass
             if not response_data:
-                response_data, content_type = self._fetch_file_with_antibot(validated_url)
-                log_info(f"Successfully fetched file via direct fetch: {validated_url}")
+                response_data, content_type = self._fetch_file_with_antibot(
+                    validated_url
+                )
+                log_info(
+                    f"Successfully fetched file via direct fetch: {validated_url}"
+                )
 
             # Process content based on type and format
             processed_content = self._process_file_content(
@@ -252,7 +283,7 @@ class URLContentDownloader(StrictToolkit):
             )
 
             # Cache the processed content
-            if self.content_cache:
+            if self.enable_caching:
                 self.content_cache[cache_key] = processed_content
 
             log_info(
@@ -262,41 +293,67 @@ class URLContentDownloader(StrictToolkit):
 
         except (URLDownloadError, ContentParsingError):
             raise
-        except Exception as e:
-            log_error(f"Unexpected error downloading {url}: {e}")
-            raise URLDownloadError(f"Failed to download file from {url}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # This is a toolkit boundary: we want to wrap any unexpected failure
+            # into a stable, user-facing error type.
+            log_error(f"Unexpected error downloading {url}: {exc}")
+            raise URLDownloadError(
+                f"Failed to download file from {url}: {exc}"
+            ) from exc
 
-    def download_multiple_urls(self, urls: List[str], format: str = "markdown") -> str:
-        """
-        Download content from multiple URLs.
+    def download_multiple_urls(
+        self, urls: List[str], output: str = "auto", **kwargs
+    ) -> str:
+        """Download content from multiple URLs.
 
         Args:
-            urls: List of URLs to download
-            format: Output format for all URLs
+            urls: List of URLs to download.
+            output: Output format for all URLs.
+            **kwargs: Backwards-compatibility for older callers.
+                - format: Alias for ``output``.
 
         Returns:
-            JSON string containing results for all URLs
+            JSON string containing results for all URLs.
         """
         if not urls:
             raise URLDownloadError("URL list cannot be empty")
 
         if len(urls) > 10:
-            log_warning(f"Large URL list ({len(urls)} URLs), limiting to first 10")
+            log_warning(
+                f"Large URL list ({len(urls)} URLs), limiting to first 10"
+            )
             urls = urls[:10]
+
+        if "format" in kwargs and kwargs["format"] is not None:
+            output = kwargs["format"]
 
         results = []
         for i, url in enumerate(urls):
             try:
-                content = self.access_website_content(url, format)
+                content = self.access_website_content(url, output)
                 results.append(
-                    {"url": url, "success": True, "content": content, "error": None}
+                    {
+                        "url": url,
+                        "success": True,
+                        "content": content,
+                        "error": None,
+                    }
                 )
-                log_debug(f"Successfully downloaded {i+1}/{len(urls)}: {url}")
-            except Exception as e:
+                log_debug(
+                    f"Successfully downloaded {i + 1}/{len(urls)}: {url}"
+                )
+            except (URLDownloadError, ContentParsingError) as exc:
                 results.append(
-                    {"url": url, "success": False, "content": None, "error": str(e)}
+                    {
+                        "url": url,
+                        "success": False,
+                        "content": None,
+                        "error": str(exc),
+                    }
                 )
-                log_warning(f"Failed to download {i+1}/{len(urls)}: {url} - {e}")
+                log_warning(
+                    f"Failed to download {i + 1}/{len(urls)}: {url} - {exc}"
+                )
 
         return json.dumps(results, indent=2, ensure_ascii=False)
 
@@ -329,10 +386,11 @@ class URLContentDownloader(StrictToolkit):
 
             return json.dumps(metadata, indent=2)
 
-        except Exception as e:
-            log_error(f"Error getting metadata for {url}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Error getting metadata for {url}: {exc}")
             return json.dumps(
-                {"url": url, "accessible": False, "error": str(e)}, indent=2
+                {"url": url, "accessible": False, "error": str(exc)},
+                indent=2,
             )
 
     def check_url_accessibility(self, url: str) -> str:
@@ -355,14 +413,16 @@ class URLContentDownloader(StrictToolkit):
                 "url": validated_url,
                 "accessible": True,
                 "status_code": response.status_code,
-                "response_time_ms": int(response.elapsed.total_seconds() * 1000),
+                "response_time_ms": int(
+                    response.elapsed.total_seconds() * 1000
+                ),
             }
 
-        except Exception as e:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             result = {
                 "url": url,
                 "accessible": False,
-                "error": str(e),
+                "error": str(exc),
                 "response_time_ms": None,
             }
 
@@ -395,8 +455,8 @@ class URLContentDownloader(StrictToolkit):
             raw_html = solution["solution"]["response"]
             return raw_html
 
-        except Exception as e:
-            log_debug(f"BYPARR request failed: {e}")
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+            log_debug(f"BYPARR request failed: {exc}")
             return None
 
     def _fetch_content_with_antibot(self, url: str) -> str:
@@ -413,7 +473,9 @@ class URLContentDownloader(StrictToolkit):
                 # Add random delay between attempts
                 if attempt > 0:
                     delay = min(2**attempt, 10) + random.uniform(0, 1)
-                    log_debug(f"Waiting {delay:.1f}s before retry {attempt + 1}")
+                    log_debug(
+                        f"Waiting {delay:.1f}s before retry {attempt + 1}"
+                    )
                     time.sleep(delay)
 
                 response = self.client.get(url, headers=headers)
@@ -424,28 +486,28 @@ class URLContentDownloader(StrictToolkit):
                     raise AntiBotDetectedError("Anti-bot system detected")
 
                 content_type = response.headers.get("content-type", "").lower()
-                if "text/html" not in content_type and "text/plain" not in content_type:
+                if (
+                    "text/html" not in content_type
+                    and "text/plain" not in content_type
+                ):
                     log_warning(f"Unexpected content type: {content_type}")
 
                 return response.text
 
-            except httpx.TimeoutException as e:
+            except httpx.TimeoutException:
                 last_error = f"Request timeout (attempt {attempt + 1}/{self.max_retries})"
                 log_warning(last_error)
-            except httpx.HTTPStatusError as e:
-                last_error = f"HTTP error {e.response.status_code}"
+            except httpx.HTTPStatusError as exc:
+                last_error = f"HTTP error {exc.response.status_code}"
                 log_warning(last_error)
-                if e.response.status_code in [403, 429]:  # Likely anti-bot
+                if exc.response.status_code in [403, 429]:  # Likely anti-bot
                     continue
-                else:
-                    break  # Don't retry other HTTP errors
-            except AntiBotDetectedError as e:
-                last_error = (
-                    f"Anti-bot detected (attempt {attempt + 1}/{self.max_retries})"
-                )
+                break  # Don't retry other HTTP errors
+            except AntiBotDetectedError:
+                last_error = f"Anti-bot detected (attempt {attempt + 1}/{self.max_retries})"
                 log_warning(last_error)
-            except Exception as e:
-                last_error = f"Request failed: {e}"
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                last_error = f"Request failed: {exc}"
                 log_error(last_error)
                 break
 
@@ -453,7 +515,9 @@ class URLContentDownloader(StrictToolkit):
             f"Failed to fetch content after {self.max_retries} attempts: {last_error}"
         )
 
-    def _fetch_file_with_antibot(self, url: str) -> tuple[Union[str, bytes], str]:
+    def _fetch_file_with_antibot(
+        self, url: str
+    ) -> tuple[Union[str, bytes], str]:
         """
         Fetch any file with anti-bot bypass techniques.
         Returns tuple of (content, content_type).
@@ -468,7 +532,9 @@ class URLContentDownloader(StrictToolkit):
                 # Add random delay between attempts
                 if attempt > 0:
                     delay = min(2**attempt, 10) + random.uniform(0, 1)
-                    log_debug(f"Waiting {delay:.1f}s before retry {attempt + 1}")
+                    log_debug(
+                        f"Waiting {delay:.1f}s before retry {attempt + 1}"
+                    )
                     time.sleep(delay)
 
                 response = self.client.get(url, headers=headers)
@@ -482,27 +548,24 @@ class URLContentDownloader(StrictToolkit):
                     if self._detect_antibot_response(response):
                         raise AntiBotDetectedError("Anti-bot system detected")
                     return response.text, content_type
-                else:
-                    # For binary content, return bytes
-                    return response.content, content_type
 
-            except httpx.TimeoutException as e:
+                # For binary content, return bytes
+                return response.content, content_type
+
+            except httpx.TimeoutException:
                 last_error = f"Request timeout (attempt {attempt + 1}/{self.max_retries})"
                 log_warning(last_error)
-            except httpx.HTTPStatusError as e:
-                last_error = f"HTTP error {e.response.status_code}"
+            except httpx.HTTPStatusError as exc:
+                last_error = f"HTTP error {exc.response.status_code}"
                 log_warning(last_error)
-                if e.response.status_code in [403, 429]:  # Likely anti-bot
+                if exc.response.status_code in [403, 429]:  # Likely anti-bot
                     continue
-                else:
-                    break  # Don't retry other HTTP errors
-            except AntiBotDetectedError as e:
-                last_error = (
-                    f"Anti-bot detected (attempt {attempt + 1}/{self.max_retries})"
-                )
+                break  # Don't retry other HTTP errors
+            except AntiBotDetectedError:
+                last_error = f"Anti-bot detected (attempt {attempt + 1}/{self.max_retries})"
                 log_warning(last_error)
-            except Exception as e:
-                last_error = f"Request failed: {e}"
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                last_error = f"Request failed: {exc}"
                 log_error(last_error)
                 break
 
@@ -510,98 +573,110 @@ class URLContentDownloader(StrictToolkit):
             f"Failed to fetch file after {self.max_retries} attempts: {last_error}"
         )
 
-    def _process_file_content(
-        self, content: Union[str, bytes], content_type: str, format: str, url: str
+    def _process_file_content(  # pylint: disable=too-many-branches,too-many-return-statements
+        self,
+        content: Union[str, bytes],
+        content_type: str,
+        output_format: str,
+        url: str,
     ) -> str:
-        """
-        Process file content based on type and requested format.
-        """
+        """Process file content based on type and requested output format."""
         try:
             # Auto-detect format based on content type
-            if format == "auto":
+            if output_format == "auto":
                 if self._is_html_content(content_type):
-                    format = "markdown"
+                    output_format = "markdown"
                 elif self._is_markitdown_supported(content_type):
-                    format = (
-                        "markdown"  # Use MarkItDown for PDFs and other supported formats
-                    )
+                    # Use MarkItDown for PDFs and other supported formats.
+                    output_format = "markdown"
                 elif self._is_binary_content(content_type):
-                    format = "binary"
+                    output_format = "binary"
                 else:
-                    format = "text"
+                    output_format = "text"
 
             # Handle binary content
             if isinstance(content, bytes):
-                if format == "binary":
+                if output_format == "binary":
                     # For binary files, save to temp file and return file info
                     return self._handle_binary_file(content, content_type, url)
-                else:
-                    # Try to decode as text
+
+                # Try to decode as text
+                try:
+                    content = content.decode("utf-8")
+                except UnicodeDecodeError:
                     try:
-                        content = content.decode("utf-8")
+                        content = content.decode("latin-1")
                     except UnicodeDecodeError:
-                        try:
-                            content = content.decode("latin-1")
-                        except UnicodeDecodeError:
-                            return self._handle_binary_file(content, content_type, url)
+                        return self._handle_binary_file(
+                            content, content_type, url
+                        )
 
             # Ensure content is string at this point
             if not isinstance(content, str):
                 content = str(content)
 
             # Process text content
-            if format == "markdown":
+            if output_format == "markdown":
                 if self._is_html_content(content_type):
                     return self._html_to_markdown(content)
-                elif self._is_markitdown_supported(content_type):
-                    # For PDFs and other MarkItDown-supported formats, process as binary with MarkItDown
+                if self._is_markitdown_supported(content_type):
+                    # For PDFs and other MarkItDown-supported formats, process as binary.
                     if isinstance(content, str):
                         content = content.encode("utf-8")
                     return self._handle_binary_file(content, content_type, url)
-                else:
-                    return self._clean_text(content)
-            elif format == "text":
+                return self._clean_text(content)
+
+            if output_format == "text":
                 if self._is_html_content(content_type):
                     return self._html_to_text(content)
-                elif self._is_markitdown_supported(content_type):
-                    # For PDFs and other MarkItDown-supported formats, process as binary with MarkItDown
+                if self._is_markitdown_supported(content_type):
+                    # For PDFs and other MarkItDown-supported formats, process as binary.
                     if isinstance(content, str):
                         content = content.encode("utf-8")
                     return self._handle_binary_file(content, content_type, url)
-                else:
-                    return self._clean_text(content)
-            elif format == "html":
-                return content
-            else:
+                return self._clean_text(content)
+
+            if output_format == "html":
                 return content
 
-        except Exception as e:
-            log_error(f"Content processing failed: {e}")
-            raise ContentParsingError(f"Failed to process content: {e}")
+            return content
 
-    def _handle_binary_file(self, content: bytes, content_type: str, url: str) -> str:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Content processing failed: {exc}")
+            raise ContentParsingError(
+                f"Failed to process content: {exc}"
+            ) from exc
+
+    def _handle_binary_file(
+        self, content: bytes, content_type: str, url: str
+    ) -> str:
         """
         Handle binary files - try MarkItDown if available, otherwise return file info.
         """
         try:
-            # Try MarkItDown for supported binary formats
-            if MARKITDOWN_AVAILABLE and markitdown_converter is not None:
+            # Try MarkItDown for supported binary formats.
+            # For non-supported binaries (images, audio, etc.), skip conversion.
+            if self._is_markitdown_supported(content_type):
                 # Get file extension from URL or content type
                 file_ext = self._get_file_extension(url, content_type)
 
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file_path = os.path.join(temp_dir, f"content{file_ext}")
+                    temp_file_path = os.path.join(
+                        temp_dir, f"content{file_ext}"
+                    )
                     with open(temp_file_path, "wb") as temp_file:
                         temp_file.write(content)
 
                     try:
-                        markdown_content = markitdown_converter.convert(
+                        markdown_content = MARKITDOWN_CONVERTER.convert(
                             temp_file_path
                         ).markdown
-                        if markdown_content and len(markdown_content.strip()) > 0:
+                        if markdown_content and markdown_content.strip():
                             return self._clean_text(markdown_content)
-                    except Exception as e:
-                        log_debug(f"MarkItDown failed for binary file: {e}")
+                    except (
+                        Exception
+                    ) as exc:  # pylint: disable=broad-exception-caught
+                        log_debug(f"MarkItDown failed for binary file: {exc}")
 
             # Fallback: return file information
             return json.dumps(
@@ -610,23 +685,29 @@ class URLContentDownloader(StrictToolkit):
                     "content_type": content_type,
                     "size_bytes": len(content),
                     "url": url,
-                    "message": "Binary file downloaded successfully. Use MarkItDown-compatible formats for content extraction.",
+                    "message": (
+                        "Binary file downloaded successfully. Use MarkItDown-compatible "
+                        "formats for content extraction."
+                    ),
                 },
                 indent=2,
             )
 
-        except Exception as e:
-            log_error(f"Binary file handling failed: {e}")
-            return f"Binary file downloaded ({len(content)} bytes) but processing failed: {e}"
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Binary file handling failed: {exc}")
+            return f"Binary file downloaded ({len(content)} bytes) but processing failed: {exc}"
 
     def _is_html_content(self, content_type: str) -> bool:
         """Check if content type is HTML."""
-        return any(html_type in content_type for html_type in self.HTML_CONTENT_TYPES)
+        return any(
+            html_type in content_type for html_type in self.HTML_CONTENT_TYPES
+        )
 
     def _is_binary_content(self, content_type: str) -> bool:
         """Check if content type is binary."""
         return any(
-            binary_type in content_type for binary_type in self.BINARY_CONTENT_TYPES
+            binary_type in content_type
+            for binary_type in self.BINARY_CONTENT_TYPES
         )
 
     def _is_markitdown_supported(self, content_type: str) -> bool:
@@ -670,7 +751,10 @@ class URLContentDownloader(StrictToolkit):
                 if self.user_agent_rotation
                 else self.USER_AGENTS[0]
             ),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept": (
+                "text/html,application/xhtml+xml,application/xml;"
+                "q=0.9,image/webp,*/*;q=0.8"
+            ),
             "Accept-Language": "en-US,en;q=0.5",
             "Accept-Encoding": "gzip, deflate, br",
             "DNT": "1",
@@ -713,50 +797,49 @@ class URLContentDownloader(StrictToolkit):
 
         return any(indicator in content for indicator in antibot_indicators)
 
-    def _format_content(self, content: str, format: str) -> str:
-        """Format content to the specified output format."""
+    def _format_content(self, content: str, output_format: str) -> str:
+        """Format HTML content to the specified output format."""
         if not content:
             return ""
 
         try:
-            if format == "html":
+            if output_format == "html":
                 return content
-            elif format == "text":
+            if output_format == "text":
                 return self._html_to_text(content)
-            elif format == "markdown":
+            if output_format == "markdown":
                 return self._html_to_markdown(content)
-            else:
-                raise ContentParsingError(f"Unsupported format: {format}")
 
-        except Exception as e:
-            log_error(f"Content formatting failed: {e}")
-            raise ContentParsingError(f"Failed to format content: {e}")
+            raise ContentParsingError(f"Unsupported format: {output_format}")
+
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Content formatting failed: {exc}")
+            raise ContentParsingError(
+                f"Failed to format content: {exc}"
+            ) from exc
 
     def _html_to_markdown(self, html_content: str) -> str:
         """Convert HTML content to markdown."""
-        if MARKITDOWN_AVAILABLE and markitdown_converter is not None:
-            try:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file_path = os.path.join(temp_dir, "content.html")
-                    with open(temp_file_path, "w", encoding="utf-8") as temp_file:
-                        temp_file.write(html_content)
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file_path = os.path.join(temp_dir, "content.html")
+                with open(temp_file_path, "w", encoding="utf-8") as temp_file:
+                    temp_file.write(html_content)
 
-                    markdown_content = markitdown_converter.convert(
-                        temp_file_path
-                    ).markdown
-                    return self._clean_text(markdown_content)
-            except Exception as e:
-                log_warning(
-                    f"MarkItDown conversion failed: {e}, falling back to basic conversion"
-                )
+                markdown_content = MARKITDOWN_CONVERTER.convert(
+                    temp_file_path
+                ).markdown
+                return self._clean_text(markdown_content)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_warning(
+                f"MarkItDown conversion failed: {exc}, falling back to basic conversion"
+            )
 
         # Fallback to basic HTML stripping
         return self._html_to_text(html_content)
 
     def _html_to_text(self, html_content: str) -> str:
         """Convert HTML content to plain text."""
-        import re
-
         # Remove script and style elements
         text = re.sub(
             r"<(script|style)[^>]*>.*?</\1>",
@@ -778,13 +861,13 @@ class URLContentDownloader(StrictToolkit):
         if not text:
             return ""
 
-        import re
-
         # Remove excessive whitespace and normalize
         text = re.sub(r"\s+", " ", text.strip())
 
         # Remove control characters
-        text = "".join(char for char in text if ord(char) >= 32 or char in "\n\t")
+        text = "".join(
+            char for char in text if ord(char) >= 32 or char in "\n\t"
+        )
 
         return text
 
@@ -798,83 +881,56 @@ class URLContentDownloader(StrictToolkit):
             if not parsed.scheme or not parsed.netloc:
                 raise URLDownloadError("Invalid URL format")
             if parsed.scheme not in ["http", "https"]:
-                raise URLDownloadError("Only HTTP and HTTPS URLs are supported")
-        except Exception as e:
-            raise URLDownloadError(f"URL validation failed: {e}")
+                raise URLDownloadError(
+                    "Only HTTP and HTTPS URLs are supported"
+                )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise URLDownloadError(f"URL validation failed: {exc}") from exc
 
         return url
 
-    def _validate_format(self, format: str) -> str:
+    def _validate_format(self, output_format: str) -> str:
         """Validate output format."""
-        if format not in self.SUPPORTED_FORMATS:
+        if output_format not in self.SUPPORTED_FORMATS:
+            supported = ", ".join(self.SUPPORTED_FORMATS)
             raise ContentParsingError(
-                f"Unsupported format '{format}'. Supported formats: {', '.join(self.SUPPORTED_FORMATS)}"
+                f"Unsupported format '{output_format}'. Supported formats: {supported}"
             )
-        return format
+        return output_format
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns detailed instructions for LLMs on how to use the URL Content Downloader.
-        """
+        """Return precise, structured instructions for LLM tool calling."""
         instructions = """
 <content_downloader_tools_instructions>
-*** URL Content Downloader Tool Instructions ***
+URL content downloader (extract text/markdown from HTML/docs; else return minimal metadata)
 
-Use this tool to download and parse content from any URL with advanced anti-bot bypass capabilities. By using these tools you can automatically fetch and process web content via URLs without manual intervention.
+GOAL
+- Given a URL, fetch content safely and return either readable text/markdown or minimal metadata.
 
-### Functions Tools
+OUTPUT
+- Always returns a string.
+- output=text/markdown/html: extracted content.
+- output=binary: JSON metadata; for PDFs/office docs it may return extracted markdown.
 
-1. **access_website_content**: Fetch content from a single URL.
-     - Parameters:
-       - `url` (str): The URL to download, e.g., "https://example.com/article"
-       - `output` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+TOOLS
+- get_file_from_url(url, output="auto")  # default
+- access_website_content(url, output="auto")  # alias
+- download_multiple_urls(urls, output="auto")  # max 10
+- get_url_metadata(url)  # HEAD only
+- check_url_accessibility(url)  # HEAD + timing
 
-2. **get_file_from_url**: Fetch any file from a URL with smart content processing.
-     - Parameters:
-       - `url` (str): The URL to download, e.g., "https://example.com/document.pdf"
-       - `output` (str, optional): Output format - "auto" (default), "markdown", "text", "html", or "binary"
+OUTPUT OPTIONS
+- auto | markdown | text | html | binary
 
-3. **download_multiple_urls**: Fetch content from multiple URLs in batch.
-     - Parameters:
-       - `urls` (list): List of URLs to download, e.g., ["https://site1.com", "https://site2.com"]
-       - `output` (str, optional): Output format for all URLs - "auto" (default), "markdown", "text", "html", or "binary"
+CONTEXT-SIZE RULES (IMPORTANT)
+- Prefer get_url_metadata() first when unsure (avoid downloading huge/binary files).
+- Prefer output="text" for summarization; use markdown only if formatting matters.
+- Do NOT paste full extracted pages/PDFs into the final answer; summarize + quote short excerpts.
 
-4. **get_url_metadata**: Extract metadata without downloading full content.
-     - Parameters:
-       - `url` (str): The URL to analyze, e.g., "https://example.com"
-
-5. **check_url_accessibility**: Test if a URL is accessible.
-     - Parameters:
-       - `url` (str): The URL to check, e.g., "https://example.com"
-
-### Features
-
-- Universal file downloading support for various formats including HTML, PDF, Word documents, images, etc.
-- Smart content processing: Uses MarkItDown for HTML and binary handling for files.
-- Automatic BYPARR integration for anti-bot bypass capabilities.
-- User-agent rotation and header spoofing to avoid detection.
-- Robust retry logic with exponential backoff to handle transient errors.
-- Multiple output format support with automatic detection based on content type.
-- Comprehensive error handling mechanisms.
-
-### Output Options
-
-- `auto`: Automatically detects the best format (markdown for HTML, binary info for files).
-- `markdown`: Converts HTML to markdown using MarkItDown.
-- `text`: Extracts plain text from content.
-- `html`: Returns raw HTML content.
-- `binary`: Provides file information and processes binary data using MarkItDown when possible.
-
-### Automatic Handling
-
-The tool automatically manages:
-- Any type of file including HTML, PDF, Word documents, Excel spreadsheets, images, etc.
-- Anti-bot detection and bypass mechanisms.
-- Content parsing and formatting based on the detected file type.
-- Error recovery strategies and retries.
-- Timeout management for long-running requests.
-- Integration with MarkItDown for enhanced binary processing.
+ERRORS
+- URLDownloadError (validation/fetch)
+- ContentParsingError (processing)
 
 </content_downloader_tools_instructions>
 """
@@ -885,5 +941,5 @@ The tool automatically manages:
         try:
             if hasattr(self, "client"):
                 self.client.close()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass

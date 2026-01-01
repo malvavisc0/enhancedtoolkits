@@ -1,0 +1,12 @@
+[MASTER]
+
+[MESSAGES CONTROL]
+# The toolkits contain large, documentation-heavy modules and some intentional
+# shared logic across toolkits. These checks are noisy in this codebase.
+disable=too-many-lines,duplicate-code
+
+[FORMAT]
+max-line-length=100
+
+[REPORTS]
+score=yes

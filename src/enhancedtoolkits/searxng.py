@@ -1,6 +1,4 @@
 """
-Enhanced SearxNG Tools v2.0
-
 A production-ready search toolkit that provides:
 - Web search with SearxNG integration
 - Optional content fetching with Byparr
@@ -8,15 +6,12 @@ A production-ready search toolkit that provides:
 - Input validation and sanitization
 - Configurable timeouts and retry logic
 - Multiple search categories support
-
-Author: malvavisc0
-License: MIT
-Version: 2.0.0
 """
 
 import json
 import os
 import random
+import re
 import tempfile
 import time
 import urllib.parse
@@ -33,43 +28,37 @@ BYPARR_URL = os.environ.get("BYPARR_URL", "http://byparr:8191/v1")
 BYPARR_TIMEOUT = int(os.environ.get("BYPARR_TIMEOUT", "60"))
 BYPARR_ENABLED = os.environ.get("BYPARR_ENABLED", "false").lower() == "true"
 
-# Required MarkItDown import
+# MarkItDown is a hard dependency for this toolkit.
 try:
     from markitdown import MarkItDown
-
-    markitdown_converter = MarkItDown()
-except ImportError:
+except ImportError as exc:
     raise ImportError(
         "MarkItDown is required for EnhancedSearxngTools. "
-        "Please install it with: pip install markitdown"
-    )
+        "Install it with: pip install markitdown"
+    ) from exc
+
+MARKITDOWN_CONVERTER = MarkItDown()
 
 
 class SearxngSearchError(Exception):
     """Custom exception for SearxNG search errors."""
 
-    pass
-
 
 class SearxngContentError(Exception):
     """Custom exception for content fetching errors."""
-
-    pass
 
 
 class FileDownloadError(SearxngContentError):
     """Custom exception for file download errors."""
 
-    pass
-
 
 class UnsupportedFileTypeError(SearxngContentError):
     """Custom exception for unsupported file types."""
 
-    pass
 
-
-class EnhancedSearxngTools(StrictToolkit):
+class EnhancedSearxngTools(
+    StrictToolkit
+):  # pylint: disable=too-many-instance-attributes
     """
     Enhanced SearxNG Tools v2.0
 
@@ -89,10 +78,10 @@ class EnhancedSearxngTools(StrictToolkit):
         "social": "Social media content",
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         host: str,
-        max_results: Optional[int] = 10,
+        max_results: Optional[int] = 20,
         timeout: int = 30,
         enable_content_fetching: Optional[bool] = False,
         enable_file_downloads: Optional[bool] = True,
@@ -120,7 +109,9 @@ class EnhancedSearxngTools(StrictToolkit):
 
         # Configuration
         self.host = self._validate_host(host)
-        self.max_results = max(1, min(30, max_results or 10))  # Limit between 1-30
+        self.max_results = max(
+            1, min(30, max_results or 20)
+        )  # Limit between 1-30
         self.timeout = max(5, min(120, timeout))  # Limit between 5-120 seconds
         self.enable_content_fetching = enable_content_fetching
         self.enable_file_downloads = enable_file_downloads
@@ -140,13 +131,17 @@ class EnhancedSearxngTools(StrictToolkit):
         if byparr_enabled is not None:
             self.byparr_enabled = byparr_enabled
         else:
-            self.byparr_enabled = BYPARR_ENABLED and self.enable_content_fetching
+            self.byparr_enabled = (
+                BYPARR_ENABLED and self.enable_content_fetching
+            )
 
         # HTTP client configuration
         self.client = httpx.Client(
             timeout=httpx.Timeout(self.timeout),
             follow_redirects=True,
-            headers={"User-Agent": "Enhanced-SearxNG-Tools/2.0 (Python/httpx)"},
+            headers={
+                "User-Agent": "Enhanced-SearxNG-Tools/2.0 (Python/httpx)"
+            },
         )
 
         # File download client configuration (separate timeout)
@@ -167,12 +162,17 @@ class EnhancedSearxngTools(StrictToolkit):
         self.register(self.perform_category_search)
 
         log_info(
-            f"Enhanced SearxNG Tools initialized - Host: {self.host}, Max Results: {self.max_results}, "
-            f"Content Fetching: {self.enable_content_fetching}, File Downloads: {self.enable_file_downloads}, "
-            f"Supported Files: {self.supported_file_types}, Byparr: {self.byparr_enabled}"
+            "Enhanced SearxNG Tools initialized - "
+            f"Host: {self.host}, Max Results: {self.max_results}, "
+            f"Content Fetching: {self.enable_content_fetching}, "
+            f"File Downloads: {self.enable_file_downloads}, "
+            f"Supported Files: {self.supported_file_types}, "
+            f"Byparr: {self.byparr_enabled}"
         )
 
-    def perform_web_search(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_web_search(
+        self, query: str, max_results: Optional[int] = None
+    ) -> str:
         """
         Perform a web search using SearxNG.
 
@@ -188,7 +188,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="general", max_results=max_results)
 
-    def perform_news_search(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_news_search(
+        self, query: str, max_results: Optional[int] = None
+    ) -> str:
         """
         Perform a news search using SearxNG.
 
@@ -204,7 +206,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="news", max_results=max_results)
 
-    def perform_image_search(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_image_search(
+        self, query: str, max_results: Optional[int] = None
+    ) -> str:
         """
         Perform an image search using SearxNG.
 
@@ -220,7 +224,9 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         return self._search(query, category="images", max_results=max_results)
 
-    def perform_video_search(self, query: str, max_results: Optional[int] = None) -> str:
+    def perform_video_search(
+        self, query: str, max_results: Optional[int] = None
+    ) -> str:
         """
         Perform a video search using SearxNG.
 
@@ -286,14 +292,17 @@ class EnhancedSearxngTools(StrictToolkit):
 
             # Get content-type for better file detection
             content_type = (
-                self._get_content_type(parsed_url) if self.enable_file_downloads else None
+                self._get_content_type(parsed_url)
+                if self.enable_file_downloads
+                else None
             )
 
             # Check if this is a supported file type
             if self._is_supported_file_type(parsed_url, content_type):
                 file_type = self._detect_file_type(parsed_url, content_type)
                 log_info(
-                    f"Detected {file_type} file (content-type: {content_type}), processing with file downloader"
+                    f"Detected {file_type} file (content-type: {content_type}), "
+                    "processing with file downloader"
                 )
                 return self._download_and_process_file(parsed_url, file_type)
 
@@ -303,20 +312,31 @@ class EnhancedSearxngTools(StrictToolkit):
                     content = self._fetch_content_with_byparr(parsed_url)
                     if content:
                         return content
-                    log_warning(f"Byparr failed for {url}, falling back to direct fetch")
-                except Exception as e:
                     log_warning(
-                        f"Byparr error for {url}: {e}, falling back to direct fetch"
+                        f"Byparr failed for {url}, falling back to direct fetch"
+                    )
+                except (
+                    httpx.HTTPError,
+                    ValueError,
+                    KeyError,
+                    TypeError,
+                ) as exc:
+                    log_warning(
+                        f"Byparr error for {url}: {exc}, falling back to direct fetch"
                     )
 
             # Fallback to direct HTTP request for HTML content
             return self._fetch_content_direct(url)
 
-        except Exception as e:
-            log_error(f"Error fetching content from {url}: {e}")
-            raise SearxngContentError(f"Failed to fetch content from {url}: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Error fetching content from {url}: {exc}")
+            raise SearxngContentError(
+                f"Failed to fetch content from {url}: {exc}"
+            ) from exc
 
-    def _detect_file_type(self, url: str, content_type: Optional[str] = None) -> str:
+    def _detect_file_type(  # pylint: disable=too-many-return-statements
+        self, url: str, content_type: Optional[str] = None
+    ) -> str:
         """
         Detect file type from URL extension and content-type header.
 
@@ -333,14 +353,17 @@ class EnhancedSearxngTools(StrictToolkit):
                 content_type_lower = content_type.lower()
                 if "application/pdf" in content_type_lower:
                     return "pdf"
-                elif any(ct in content_type_lower for ct in ["text/plain", "text/txt"]):
+                if any(
+                    ct in content_type_lower
+                    for ct in ["text/plain", "text/txt"]
+                ):
                     return "txt"
-                elif any(
+                if any(
                     ct in content_type_lower
                     for ct in ["text/markdown", "text/x-markdown"]
                 ):
                     return "md"
-                elif any(
+                if any(
                     ct in content_type_lower
                     for ct in ["text/html", "application/xhtml+xml"]
                 ):
@@ -352,15 +375,15 @@ class EnhancedSearxngTools(StrictToolkit):
 
             if path.endswith(".pdf"):
                 return "pdf"
-            elif path.endswith((".txt", ".text")):
+            if path.endswith((".txt", ".text")):
                 return "txt"
-            elif path.endswith((".md", ".markdown")):
+            if path.endswith((".md", ".markdown")):
                 return "md"
-            elif path.endswith((".html", ".htm")):
+            if path.endswith((".html", ".htm")):
                 return "html"
-            else:
-                return "unknown"
-        except Exception:
+
+            return "unknown"
+        except Exception:  # pylint: disable=broad-exception-caught
             return "unknown"
 
     def _is_supported_file_type(
@@ -396,8 +419,8 @@ class EnhancedSearxngTools(StrictToolkit):
             if self.file_client:
                 response = self.file_client.head(url, timeout=10)
                 return response.headers.get("content-type")
-        except Exception as e:
-            log_debug(f"Failed to get content-type for {url}: {e}")
+        except httpx.HTTPError as exc:
+            log_debug(f"Failed to get content-type for {url}: {exc}")
         return None
 
     def _download_and_process_file(self, url: str, file_type: str) -> str:
@@ -419,18 +442,22 @@ class EnhancedSearxngTools(StrictToolkit):
 
             if file_type == "pdf":
                 return self._process_pdf_content(url)
-            elif file_type == "txt":
+            if file_type == "txt":
                 return self._process_text_file(url)
-            elif file_type == "md":
+            if file_type == "md":
                 return self._process_markdown_file(url)
-            else:
-                raise UnsupportedFileTypeError(f"Unsupported file type: {file_type}")
+
+            raise UnsupportedFileTypeError(
+                f"Unsupported file type: {file_type}"
+            )
 
         except (FileDownloadError, UnsupportedFileTypeError):
             raise
-        except Exception as e:
-            log_error(f"Error processing {file_type} file from {url}: {e}")
-            raise FileDownloadError(f"Failed to process {file_type} file: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Error processing {file_type} file from {url}: {exc}")
+            raise FileDownloadError(
+                f"Failed to process {file_type} file: {exc}"
+            ) from exc
 
     def _process_pdf_content(self, url: str) -> str:
         """
@@ -461,7 +488,9 @@ class EnhancedSearxngTools(StrictToolkit):
                 content_length
                 and int(content_length) > self.max_file_size_mb * 1024 * 1024
             ):
-                raise FileDownloadError(f"PDF file too large: {content_length} bytes")
+                raise FileDownloadError(
+                    f"PDF file too large: {content_length} bytes"
+                )
 
             # Process with MarkItDown
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -469,12 +498,14 @@ class EnhancedSearxngTools(StrictToolkit):
                 with open(temp_file_path, "wb") as temp_file:
                     temp_file.write(response.content)
 
-                markdown_content = markitdown_converter.convert(temp_file_path).markdown
+                markdown_content = MARKITDOWN_CONVERTER.convert(
+                    temp_file_path
+                ).markdown
                 return self._clean_text(markdown_content)
 
-        except Exception as e:
-            log_error(f"PDF processing failed for {url}: {e}")
-            raise FileDownloadError(f"Failed to process PDF: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"PDF processing failed for {url}: {exc}")
+            raise FileDownloadError(f"Failed to process PDF: {exc}") from exc
 
     def _process_text_file(self, url: str) -> str:
         """
@@ -497,7 +528,12 @@ class EnhancedSearxngTools(StrictToolkit):
             # Validate content-type for text files
             if content_type and not any(
                 ct in content_type
-                for ct in ["text/plain", "text/txt", "text/", "application/octet-stream"]
+                for ct in [
+                    "text/plain",
+                    "text/txt",
+                    "text/",
+                    "application/octet-stream",
+                ]
             ):
                 log_warning(f"Expected text content type, got: {content_type}")
 
@@ -507,7 +543,9 @@ class EnhancedSearxngTools(StrictToolkit):
                 content_length
                 and int(content_length) > self.max_file_size_mb * 1024 * 1024
             ):
-                raise FileDownloadError(f"Text file too large: {content_length} bytes")
+                raise FileDownloadError(
+                    f"Text file too large: {content_length} bytes"
+                )
 
             # Try to decode as text
             try:
@@ -516,13 +554,17 @@ class EnhancedSearxngTools(StrictToolkit):
                 try:
                     content = response.content.decode("latin-1")
                 except UnicodeDecodeError:
-                    content = response.content.decode("utf-8", errors="replace")
+                    content = response.content.decode(
+                        "utf-8", errors="replace"
+                    )
 
             return self._clean_text(content)
 
-        except Exception as e:
-            log_error(f"Text file processing failed for {url}: {e}")
-            raise FileDownloadError(f"Failed to process text file: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Text file processing failed for {url}: {exc}")
+            raise FileDownloadError(
+                f"Failed to process text file: {exc}"
+            ) from exc
 
     def _process_markdown_file(self, url: str) -> str:
         """
@@ -553,7 +595,9 @@ class EnhancedSearxngTools(StrictToolkit):
                     "application/octet-stream",
                 ]
             ):
-                log_warning(f"Expected markdown content type, got: {content_type}")
+                log_warning(
+                    f"Expected markdown content type, got: {content_type}"
+                )
 
             # Check file size
             content_length = response.headers.get("content-length")
@@ -572,13 +616,17 @@ class EnhancedSearxngTools(StrictToolkit):
                 try:
                     content = response.content.decode("latin-1")
                 except UnicodeDecodeError:
-                    content = response.content.decode("utf-8", errors="replace")
+                    content = response.content.decode(
+                        "utf-8", errors="replace"
+                    )
 
             return self._clean_text(content)
 
-        except Exception as e:
-            log_error(f"Markdown file processing failed for {url}: {e}")
-            raise FileDownloadError(f"Failed to process markdown file: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Markdown file processing failed for {url}: {exc}")
+            raise FileDownloadError(
+                f"Failed to process markdown file: {exc}"
+            ) from exc
 
     def _fetch_file_with_antibot(self, url: str) -> httpx.Response:
         """
@@ -607,7 +655,9 @@ class EnhancedSearxngTools(StrictToolkit):
                 # Add random delay between attempts
                 if attempt > 0:
                     delay = min(2**attempt, 10) + random.uniform(0, 1)
-                    log_debug(f"Waiting {delay:.1f}s before retry {attempt + 1}")
+                    log_debug(
+                        f"Waiting {delay:.1f}s before retry {attempt + 1}"
+                    )
                     time.sleep(delay)
 
                 response = self.file_client.get(url, headers=headers)
@@ -615,18 +665,19 @@ class EnhancedSearxngTools(StrictToolkit):
 
                 return response
 
-            except httpx.TimeoutException as e:
-                last_error = f"Request timeout (attempt {attempt + 1}/{max_retries})"
+            except httpx.TimeoutException:
+                last_error = (
+                    f"Request timeout (attempt {attempt + 1}/{max_retries})"
+                )
                 log_warning(last_error)
-            except httpx.HTTPStatusError as e:
-                last_error = f"HTTP error {e.response.status_code}"
+            except httpx.HTTPStatusError as exc:
+                last_error = f"HTTP error {exc.response.status_code}"
                 log_warning(last_error)
-                if e.response.status_code in [403, 429]:  # Likely anti-bot
+                if exc.response.status_code in [403, 429]:  # Likely anti-bot
                     continue
-                else:
-                    break  # Don't retry other HTTP errors
-            except Exception as e:
-                last_error = f"Request failed: {e}"
+                break  # Don't retry other HTTP errors
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                last_error = f"Request failed: {exc}"
                 log_error(last_error)
                 break
 
@@ -642,14 +693,28 @@ class EnhancedSearxngTools(StrictToolkit):
             Dictionary of HTTP headers
         """
         user_agents = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+            (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
+                "Gecko/20100101 Firefox/121.0"
+            ),
         ]
 
         headers = {
             "User-Agent": random.choice(user_agents),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept": (
+                "text/html,application/xhtml+xml,application/xml;"
+                "q=0.9,image/webp,*/*;q=0.8"
+            ),
             "Accept-Language": "en-US,en;q=0.5",
             "Accept-Encoding": "gzip, deflate, br",
             "DNT": "1",
@@ -703,18 +768,21 @@ class EnhancedSearxngTools(StrictToolkit):
             response_data = self._make_search_request(url)
 
             # Process results
-            results = self._process_search_results(response_data, count, category)
+            results = self._process_search_results(
+                response_data, count, category
+            )
 
             log_info(
-                f"Search completed: {len(results)} results for query '{query}' in category '{category or 'general'}'"
+                f"Search completed: {len(results)} results for query '{query}' "
+                f"in category '{category or 'general'}'"
             )
             return json.dumps(results, indent=2, ensure_ascii=False)
 
         except SearxngSearchError:
             raise
-        except Exception as e:
-            log_error(f"Unexpected error during search: {e}")
-            raise SearxngSearchError(f"Search failed: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"Unexpected error during search: {exc}")
+            raise SearxngSearchError(f"Search failed: {exc}") from exc
 
     def _make_search_request(self, url: str, max_retries: int = 3) -> Dict:
         """
@@ -729,26 +797,30 @@ class EnhancedSearxngTools(StrictToolkit):
 
                 data = response.json()
                 if "results" not in data:
-                    raise SearxngSearchError("Invalid response format from SearxNG")
+                    raise SearxngSearchError(
+                        "Invalid response format from SearxNG"
+                    )
 
                 return data
 
             except httpx.TimeoutException as e:
-                last_error = f"Request timeout (attempt {attempt + 1}/{max_retries})"
+                last_error = (
+                    f"Request timeout (attempt {attempt + 1}/{max_retries})"
+                )
                 log_warning(last_error)
                 log_warning(e)
             except httpx.HTTPStatusError as e:
-                last_error = f"HTTP error {e.response.status_code}: {e.response.text}"
+                last_error = (
+                    f"HTTP error {e.response.status_code}: {e.response.text}"
+                )
                 log_error(last_error)
                 log_warning(e)
                 break  # Don't retry HTTP errors
             except json.JSONDecodeError as e:
-                last_error = (
-                    f"Invalid JSON response (attempt {attempt + 1}/{max_retries})"
-                )
+                last_error = f"Invalid JSON response (attempt {attempt + 1}/{max_retries})"
                 log_warning(last_error)
                 log_warning(e)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 last_error = f"Request failed: {e}"
                 log_error(last_error)
                 break  # Don't retry unexpected errors
@@ -757,7 +829,7 @@ class EnhancedSearxngTools(StrictToolkit):
             f"Search request failed after {max_retries} attempts: {last_error}"
         )
 
-    def _process_search_results(
+    def _process_search_results(  # pylint: disable=too-many-branches
         self, response_data: Dict, count: int, category: Optional[str]
     ) -> List[Dict]:
         """
@@ -808,7 +880,9 @@ class EnhancedSearxngTools(StrictToolkit):
                 # Check if this is a supported file type
                 content_type = None
                 file_type = (
-                    self._detect_file_type(result["url"]) if result["url"] else "unknown"
+                    self._detect_file_type(result["url"])
+                    if result["url"]
+                    else "unknown"
                 )
 
                 # Get content-type for better detection if file downloads are enabled
@@ -819,7 +893,9 @@ class EnhancedSearxngTools(StrictToolkit):
                 ):
                     content_type = self._get_content_type(result["url"])
                     # Re-detect with content-type for accuracy
-                    file_type = self._detect_file_type(result["url"], content_type)
+                    file_type = self._detect_file_type(
+                        result["url"], content_type
+                    )
 
                 if file_type != "unknown":
                     result["file_type"] = file_type
@@ -835,23 +911,34 @@ class EnhancedSearxngTools(StrictToolkit):
                 ):  # Limit content fetching to first 3 results
                     try:
                         # Check if this is a supported file type for download
-                        if self._is_supported_file_type(result["url"], content_type):
+                        if self._is_supported_file_type(
+                            result["url"], content_type
+                        ):
                             log_info(
-                                f"Processing {file_type} file: {result['url']} (content-type: {content_type})"
+                                f"Processing {file_type} file: {result['url']} "
+                                f"(content-type: {content_type})"
                             )
-                            result["content"] = self._download_and_process_file(
-                                result["url"], file_type
+                            result["content"] = (
+                                self._download_and_process_file(
+                                    result["url"], file_type
+                                )
                             )
                         else:
                             # Regular HTML content fetching
-                            result["content"] = self._fetch_content_safe(result["url"])
-                    except Exception as e:
-                        log_debug(f"Content fetching failed for {result['url']}: {e}")
+                            result["content"] = self._fetch_content_safe(
+                                result["url"]
+                            )
+                    except (
+                        Exception
+                    ) as e:  # pylint: disable=broad-exception-caught
+                        log_debug(
+                            f"Content fetching failed for {result['url']}: {e}"
+                        )
                         result["content"] = ""
 
                 results.append(result)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 log_warning(f"Error processing search result {i}: {e}")
                 continue
 
@@ -884,8 +971,8 @@ class EnhancedSearxngTools(StrictToolkit):
             raw_html = solution["solution"]["response"]
             return self._parse_html_content(raw_html)
 
-        except Exception as e:
-            log_debug(f"Byparr request failed: {e}")
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+            log_debug(f"Byparr request failed: {exc}")
             return None
 
     def _fetch_content_direct(self, url: str) -> str:
@@ -902,8 +989,8 @@ class EnhancedSearxngTools(StrictToolkit):
 
             return self._parse_html_content(response.text)
 
-        except Exception as e:
-            raise SearxngContentError(f"Direct fetch failed: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise SearxngContentError(f"Direct fetch failed: {exc}") from exc
 
     def _parse_html_content(self, html_content: str) -> str:
         """
@@ -927,11 +1014,15 @@ class EnhancedSearxngTools(StrictToolkit):
                 with open(temp_file_path, "w", encoding="utf-8") as temp_file:
                     temp_file.write(html_content)
 
-                markdown_content = markitdown_converter.convert(temp_file_path).markdown
+                markdown_content = MARKITDOWN_CONVERTER.convert(
+                    temp_file_path
+                ).markdown
                 return self._clean_text(markdown_content)
-        except Exception as e:
-            log_error(f"HTML parsing failed: {e}")
-            raise SearxngContentError(f"Failed to parse HTML content: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log_error(f"HTML parsing failed: {exc}")
+            raise SearxngContentError(
+                f"Failed to parse HTML content: {exc}"
+            ) from exc
 
     def _fetch_content_safe(self, url: str) -> str:
         """
@@ -939,7 +1030,7 @@ class EnhancedSearxngTools(StrictToolkit):
         """
         try:
             return self._get_page_content(url)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             return ""
 
     def _validate_host(self, host: str) -> str:
@@ -956,8 +1047,8 @@ class EnhancedSearxngTools(StrictToolkit):
             parsed = urlparse(host)
             if not parsed.netloc:
                 raise ValueError("Invalid host URL")
-        except Exception:
-            raise ValueError(f"Invalid host URL: {host}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise ValueError(f"Invalid host URL: {host}") from exc
 
         return host.rstrip("/")
 
@@ -973,9 +1064,11 @@ class EnhancedSearxngTools(StrictToolkit):
             if not parsed.scheme or not parsed.netloc:
                 raise SearxngContentError("Invalid URL format")
             if parsed.scheme not in ["http", "https"]:
-                raise SearxngContentError("Only HTTP and HTTPS URLs are supported")
-        except Exception as e:
-            raise SearxngContentError(f"URL validation failed: {e}")
+                raise SearxngContentError(
+                    "Only HTTP and HTTPS URLs are supported"
+                )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            raise SearxngContentError(f"URL validation failed: {exc}") from exc
 
         return url
 
@@ -987,86 +1080,54 @@ class EnhancedSearxngTools(StrictToolkit):
             return ""
 
         # Remove excessive whitespace and normalize
-        import re
-
         text = re.sub(r"\s+", " ", text.strip())
 
         # Remove control characters
-        text = "".join(char for char in text if ord(char) >= 32 or char in "\n\t")
+        text = "".join(
+            char for char in text if ord(char) >= 32 or char in "\n\t"
+        )
 
         return text
 
     @staticmethod
     def get_llm_usage_instructions() -> str:
-        """
-        Returns a set of detailed instructions for LLMs on how to use each tool in EnhancedSearxngTools.
-        Each instruction includes the method name, description, parameters, types, and example values.
-        """
+        """Return precise, structured instructions for LLM tool calling."""
         instructions = """
 <internet_search_tools_instructions>
-*** Web Search Tools Instructions using SearxNG ***
+Web search via SearxNG (ranked results; optional limited content fetch)
 
-These tools enable you to perform various web searches and manage the results. They provide accurate, real-time information with improved file handling capabilities.
+GOAL
+- Search the web via SearxNG and return ranked results as JSON.
 
-**Content Fetching Capabilities:**
-- The tools can automatically fetch and process content from URLs in search results when content fetching is enabled
-- Supported file types (PDF, TXT, MD) are detected and their contents extracted
-- HTML content can be fetched and converted to markdown
-- File processing includes anti-bot measures for reliable access
+OUTPUT
+- Always returns a JSON string encoding a list of results.
+- Each result includes: title, url, summary, category.
+- Optional fields by category:
+  - images: thumbnail/img_src/width/height
+  - videos: thumbnail/duration/publishedDate
+  - news: publishedDate/source
+  - files: file_type/content_type
+  - content: only if enable_content_fetching=True
 
-**General Instructions:**
-- All methods return a dictionary with 'results' (list) and 'status' (str) keys.
-- Each result is a dictionary containing relevant data based on the search type.
-- The 'file_type' field will be present if supported file types are detected in URLs.
-- If errors occur, an error message will be returned under the 'error' key.
+TOOLS
+- perform_web_search(query, max_results=None)
+- perform_news_search(query, max_results=None)
+- perform_image_search(query, max_results=None)
+- perform_video_search(query, max_results=None)
+- perform_category_search(query, category, max_results=None)
+  categories: general|news|images|videos|music|files|science|social
 
-### Functions Tools
+LIMITS / CONTEXT-SIZE RULES (IMPORTANT)
+- query is trimmed and truncated to 500 chars.
+- Keep max_results small (5–10) unless the user asks; internal clamping applies.
+- Content fetching is OFF by default and expensive/large:
+  - enabled only for general/news/files
+  - fetches at most the first 3 results
+- Do NOT paste large raw page/PDF content into the final answer; summarize.
 
-1. **perform_web_search**: Perform a web search.
-   - Parameters:
-     - `query` (str): Search term or phrase, e.g., "climate change impacts".
-     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `perform_web_search("python best practices", max_results=7)`
-
-2. **perform_news_search**: Perform a news search.
-   - Parameters:
-     - `query` (str): Search term or phrase, e.g., "AI in healthcare".
-     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `perform_news_search("space exploration", max_results=5)`
-
-3. **perform_image_search**: Perform an image search.
-   - Parameters:
-     - `query` (str): Search term or phrase, e.g., "coffee shop interior".
-     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `perform_image_search("dog breeds")`
-
-4. **perform_video_search**: Perform a video search.
-   - Parameters:
-     - `query` (str): Search term or phrase, e.g., "language learning".
-     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `perform_video_search("language learning", max_results=8)`
-
-5. **perform_category_search**: Search within a specific category.
-   - Parameters:
-     - `query` (str): Search term or phrase, e.g., "quantum computing advancements".
-     - `category` (str): One of: general, news, images, videos, music, files, science, social, or it.
-     - `max_results` (int, optional): Maximum results to return (default: 5, range: 1-30).
-   - *Example:* `perform_category_search("cybersecurity trends", category="it")`
-
-**File Processing Features:**
-- Automatically detects PDF, TXT, and Markdown files in search results, including from URLs in the search results.
-
-**Configuration Options:**
-- Max file download size (default: 50MB)
-- Download timeout protection
-- Enable/disable URL content fetching and file downloads
-
-**Additional Notes:**
-- Ensure the category parameter in `perform_category_search` matches one of the accepted values.
-- File processing is automatically applied when supported file types are detected in URLs.
-
-**Error Handling:**
-If any errors occur during execution (e.g., invalid parameters, connectivity issues), appropriate error messages will be returned under the 'error' key to guide troubleshooting.
+ERRORS
+- SearxngSearchError: invalid category / request failures
+- SearxngContentError, FileDownloadError: content fetching or file processing
 
 </internet_search_tools_instructions>
 """
@@ -1081,5 +1142,5 @@ If any errors occur during execution (e.g., invalid parameters, connectivity iss
                 self.client.close()
             if hasattr(self, "file_client") and self.file_client:
                 self.file_client.close()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass

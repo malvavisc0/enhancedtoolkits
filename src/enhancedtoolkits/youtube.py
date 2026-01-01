@@ -1,5 +1,4 @@
-"""YouTube tools.
-
+"""
 This toolkit uses:
 
 - Metadata: YouTube oEmbed (title/author/thumbnail/embed html)
@@ -10,9 +9,6 @@ All public tools return **JSON strings**.
 Notes:
 - oEmbed does **not** include view counts / likes / upload date / duration.
 - Transcript tools require `youtube-transcript-api`.
-
-Author: malvavisc0
-License: MIT
 """
 
 from __future__ import annotations
@@ -656,30 +652,29 @@ class EnhancedYouTubeTools(StrictToolkit):
         """Return short, text-first usage instructions for the YouTube tools."""
         return """
 <youtube_tools>
-YouTube metadata (oEmbed) + transcripts.
-All tools return JSON strings.
+YouTube metadata (oEmbed) + transcripts (youtube-transcript-api)
 
-Core tools:
+GOAL
+- YouTube metadata (oEmbed) + transcripts (youtube-transcript-api). All tools return JSON strings.
+
+CORE TOOLS
 - fetch_youtube_video_metadata(video_url)
-  - oEmbed fields only: title/author/thumbnail/embed html.
-  - Not available via oEmbed: view counts, likes, upload date, duration.
 - extract_youtube_video_id(video_url)
-  - Accepts full URLs, schemeless URLs, or raw 11-char ids.
 - fetch_comprehensive_youtube_video_info(video_url, include_transcript=False)
 
-Transcript tools (requires `youtube-transcript-api`):
-- fetch_youtube_video_transcript(video_url, language='en', auto_generated=True)
+TRANSCRIPT TOOLS
 - fetch_available_youtube_transcripts(video_url)
 - fetch_youtube_transcript_languages(video_url)
+- fetch_youtube_video_transcript(video_url, language='en', auto_generated=True)
 
-Operational notes:
-- Tool schemas are **strict** (OpenAI compatibility): pass all parameters, even if a default is shown.
-- If transcripts work locally but fail on a server/cloud VM with TranscriptsDisabled,
-  YouTube may be blocking/challenging that egress IP.
+LIMITATIONS
+- oEmbed does NOT provide: views, likes, upload date, duration.
 
-Suggested workflow:
-1) fetch_youtube_video_metadata(url)
-2) fetch_youtube_transcript_languages(url)
-3) fetch_youtube_video_transcript(url, language='en')
+CONTEXT-SIZE RULES (IMPORTANT)
+- Transcripts can be very large; fetch only when needed.
+- Do not dump full transcripts into the final answer; summarize + quote short excerpts.
+
+NOTES
+- If transcripts work locally but fail on servers with TranscriptsDisabled, your egress IP may be blocked/challenged.
 </youtube_tools>
 """

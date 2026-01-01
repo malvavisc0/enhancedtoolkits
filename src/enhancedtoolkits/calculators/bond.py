@@ -4,11 +4,7 @@ Bond Calculator
 Provides bond calculations including bond pricing and yield to maturity calculations.
 """
 
-from .base import (
-    BaseCalculatorTools,
-    FinancialComputationError,
-    FinancialValidationError,
-)
+from .base import BaseCalculatorTools, FinancialComputationError
 
 
 class BondCalculatorTools(BaseCalculatorTools):
@@ -99,8 +95,6 @@ class BondCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate bond price", e)
             raise FinancialComputationError(
@@ -158,8 +152,6 @@ class BondCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate YTM", e)
             raise FinancialComputationError(
@@ -171,6 +163,11 @@ class BondCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for bond tools."""
         return """
 <bond_calculator>
+Bond pricing and yield to maturity
+
+GOAL
+- Compute bond price or approximate YTM and return JSON.
+
 Bond pricing and yield. Tools return JSON strings.
 
 Tools:
@@ -179,5 +176,8 @@ Tools:
 
 Notes:
 - `coupon_rate` and `yield_rate` are per period as decimals.
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Prefer returning only the requested metric(s) in user-facing text; don’t paste full JSON.
 </bond_calculator>
 """

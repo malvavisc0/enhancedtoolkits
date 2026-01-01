@@ -87,8 +87,6 @@ class LoanCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate loan payment", e)
             raise FinancialComputationError(
@@ -162,8 +160,6 @@ class LoanCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to generate amortization schedule",
@@ -255,6 +251,11 @@ class LoanCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for loan tools."""
         return """
 <loan_calculator>
+Loan payments and amortization
+
+GOAL
+- Compute payments/interest/amortization for an amortizing loan and return JSON.
+
 Loan calculations. Tools return JSON strings.
 
 Tools:
@@ -266,5 +267,8 @@ Tools:
 Notes:
 - `rate` is the interest rate per payment period as a decimal (e.g. monthly rate).
 - For an annual APR `apr`, monthly rate is `apr / 12`.
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Amortization schedules can be large; summarize totals + a few representative rows.
 </loan_calculator>
 """

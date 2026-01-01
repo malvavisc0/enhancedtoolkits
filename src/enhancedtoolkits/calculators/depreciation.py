@@ -94,8 +94,6 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate straight-line depreciation",
@@ -159,8 +157,6 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error(
                 "Failed to calculate declining balance depreciation",
@@ -175,6 +171,11 @@ class DepreciationCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for depreciation tools."""
         return """
 <depreciation_calculator>
+Depreciation schedules (straight-line / declining balance)
+
+GOAL
+- Compute depreciation amounts and schedules and return JSON.
+
 Depreciation schedules. Tools return JSON strings.
 
 Tools:
@@ -183,5 +184,8 @@ Tools:
 
 Notes:
 - `rate` is per period as a decimal (e.g., 0.2 for 20%).
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Schedules can be long for large `life`; summarize key years/totals in user-facing answers.
 </depreciation_calculator>
 """

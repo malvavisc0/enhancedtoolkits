@@ -86,8 +86,6 @@ class RiskMetricsCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate Sharpe ratio", e)
             raise FinancialComputationError(
@@ -132,8 +130,6 @@ class RiskMetricsCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate volatility", e)
             raise FinancialComputationError(
@@ -225,6 +221,11 @@ class RiskMetricsCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for risk tools."""
         return """
 <risk_metrics_calculator>
+Risk metrics (Sharpe/volatility/beta/VaR)
+
+GOAL
+- Compute portfolio risk metrics from small return series and return JSON.
+
 Risk metrics. Tools return JSON strings.
 
 Tools:
@@ -236,5 +237,9 @@ Tools:
 Notes:
 - `returns` are decimals per period (e.g. 0.01 for +1%).
 - VaR is historical (quantile of returns).
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Keep returns lists reasonably small; do not pass huge arrays.
+- In final user responses, summarize the metric(s) instead of pasting full JSON.
 </risk_metrics_calculator>
 """

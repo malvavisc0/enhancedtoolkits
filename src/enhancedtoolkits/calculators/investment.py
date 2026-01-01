@@ -6,11 +6,7 @@ Provides investment analysis calculations including NPV, IRR, CAGR, and ROI.
 
 from typing import List
 
-from .base import (
-    BaseCalculatorTools,
-    FinancialComputationError,
-    FinancialValidationError,
-)
+from .base import BaseCalculatorTools, FinancialComputationError
 
 
 class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
@@ -78,8 +74,6 @@ class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate NPV", e)
             raise FinancialComputationError(
@@ -122,8 +116,6 @@ class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate IRR", e)
             raise FinancialComputationError(
@@ -174,8 +166,6 @@ class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate CAGR", e)
             raise FinancialComputationError(
@@ -219,8 +209,6 @@ class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
 
             return self._format_json_response(result)
 
-        except (FinancialValidationError, FinancialComputationError):
-            raise
         except (TypeError, ValueError, OverflowError, ZeroDivisionError) as e:
             self._log_unexpected_error("Failed to calculate ROI", e)
             raise FinancialComputationError(
@@ -232,6 +220,11 @@ class InvestmentAnalysisCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for investment tools."""
         return """
 <investment_analysis_calculator>
+Investment analysis (NPV/IRR/CAGR/ROI)
+
+GOAL
+- Compute common investment metrics from small cash-flow series and return JSON.
+
 Investment analysis. Tools return JSON strings.
 
 Tools:
@@ -243,5 +236,9 @@ Tools:
 Notes:
 - `cash_flows` is a list like [-1000, 300, 400, 500].
 - `rate` is per period as a decimal (0.10 = 10%).
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- Keep cash flow lists small; do not pass huge arrays.
+- In final user responses, summarize NPV/IRR/ROI rather than pasting full JSON.
 </investment_analysis_calculator>
 """

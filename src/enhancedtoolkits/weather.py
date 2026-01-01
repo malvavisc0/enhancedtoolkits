@@ -1,6 +1,4 @@
 """
-Enhanced Weather Tools v1.0
-
 A comprehensive weather toolkit that provides:
 - Current weather conditions
 - Weather forecasts
@@ -8,10 +6,6 @@ A comprehensive weather toolkit that provides:
 - Weather descriptions
 - Support for multiple languages
 - Robust error handling and logging
-
-Author: malvavisc0
-License: MIT
-Version: 1.0.0
 """
 
 import json
@@ -535,20 +529,23 @@ class EnhancedWeatherTools(StrictToolkit):
         """Return short, text-first usage instructions for the weather tools."""
         return """
 <weather_tools>
-Weather lookup via wttr.in (pywttr). Tools return JSON strings.
+Weather lookup via wttr.in (pywttr)
 
-Tools:
+GOAL
+- Weather lookup via wttr.in (pywttr). All tools return JSON strings.
+
+TOOLS
 - fetch_current_weather_conditions(location, language='en')
-- fetch_weather_forecast(location, days=3, language='en')
+- fetch_weather_forecast(location, days=3, language='en')  # days clamped 1..7
 - fetch_temperature_data(location, language='en')
 - fetch_weather_text_description(location, language='en')
 
-Example:
-1) fetch_current_weather_conditions('Berlin', 'de')
-2) fetch_weather_forecast('Berlin', 3, 'de')
+CONTEXT-SIZE RULES (IMPORTANT)
+- Prefer days<=3 unless the user explicitly asks for a longer forecast.
+- Do not paste the full JSON into the final answer; summarize key fields.
 
-Notes:
-- `location` can be a city name or "lat,lon".
-- `language` defaults to 'en' and falls back to English if unsupported.
+NOTES
+- location: city name or "lat,lon".
+- language: falls back to English if unsupported.
 </weather_tools>
 """

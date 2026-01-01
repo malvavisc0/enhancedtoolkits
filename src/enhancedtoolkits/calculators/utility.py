@@ -94,6 +94,11 @@ class UtilityCalculatorTools(BaseCalculatorTools):
         """Return short, text-first usage instructions for utility tools."""
         return """
 <utility_calculator>
+Simple utilities (currency conversion, inflation adjustment)
+
+GOAL
+- Convert/adjust values with simple formulas and return JSON.
+
 Simple utilities. Tools return JSON strings.
 
 Tools:
@@ -102,5 +107,8 @@ Tools:
 
 Notes:
 - `rate` is a decimal (e.g., 0.03 for 3%).
+
+CONTEXT-SIZE RULES (IMPORTANT)
+- In final user responses, present the converted/adjusted amount and assumptions; avoid dumping full JSON.
 </utility_calculator>
 """

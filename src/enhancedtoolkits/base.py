@@ -1,4 +1,5 @@
-"""Shared base utilities for toolkit implementations.
+"""
+Shared base utilities for toolkit implementations.
 
 This module defines [`StrictToolkit`](src/enhancedtoolkits/base.py:10), a thin wrapper
 around agno's `Toolkit` that enforces strict JSON schemas for OpenAI tool calling.
