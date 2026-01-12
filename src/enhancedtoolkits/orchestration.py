@@ -124,6 +124,11 @@ BEST PRACTICES
     def _get_session_state(agent_or_team: Any) -> Dict[str, Any]:
         """Return the session state container (attach if missing)."""
         # pylint: disable=protected-access
+        
+        # DIAGNOSTIC: Log what type we received
+        log_debug(f"_get_session_state received type: {type(agent_or_team)}")
+        log_debug(f"_get_session_state received value: {agent_or_team}")
+     
         if not hasattr(agent_or_team, "_orchestration_session_state"):
             agent_or_team._orchestration_session_state = {}
         return agent_or_team._orchestration_session_state
